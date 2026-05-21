@@ -2,9 +2,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { AudioFeatures } from "@/lib/enrichment/reccobeats";
 import type { ClassifierTrack, PlaylistCentroid, PlaylistForClassifier } from "@/lib/types";
 
-interface Level3Result {
-  playlistIds: string[];
+export interface PlaylistMatch {
+  id: string;
   confidence: number;
+}
+
+interface Level3Result {
+  playlists: PlaylistMatch[];
   reason: string;
   rawResponse: string;
 }
@@ -76,8 +80,8 @@ Available playlists:
 ${JSON.stringify(playlistList, null, 2)}
 
 Reply with a single JSON object, no markdown:
-{"playlists": ["<uuid>", ...], "confidence": <0.0-1.0>, "reason": "<one sentence>"}
-Return an empty playlists array if none fit.`;
+{"playlists": [{"id": "<uuid>", "confidence": <0.0-1.0>}, ...], "reason": "<one sentence in French>"}
+Each playlist gets its own confidence score. Return an empty playlists array if none fit.`;
 
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
@@ -93,17 +97,18 @@ Return an empty playlists array if none fit.`;
   const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
   const parsed = JSON.parse(text) as {
-    playlists: string[];
-    confidence: number;
+    playlists: { id: string; confidence: number }[];
     reason: string;
   };
 
   const validIds = new Set(playlists.map((p) => p.id));
-  const playlistIds = (parsed.playlists ?? []).filter((id) => validIds.has(id));
+  const matches = (parsed.playlists ?? [])
+    .filter((p) => validIds.has(p.id))
+    .map((p) => ({ id: p.id, confidence: Math.max(0, Math.min(1, p.confidence)) }))
+    .sort((a, b) => b.confidence - a.confidence);
 
   return {
-    playlistIds,
-    confidence: Math.max(0, Math.min(1, parsed.confidence)),
+    playlists: matches,
     reason: parsed.reason,
     rawResponse: text,
   };

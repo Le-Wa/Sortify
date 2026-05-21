@@ -27,23 +27,30 @@ export async function classify(
   if (!skipLlm) {
     try {
       const l3 = await matchLevel3(track, audioFeatures, genres, playlists);
-      const tooLow = l3.confidence < MIN_ASSIGN_CONFIDENCE;
-      if (tooLow) {
+
+      // Each playlist has its own confidence — filter independently
+      const assigned = l3.playlists.filter((p) => p.confidence >= MIN_ASSIGN_CONFIDENCE);
+      const primary = assigned[0] ?? null;
+
+      if (!primary) {
+        // Nothing above assign threshold — store best suggestion if above suggestion threshold
+        const best = l3.playlists[0] ?? null;
         return {
           playlistId: null,
           extraPlaylistIds: [],
-          llmSuggestion: l3.confidence >= MIN_SUGGESTION_CONFIDENCE ? (l3.playlistIds[0] ?? null) : null,
-          confidence: l3.confidence,
+          llmSuggestion: best && best.confidence >= MIN_SUGGESTION_CONFIDENCE ? best.id : null,
+          confidence: best?.confidence ?? 0,
           level: 3,
           reason: l3.reason,
           needsReview: true,
         };
       }
+
       return {
-        playlistId: l3.playlistIds[0] ?? null,
-        extraPlaylistIds: l3.playlistIds.slice(1),
+        playlistId: primary.id,
+        extraPlaylistIds: assigned.slice(1).map((p) => p.id),
         llmSuggestion: null,
-        confidence: l3.confidence,
+        confidence: primary.confidence,
         level: 3,
         reason: l3.reason,
         needsReview: false,

@@ -147,10 +147,11 @@ export async function GET(req: NextRequest) {
   let l3: { suggested: string | null; confidence: number; reason: string; raw_response: string };
   try {
     const result = await matchLevel3(track, audioFeatures, genres, playlists);
-    const playlist = playlists.find((p) => p.id === result.playlistIds[0]);
+    const best = result.playlists[0] ?? null;
+    const playlist = playlists.find((p) => p.id === best?.id);
     l3 = {
       suggested: playlist?.name ?? null,
-      confidence: result.confidence,
+      confidence: best?.confidence ?? 0,
       reason: result.reason,
       raw_response: result.rawResponse,
     };
