@@ -230,19 +230,26 @@ export async function getPlaylistsStats(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("tracks")
-    .select("assigned_playlist, pushed_to_spotify")
+    .select("assigned_playlist, extra_playlists, pushed_to_spotify")
     .eq("user_id", userId)
-    .not("assigned_playlist", "is", null)
-    .eq("is_archived", false);
+    .eq("is_archived", false)
+    .or("assigned_playlist.not.is.null,extra_playlists.neq.{}");
   if (error) throw error;
 
   const stats: Record<string, PlaylistStats> = {};
-  for (const row of data ?? []) {
-    const id = row.assigned_playlist as string;
+  const add = (id: string, synced: boolean) => {
     if (!stats[id]) stats[id] = { total: 0, synced: 0, not_synced: 0 };
     stats[id].total++;
-    if (row.pushed_to_spotify !== null) stats[id].synced++;
+    if (synced) stats[id].synced++;
     else stats[id].not_synced++;
+  };
+
+  for (const row of data ?? []) {
+    const synced = row.pushed_to_spotify !== null;
+    if (row.assigned_playlist) add(row.assigned_playlist as string, synced);
+    for (const pid of (row.extra_playlists as string[] | null) ?? []) {
+      add(pid, synced);
+    }
   }
   return stats;
 }
@@ -285,8 +292,8 @@ export async function getPlaylistTracksAssigned(
       "id, spotify_track_id, name, artist_name, artists, album_name, spotify_added_at, genres, classification_level, pushed_to_spotify"
     )
     .eq("user_id", userId)
-    .eq("assigned_playlist", playlistId)
     .eq("is_archived", false)
+    .or(`assigned_playlist.eq.${playlistId},extra_playlists.cs.{${playlistId}}`)
     .order("spotify_added_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as PlaylistTrackRow[];
@@ -301,9 +308,9 @@ export async function getUnsyncedPlaylistTracks(
     .from("tracks")
     .select("id, spotify_track_id")
     .eq("user_id", userId)
-    .eq("assigned_playlist", playlistId)
+    .eq("is_archived", false)
     .is("pushed_to_spotify", null)
-    .eq("is_archived", false);
+    .or(`assigned_playlist.eq.${playlistId},extra_playlists.cs.{${playlistId}}`);
   if (error) throw error;
   return (data ?? []) as { id: string; spotify_track_id: string }[];
 }
