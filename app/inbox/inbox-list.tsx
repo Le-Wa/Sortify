@@ -14,6 +14,7 @@ interface InboxTrack {
   genres: string[];
   enrichment_source: string | null;
   audio_features: { energy?: number; danceability?: number; tempo?: number } | null;
+  llm_suggestion_id: string | null;
   suggested_playlist: string | null;
   suggested_playlist_spotify_id: string | null;
   confidence: number | null;
@@ -67,9 +68,10 @@ function TrackCard({
   playlists,
   isExiting,
   isBusy,
-  correctingId,
+  isCorrectingThis,
   isReasonExpanded,
-  onSetCorrecting,
+  onStartCorrecting,
+  onCancelCorrecting,
   onToggleReason,
   onValidate,
   onCorrect,
@@ -79,16 +81,16 @@ function TrackCard({
   playlists: InboxPlaylist[];
   isExiting: boolean;
   isBusy: boolean;
-  correctingId: string | null;
+  isCorrectingThis: boolean;
   isReasonExpanded: boolean;
-  onSetCorrecting: (pid: string | null) => void;
+  onStartCorrecting: () => void;
+  onCancelCorrecting: () => void;
   onToggleReason: () => void;
   onValidate: () => void;
-  onCorrect: (pid: string) => void;
+  onCorrect: (ids: string[]) => void;
   onArchive: () => void;
 }) {
-  const [selectedPlaylist, setSelectedPlaylist] = useState(playlists[0]?.id ?? "");
-  const isCorrectingThis = correctingId !== null;
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const af = track.audio_features;
   const hasReason = !!track.classification_reason && track.classification_reason.length > 0;
@@ -225,7 +227,7 @@ function TrackCard({
       {!isCorrectingThis ? (
         <div className="flex gap-2">
           <button
-            disabled={isBusy || !track.suggested_playlist}
+            disabled={isBusy || !track.llm_suggestion_id}
             onClick={onValidate}
             className="flex-1 rounded-lg bg-emerald-700 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -233,7 +235,7 @@ function TrackCard({
           </button>
           <button
             disabled={isBusy}
-            onClick={() => onSetCorrecting(playlists[0]?.id ?? "")}
+            onClick={onStartCorrecting}
             className="flex-1 rounded-lg border border-neutral-700 py-1.5 text-sm font-medium transition-colors hover:bg-neutral-800 disabled:opacity-40"
           >
             ✎ Corriger
@@ -248,33 +250,43 @@ function TrackCard({
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <select
-            value={selectedPlaylist}
-            onChange={(e) => setSelectedPlaylist(e.target.value)}
-            className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
+        <div className="flex flex-col gap-2">
+          <div className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2">
             {playlists.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
+              <label key={p.id} className="flex cursor-pointer items-center gap-2.5 py-1 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(p.id)}
+                  onChange={(e) =>
+                    setSelectedIds((prev) =>
+                      e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                    )
+                  }
+                  className="accent-blue-500"
+                />
+                <span className={selectedIds.includes(p.id) ? "text-white" : "text-neutral-400"}>
+                  {p.name}
+                </span>
+              </label>
             ))}
-          </select>
-          <button
-            disabled={isBusy || !selectedPlaylist}
-            onClick={() => onCorrect(selectedPlaylist)}
-            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
-          >
-            {isBusy ? "…" : "OK"}
-          </button>
-          <button
-            disabled={isBusy}
-            onClick={() => onSetCorrecting(null)}
-            className="rounded-lg border border-neutral-700 px-2.5 py-1.5 text-sm transition-colors hover:bg-neutral-800 disabled:opacity-40"
-            aria-label="Annuler"
-          >
-            ↩
-          </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              disabled={isBusy || selectedIds.length === 0}
+              onClick={() => onCorrect(selectedIds)}
+              className="flex-1 rounded-lg bg-blue-600 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {isBusy ? "…" : `Assigner (${selectedIds.length})`}
+            </button>
+            <button
+              disabled={isBusy}
+              onClick={onCancelCorrecting}
+              className="rounded-lg border border-neutral-700 px-2.5 py-1.5 text-sm transition-colors hover:bg-neutral-800 disabled:opacity-40"
+              aria-label="Annuler"
+            >
+              ↩
+            </button>
+          </div>
         </div>
       )}
     </li>
@@ -297,7 +309,7 @@ export default function InboxClient() {
 
   const [playlists, setPlaylists] = useState<InboxPlaylist[]>([]);
 
-  const [correcting, setCorrecting] = useState<Record<string, string | null>>({});
+  const [correcting, setCorrecting] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [exiting, setExiting] = useState<Set<string>>(new Set());
   const [expandedReasons, setExpandedReasons] = useState<Set<string>>(new Set());
@@ -354,19 +366,19 @@ export default function InboxClient() {
   async function handleAction(
     trackId: string,
     action: "validate" | "correct" | "archive",
-    playlistId?: string
+    playlistIds?: string[]
   ) {
     setBusy((prev) => new Set([...prev, trackId]));
     try {
-      const body: Record<string, string> = { action };
-      if (playlistId) body.playlist_id = playlistId;
+      const body: Record<string, unknown> = { action };
+      if (playlistIds) body.playlist_ids = playlistIds;
       const res = await fetch(`/api/inbox/${trackId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(await res.text());
-      setCorrecting((prev) => { const n = { ...prev }; delete n[trackId]; return n; });
+      setCorrecting((prev) => { const n = new Set(prev); n.delete(trackId); return n; });
       exitTrack(trackId);
     } catch (err) {
       alert(`Erreur : ${String(err)}`);
@@ -494,14 +506,13 @@ export default function InboxClient() {
                 playlists={playlists}
                 isExiting={exiting.has(track.id)}
                 isBusy={busy.has(track.id)}
-                correctingId={correcting[track.id] ?? null}
+                isCorrectingThis={correcting.has(track.id)}
                 isReasonExpanded={expandedReasons.has(track.id)}
-                onSetCorrecting={(pid) =>
-                  setCorrecting((prev) =>
-                    pid === null
-                      ? (({ [track.id]: _, ...rest }) => rest)(prev)
-                      : { ...prev, [track.id]: pid }
-                  )
+                onStartCorrecting={() =>
+                  setCorrecting((prev) => new Set([...prev, track.id]))
+                }
+                onCancelCorrecting={() =>
+                  setCorrecting((prev) => { const n = new Set(prev); n.delete(track.id); return n; })
                 }
                 onToggleReason={() =>
                   setExpandedReasons((prev) => {
@@ -511,7 +522,7 @@ export default function InboxClient() {
                   })
                 }
                 onValidate={() => handleAction(track.id, "validate")}
-                onCorrect={(pid) => handleAction(track.id, "correct", pid)}
+                onCorrect={(ids) => handleAction(track.id, "correct", ids)}
                 onArchive={() => handleAction(track.id, "archive")}
               />
             ))}

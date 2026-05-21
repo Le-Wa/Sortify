@@ -42,6 +42,8 @@ export interface UpsertTrackData {
   audio_features: Partial<AudioFeatures> | null;
   genres: string[];
   assigned_playlist: string | null;
+  extra_playlists: string[];
+  llm_suggestion: string | null;
   classified_at: string;
   classification_level: number;
   needs_review: boolean;
@@ -362,8 +364,8 @@ export interface InboxTrackRowV2 {
   genres: string[] | null;
   enrichment_source: string | null;
   audio_features: Partial<AudioFeatures> | null;
-  assigned_playlist: string | null;
-  playlists: { id: string; name: string; spotify_playlist_id: string } | null;
+  llm_suggestion: string | null;
+  suggestion_playlist: { id: string; name: string; spotify_playlist_id: string } | null;
 }
 
 export async function getInboxTracksNeedsReview(
@@ -374,14 +376,14 @@ export async function getInboxTracksNeedsReview(
   let query = supabase
     .from("tracks")
     .select(
-      "id, spotify_track_id, name, artist_name, artists, album_name, isrc, spotify_added_at, genres, enrichment_source, audio_features, assigned_playlist, playlists!assigned_playlist(id, name, spotify_playlist_id)"
+      "id, spotify_track_id, name, artist_name, artists, album_name, isrc, spotify_added_at, genres, enrichment_source, audio_features, llm_suggestion, suggestion_playlist:playlists!llm_suggestion(id, name, spotify_playlist_id)"
     )
     .eq("user_id", userId)
     .eq("needs_review", true)
     .eq("is_archived", false);
 
   if (playlistId) {
-    query = query.eq("assigned_playlist", playlistId);
+    query = query.eq("llm_suggestion", playlistId);
   }
 
   const { data, error } = await query;
@@ -410,29 +412,19 @@ export async function getLatestLogByTrackIds(
   return map;
 }
 
-export async function updateTrackInboxValidate(
-  trackId: string,
-  userId: string
-): Promise<void> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("tracks")
-    .update({ needs_review: false, classified_at: new Date().toISOString() })
-    .eq("id", trackId)
-    .eq("user_id", userId);
-  if (error) throw error;
-}
-
 export async function updateTrackInboxCorrect(
   trackId: string,
   userId: string,
-  newPlaylistId: string
+  playlistIds: string[]
 ): Promise<void> {
+  const [primary, ...extras] = playlistIds;
   const supabase = createClient();
   const { error } = await supabase
     .from("tracks")
     .update({
-      assigned_playlist: newPlaylistId,
+      assigned_playlist: primary,
+      extra_playlists: extras,
+      llm_suggestion: null,
       needs_review: false,
       classified_at: new Date().toISOString(),
     })
@@ -488,15 +480,15 @@ export async function insertInboxLog(entry: {
 export async function getTrackForConfirmation(
   trackId: string,
   userId: string
-): Promise<{ id: string; spotify_track_id: string; genres: string[] | null; assigned_playlist: string | null } | null> {
+): Promise<{ id: string; spotify_track_id: string; genres: string[] | null; llm_suggestion: string | null; extra_playlists: string[] } | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("tracks")
-    .select("id, spotify_track_id, genres, assigned_playlist")
+    .select("id, spotify_track_id, genres, llm_suggestion, extra_playlists")
     .eq("id", trackId)
     .eq("user_id", userId)
     .single();
-  return data;
+  return data as typeof data & { extra_playlists: string[] };
 }
 
 export async function getPlaylistForConfirmation(

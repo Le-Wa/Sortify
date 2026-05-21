@@ -70,6 +70,8 @@ export async function POST(req: Request): Promise<Response> {
         audio_features: row.audio_features as AudioFeatures | null,
         genres: row.genres ?? [],
         assigned_playlist: result.playlistId,
+        extra_playlists: result.extraPlaylistIds,
+        llm_suggestion: result.llmSuggestion,
         classified_at: new Date().toISOString(),
         classification_level: result.level,
         needs_review: result.needsReview,
@@ -79,15 +81,18 @@ export async function POST(req: Request): Promise<Response> {
         track_id: trackDbId,
         user_id: dbUser.id,
         level_used: result.level,
-        suggested: result.playlistId,
+        suggested: result.playlistId ?? result.llmSuggestion,
         confidence: result.confidence,
         reason: result.reason ?? null,
       });
 
-      if (result.playlistId && result.confidence >= 0.60) {
-        const playlist = playlists.find((p) => p.id === result.playlistId);
-        if (playlist) {
-          await addTrackToPlaylist(token, playlist.spotify_playlist_id, row.spotify_track_id);
+      if (result.playlistId) {
+        const allIds = [result.playlistId, ...result.extraPlaylistIds];
+        for (const pid of allIds) {
+          const playlist = playlists.find((p) => p.id === pid);
+          if (playlist) {
+            await addTrackToPlaylist(token, playlist.spotify_playlist_id, row.spotify_track_id);
+          }
         }
       }
 

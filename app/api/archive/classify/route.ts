@@ -113,6 +113,8 @@ export async function POST(): Promise<Response> {
       audio_features: features,
       genres,
       assigned_playlist: result.playlistId,
+      extra_playlists: result.extraPlaylistIds,
+      llm_suggestion: result.llmSuggestion,
       classified_at: new Date().toISOString(),
       classification_level: result.level,
       needs_review: result.needsReview,

@@ -6,7 +6,6 @@ import {
   getUserBySpotifyId,
   getTrackForConfirmation,
   getPlaylistForConfirmation,
-  updateTrackInboxValidate,
   updateTrackInboxCorrect,
   updateTrackInboxArchive,
   setPushedToSpotify,
@@ -27,7 +26,7 @@ export async function PATCH(
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
 
   const { track_id } = await params;
-  const body = (await req.json()) as { action?: string; playlist_id?: string };
+  const body = (await req.json()) as { action?: string; playlist_ids?: string[] };
   const { action } = body;
 
   if (!action || !["validate", "correct", "archive"].includes(action)) {
@@ -42,34 +41,30 @@ export async function PATCH(
     return Response.json({ success: true, track_id, action });
   }
 
-  let targetPlaylistId: string;
+  let targetPlaylistIds: string[];
+  const originalSuggestion = track.llm_suggestion;
+
   if (action === "validate") {
-    if (!track.assigned_playlist) {
+    if (!track.llm_suggestion) {
       return Response.json({ error: "No suggested playlist for this track" }, { status: 400 });
     }
-    targetPlaylistId = track.assigned_playlist;
+    targetPlaylistIds = [track.llm_suggestion];
   } else {
-    if (!body.playlist_id) {
-      return Response.json({ error: "playlist_id is required for correct action" }, { status: 400 });
+    if (!body.playlist_ids?.length) {
+      return Response.json({ error: "playlist_ids is required for correct action" }, { status: 400 });
     }
-    targetPlaylistId = body.playlist_id;
+    targetPlaylistIds = body.playlist_ids;
   }
 
-  const targetPlaylist = await getPlaylistForConfirmation(targetPlaylistId, dbUser.id);
-  if (!targetPlaylist) return Response.json({ error: "Playlist not found" }, { status: 404 });
-
-  const originalSuggestion = track.assigned_playlist;
-
-  if (action === "validate") {
-    await updateTrackInboxValidate(track_id, dbUser.id);
-  } else {
-    await updateTrackInboxCorrect(track_id, dbUser.id, targetPlaylistId);
-  }
+  await updateTrackInboxCorrect(track_id, dbUser.id, targetPlaylistIds);
 
   const token = await refreshAccessToken(session.userId);
   let spotifySuccess = false;
   try {
-    await addTrackToPlaylist(token, targetPlaylist.spotify_playlist_id, track.spotify_track_id);
+    for (const pid of targetPlaylistIds) {
+      const pl = await getPlaylistForConfirmation(pid, dbUser.id);
+      if (pl) await addTrackToPlaylist(token, pl.spotify_playlist_id, track.spotify_track_id);
+    }
     spotifySuccess = true;
   } catch (err) {
     console.error("Spotify push failed:", err);
@@ -86,7 +81,7 @@ export async function PATCH(
     track_id,
     user_id: dbUser.id,
     suggested: originalSuggestion,
-    corrected_to: action === "correct" ? targetPlaylistId : null,
+    corrected_to: action === "correct" ? targetPlaylistIds[0] : null,
     confidence: latestLog?.confidence ?? 1.0,
     reason: action === "correct" ? "Manual correction" : "Manual confirmation",
   });

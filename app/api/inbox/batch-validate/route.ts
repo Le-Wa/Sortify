@@ -7,7 +7,7 @@ import {
   getInboxTracksNeedsReview,
   getLatestLogByTrackIds,
   getPlaylistForConfirmation,
-  updateTrackInboxValidate,
+  updateTrackInboxCorrect,
   setPushedToSpotify,
   insertInboxLog,
 } from "@/lib/supabase/queries";
@@ -28,7 +28,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const eligible = rows.filter((row) => {
     const confidence = logMap[row.id]?.confidence ?? null;
-    return confidence !== null && confidence >= minConfidence && row.assigned_playlist !== null;
+    return confidence !== null && confidence >= minConfidence && row.llm_suggestion !== null;
   });
 
   if (eligible.length === 0) {
@@ -41,7 +41,8 @@ export async function POST(req: Request): Promise<Response> {
 
   for (const row of eligible) {
     try {
-      const playlist = await getPlaylistForConfirmation(row.assigned_playlist!, dbUser.id);
+      const suggestionId = row.llm_suggestion!;
+      const playlist = await getPlaylistForConfirmation(suggestionId, dbUser.id);
       if (!playlist) {
         errors.push(`Track ${row.id}: playlist not found`);
         continue;
@@ -55,13 +56,13 @@ export async function POST(req: Request): Promise<Response> {
         console.error(`Spotify push failed for track ${row.id}:`, err);
       }
 
-      await updateTrackInboxValidate(row.id, dbUser.id);
+      await updateTrackInboxCorrect(row.id, dbUser.id, [suggestionId]);
       if (spotifySuccess) await setPushedToSpotify(row.id, dbUser.id);
 
       await insertInboxLog({
         track_id: row.id,
         user_id: dbUser.id,
-        suggested: row.assigned_playlist,
+        suggested: suggestionId,
         corrected_to: null,
         confidence: logMap[row.id]?.confidence ?? 1.0,
         reason: "Batch validation",

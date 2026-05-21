@@ -68,6 +68,8 @@ export interface PlaylistForClassifier {
 
 export interface ClassificationResult {
   playlistId: string | null;
+  extraPlaylistIds: string[];
+  llmSuggestion: string | null;
   confidence: number;
   level: 1 | 2 | 3;
   reason?: string;
