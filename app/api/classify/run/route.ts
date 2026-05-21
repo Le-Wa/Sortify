@@ -9,9 +9,12 @@ import {
   upsertTrack,
   insertClassificationLog,
 } from "@/lib/supabase/queries";
+import { addTrackToPlaylist } from "@/lib/spotify/fetchers";
+import { refreshAccessToken } from "@/lib/spotify/token";
 import type { AudioFeatures, ClassifierTrack } from "@/lib/types";
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE_LLM = 5;   // smaller — each track may call Anthropic (~2s)
+const BATCH_SIZE_FAST = 25; // larger — L1/L2 only, no API calls
 
 export async function POST(req: Request): Promise<Response> {
   const session = await getServerSession(authOptions);
@@ -23,9 +26,12 @@ export async function POST(req: Request): Promise<Response> {
   const body = await req.json().catch(() => ({})) as { skipLlm?: boolean };
   const skipLlm = body.skipLlm === true;
 
-  const [tracks, playlists] = await Promise.all([
-    getTracksForClassification(dbUser.id, BATCH_SIZE),
+  const batchSize = skipLlm ? BATCH_SIZE_FAST : BATCH_SIZE_LLM;
+
+  const [tracks, playlists, token] = await Promise.all([
+    getTracksForClassification(dbUser.id, batchSize),
     getUserPlaylists(dbUser.id),
+    refreshAccessToken(session.userId),
   ]);
 
   if (playlists.length === 0) {
@@ -78,11 +84,15 @@ export async function POST(req: Request): Promise<Response> {
         reason: result.reason ?? null,
       });
 
-      if (result.needsReview) {
-        needsReview++;
-      } else {
-        classified++;
+      if (result.playlistId && result.confidence >= 0.60) {
+        const playlist = playlists.find((p) => p.id === result.playlistId);
+        if (playlist) {
+          await addTrackToPlaylist(token, playlist.spotify_playlist_id, row.spotify_track_id);
+        }
       }
+
+      if (result.needsReview) needsReview++;
+      else classified++;
     } catch (e) {
       errors.push(`${row.spotify_track_id}: ${String(e)}`);
     }
@@ -93,6 +103,7 @@ export async function POST(req: Request): Promise<Response> {
     needs_review: needsReview,
     batch_size: tracks.length,
     remaining: Math.max(0, remaining - tracks.length),
+    total: remaining,
     errors,
   });
 }

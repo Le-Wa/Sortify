@@ -695,6 +695,7 @@ export interface AdminLogV2Row {
   track_id: string;
   track_name: string | null;
   artist_name: string | null;
+  enriched: boolean;
   level_used: number;
   suggested: string | null;
   confidence: number;
@@ -734,12 +735,12 @@ export async function getAdminLogsV2(
   if (error) throw error;
 
   const trackIds = [...new Set((logRows ?? []).map((r) => r.track_id as string))];
-  let trackMap = new Map<string, { name: string | null; artist_name: string | null; artists: string[] | null }>();
+  let trackMap = new Map<string, { name: string | null; artist_name: string | null; artists: string[] | null; enriched_at: string | null }>();
 
   if (trackIds.length > 0) {
     const { data: trackRows } = await supabase
       .from("tracks")
-      .select("id, name, artist_name, artists")
+      .select("id, name, artist_name, artists, enriched_at")
       .in("id", trackIds);
     trackMap = new Map(
       (trackRows ?? []).map((t) => [
@@ -748,6 +749,7 @@ export async function getAdminLogsV2(
           name: t.name as string | null,
           artist_name: t.artist_name as string | null,
           artists: t.artists as string[] | null,
+          enriched_at: t.enriched_at as string | null,
         },
       ])
     );
@@ -760,6 +762,7 @@ export async function getAdminLogsV2(
       track_id: row.track_id as string,
       track_name: track?.name ?? null,
       artist_name: track?.artist_name ?? (track?.artists?.[0] ?? null),
+      enriched: track?.enriched_at !== null && track?.enriched_at !== undefined,
       level_used: row.level_used as number,
       suggested: row.suggested as string | null,
       confidence: row.confidence as number,

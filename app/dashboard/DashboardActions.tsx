@@ -70,11 +70,20 @@ function ActionBtn({
   );
 }
 
+type ImportMode = "months" | "songs";
+
 export default function DashboardActions() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  const [importPanelOpen, setImportPanelOpen] = useState(false);
+  const [importMode, setImportMode] = useState<ImportMode>("months");
+  const [importMonths, setImportMonths] = useState("12");
+  const [importSongs, setImportSongs] = useState("500");
+
+  const [classifyProgress, setClassifyProgress] = useState<{ done: number; total: number } | null>(null);
 
   const loadStats = useCallback(async () => {
     try {
@@ -106,27 +115,91 @@ export default function DashboardActions() {
     }
   }
 
-  async function importAll() {
-    if (!confirm("L'import complet peut prendre plusieurs minutes. Continuer ?")) return;
+  async function importAll(mode: ImportMode, value: number) {
+    setImportPanelOpen(false);
     setBusy(true);
+    const months = mode === "months" ? value : 0;
+    const maxTracks = mode === "songs" && value > 0 ? value : Infinity;
     let cursor: string | null = null;
     let total = 0;
     try {
+      // 1. Import
       do {
         const res = await fetch("/api/tracks/import-all", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cursor }),
+          body: JSON.stringify({ months, cursor }),
         });
         const data = (await res.json()) as { pageImported: number; total: number; cursor: string | null };
         total += data.pageImported;
         cursor = data.cursor;
         setFeedback(`Import en cours… ${total} tracks`);
-      } while (cursor !== null);
-      flash(`Import complet — ${total} tracks importés`);
+      } while (cursor !== null && total < maxTracks);
+
+      // 2. Enrichissement automatique (genres + audio features)
+      if (total > 0) {
+        setFeedback(`Import terminé (${total}). Enrichissement en cours…`);
+        let enriched = 0;
+        let remaining = Infinity;
+        while (remaining > 0) {
+          const res = await fetch("/api/tracks/enrich", { method: "POST" });
+          const data = (await res.json()) as { enriched: number; failed: number; remaining: number };
+          enriched += data.enriched;
+          remaining = data.remaining;
+          if (data.enriched === 0) break;
+          setFeedback(`Enrichissement… ${enriched} tracks`);
+        }
+        flash(`${total} importés · ${enriched} enrichis`);
+      } else {
+        flash(`Import terminé — aucun nouveau track`);
+      }
+
       await loadStats();
     } catch {
-      flash("Erreur lors de l'import complet");
+      flash("Erreur lors de l'import");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleImportSubmit() {
+    const value = importMode === "months"
+      ? Math.max(0, parseInt(importMonths, 10) || 0)
+      : Math.max(1, parseInt(importSongs, 10) || 1);
+    void importAll(importMode, value);
+  }
+
+  async function resetNeedsReview() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/tracks/reset-needs-review", { method: "POST" });
+      const data = (await res.json()) as { reset: number };
+      flash(`${data.reset} track${data.reset !== 1 ? "s" : ""} remis en file — relance le classifier`);
+      await loadStats();
+    } catch {
+      flash("Erreur lors du reset");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function enrichTracks() {
+    setBusy(true);
+    let enriched = 0;
+    let remaining = Infinity;
+    try {
+      while (remaining > 0) {
+        const res = await fetch("/api/tracks/enrich", { method: "POST" });
+        const data = (await res.json()) as { enriched: number; failed: number; remaining: number };
+        enriched += data.enriched;
+        remaining = data.remaining;
+        if (data.enriched === 0) break;
+        setFeedback(`Enrichissement… ${enriched} tracks`);
+      }
+      flash(`Enrichissement terminé — ${enriched} track${enriched !== 1 ? "s" : ""}`);
+      await loadStats();
+    } catch {
+      flash("Erreur lors de l'enrichissement");
     } finally {
       setBusy(false);
     }
@@ -134,8 +207,11 @@ export default function DashboardActions() {
 
   async function runClassify(skipLlm = false) {
     setBusy(true);
+    setClassifyProgress(null);
     let totalClassified = 0;
     let totalReview = 0;
+    let totalErrors = 0;
+    let grandTotal = 0;
     try {
       let remaining = Infinity;
       while (remaining > 0) {
@@ -144,25 +220,36 @@ export default function DashboardActions() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ skipLlm }),
         });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => res.statusText);
+          flash(`Erreur classifier (HTTP ${res.status}) : ${msg}`);
+          break;
+        }
         const data = (await res.json()) as {
           classified: number;
           needs_review: number;
           batch_size: number;
           remaining: number;
+          total: number;
           errors: string[];
         };
         totalClassified += data.classified;
         totalReview += data.needs_review;
+        totalErrors += data.errors.length;
         remaining = data.remaining;
+        if (grandTotal === 0) grandTotal = data.total;
+        const done = grandTotal - remaining;
+        setClassifyProgress({ done, total: grandTotal });
         if (data.batch_size === 0) break;
-        setFeedback(`Classification… ${totalClassified} ok · ${totalReview} review`);
       }
-      flash(`Terminé — ${totalClassified} classifiés · ${totalReview} en review`);
+      const errPart = totalErrors > 0 ? ` · ${totalErrors} erreur${totalErrors > 1 ? "s" : ""}` : "";
+      flash(`Terminé — ${totalClassified} classifiés · ${totalReview} en review${errPart}`);
       await loadStats();
-    } catch {
-      flash("Erreur lors de la classification");
+    } catch (err) {
+      flash(`Erreur : ${String(err)}`);
     } finally {
       setBusy(false);
+      setClassifyProgress(null);
     }
   }
 
@@ -228,11 +315,22 @@ export default function DashboardActions() {
           onClick={importRecent}
           disabled={busy}
         />
-        <ActionBtn
-          label="Import historique complet"
-          onClick={importAll}
+        <button
           disabled={busy}
-          variant="danger"
+          onClick={() => setImportPanelOpen((o) => !o)}
+          className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-600 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Import historique {importPanelOpen ? "▴" : "▾"}
+        </button>
+        <ActionBtn
+          label="Enrichir les tracks"
+          onClick={enrichTracks}
+          disabled={busy}
+        />
+        <ActionBtn
+          label="Reset needs_review"
+          onClick={resetNeedsReview}
+          disabled={busy}
         />
         <ActionBtn
           label="Classifier (LLM)"
@@ -251,6 +349,94 @@ export default function DashboardActions() {
         />
       </div>
 
+      {/* ── Import panel ───────────────────────────────────────────────────── */}
+      {importPanelOpen && (
+        <div className="rounded-xl border border-neutral-700 bg-neutral-900 p-4 space-y-4">
+          {/* Mode selector */}
+          <div className="flex gap-4 text-sm">
+            {(["months", "songs"] as ImportMode[]).map((m) => (
+              <label key={m} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="importMode"
+                  value={m}
+                  checked={importMode === m}
+                  onChange={() => setImportMode(m)}
+                  className="accent-neutral-400"
+                />
+                <span className={importMode === m ? "text-white" : "text-neutral-400"}>
+                  {m === "months" ? "Par mois" : "Par nombre de sons"}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Value input */}
+          <div className="flex items-center gap-3">
+            {importMode === "months" ? (
+              <>
+                <input
+                  type="number"
+                  min={0}
+                  value={importMonths}
+                  onChange={(e) => setImportMonths(e.target.value)}
+                  className="w-24 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                />
+                <span className="text-sm text-neutral-400">mois</span>
+                <span className="text-xs text-neutral-600">
+                  {importMonths === "0" || importMonths === ""
+                    ? "(tout l'historique)"
+                    : `≈ ${parseInt(importMonths, 10) * 30} derniers jours`}
+                </span>
+              </>
+            ) : (
+              <>
+                <input
+                  type="number"
+                  min={1}
+                  step={100}
+                  value={importSongs}
+                  onChange={(e) => setImportSongs(e.target.value)}
+                  className="w-28 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                />
+                <span className="text-sm text-neutral-400">sons les plus récents</span>
+              </>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleImportSubmit}
+              className="rounded-lg bg-neutral-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-neutral-500"
+            >
+              Lancer l'import
+            </button>
+            <button
+              onClick={() => setImportPanelOpen(false)}
+              className="rounded-lg border border-neutral-700 px-4 py-1.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-800"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Classify progress */}
+      {classifyProgress && classifyProgress.total > 0 && (
+        <div className="space-y-1">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-800">
+            <div
+              className="h-full rounded-full bg-green-600 transition-all duration-300"
+              style={{ width: `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%` }}
+            />
+          </div>
+          <p className="text-right text-xs tabular-nums text-neutral-500">
+            {classifyProgress.done} / {classifyProgress.total}
+          </p>
+        </div>
+      )}
       {/* ── Feedback + last sync ────────────────────────────────────────────── */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
         <span>{feedback ?? " "}</span>

@@ -41,6 +41,7 @@ interface AdminLog {
   track_id: string;
   track_name: string | null;
   artist_name: string | null;
+  enriched: boolean;
   level_used: number;
   suggested: string | null;
   confidence: number;
@@ -426,6 +427,7 @@ export default function AdminClient() {
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Date</th>
                   <th className="px-4 py-2.5 font-medium">Track</th>
+                  <th className="px-4 py-2.5 font-medium">Enrichi</th>
                   <th className="px-4 py-2.5 font-medium">Niv.</th>
                   <th className="px-4 py-2.5 font-medium">Suggestion</th>
                   <th className="px-4 py-2.5 text-right font-medium">Conf.</th>
@@ -446,6 +448,13 @@ export default function AdminClient() {
                         )}
                         {row.track_name ?? "—"}
                       </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.enriched ? (
+                        <span className="text-xs font-medium text-green-500">✓</span>
+                      ) : (
+                        <span className="text-xs text-neutral-600">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <LevelBadge level={row.level_used} />

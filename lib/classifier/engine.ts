@@ -21,6 +21,8 @@ export async function classify(
     return { playlistId: null, confidence: 0, level: 3, needsReview: true };
   }
 
+  let llmError: string | null = null;
+
   if (!skipLlm) {
     try {
       const l3 = await matchLevel3(track, audioFeatures, genres, playlists);
@@ -32,8 +34,9 @@ export async function classify(
         reason: l3.reason,
         needsReview: tooLow,
       };
-    } catch {
-      // fall through to Level 2
+    } catch (err) {
+      llmError = String(err);
+      console.error("[L3] LLM failed:", llmError);
     }
   }
 
@@ -44,7 +47,7 @@ export async function classify(
         playlistId: l2.playlistId,
         confidence: l2.confidence,
         level: 2,
-        reason: skipLlm ? undefined : "LLM unavailable — fell back to centroid clustering",
+        reason: llmError ? `L3 error: ${llmError}` : undefined,
         needsReview: false,
       };
     }
@@ -56,7 +59,7 @@ export async function classify(
     playlistId: assigned ? l1!.playlistId : null,
     confidence: l1?.confidence ?? 0,
     level: 1,
-    reason: skipLlm ? undefined : "LLM unavailable — fell back to rule-based classifier",
+    reason: llmError ? `L3 error: ${llmError}` : undefined,
     needsReview: !assigned,
   };
 }

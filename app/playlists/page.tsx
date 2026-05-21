@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getUserBySpotifyId, getUserPlaylists, getPlaylistsStats } from "@/lib/supabase/queries";
-import Navbar from "@/app/ui/Navbar";
 import PlaylistsClient from "./PlaylistsClient";
 
 export default async function PlaylistsPage() {
@@ -26,11 +25,8 @@ export default async function PlaylistsPage() {
   }));
 
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-10 text-white">
-        <PlaylistsClient playlists={data} />
-      </main>
-    </>
+    <main className="mx-auto max-w-3xl px-4 py-10 text-white">
+      <PlaylistsClient playlists={data} />
+    </main>
   );
 }

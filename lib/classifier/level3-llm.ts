@@ -80,14 +80,17 @@ Reply with a single JSON object, no markdown:
 Return an empty playlists array if none fit.`;
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 300,
     system,
     messages: [{ role: "user", content: userMessage }],
   });
 
-  const text =
+  const raw =
     message.content[0].type === "text" ? message.content[0].text.trim() : "";
+
+  // Strip markdown code fences if the model wraps the JSON despite instructions
+  const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
   const parsed = JSON.parse(text) as {
     playlists: string[];

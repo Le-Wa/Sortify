@@ -9,12 +9,10 @@ import {
 } from "@/lib/supabase/queries";
 import type { PlaylistCentroid } from "@/lib/types";
 import Link from "next/link";
-import Navbar from "@/app/ui/Navbar";
 import DashboardActions from "./DashboardActions";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const MS_7D = 7 * 24 * 60 * 60 * 1000;
 const MS_30D = 30 * 24 * 60 * 60 * 1000;
 
 const COHERENCE_DIMS = [
@@ -85,16 +83,11 @@ export default async function DashboardPage() {
   const now = Date.now();
 
   // ── Inbox count ─────────────────────────────────────────────────────────
-  const inboxCount = tracks.filter(
-    (t) =>
-      !t.is_archived &&
-      (t.needs_review || t.classified_at === null) &&
-      new Date(t.spotify_added_at ?? 0).getTime() > now - MS_7D
-  ).length;
+  const inboxCount = tracks.filter((t) => !t.is_archived && t.needs_review).length;
 
   // ── Global stats ─────────────────────────────────────────────────────────
-  const total = tracks.length;
-  const classified = tracks.filter((t) => t.classified_at !== null).length;
+  const total = tracks.filter((t) => !t.is_archived).length;
+  const classified = tracks.filter((t) => !t.is_archived && t.assigned_playlist !== null).length;
   const coverage = total > 0 ? Math.round((classified / total) * 100) : 0;
 
   // ── Emotional profile (last 30 days classified) ───────────────────────────
@@ -132,9 +125,7 @@ export default async function DashboardPage() {
   // ────────────────────────────────────────────────────────────────────────
 
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl space-y-8 px-4 py-10 text-white">
+    <main className="mx-auto max-w-3xl space-y-8 px-4 py-10 text-white">
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
       {/* ── 0. Stats + Actions (client island) ──────────────────────────── */}
@@ -247,6 +238,5 @@ export default async function DashboardPage() {
         </div>
       </section>
     </main>
-    </>
   );
 }
