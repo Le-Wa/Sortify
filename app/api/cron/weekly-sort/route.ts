@@ -203,9 +203,10 @@ async function processTrack(
     track_id: trackDbId,
     user_id: user.id,
     level_used: result.level,
-    suggested: result.playlistId,
+    suggested: result.playlistId ?? result.llmSuggestion,
     confidence: result.confidence,
     reason: result.reason ?? null,
+    playlists_detail: result.playlistsDetail.length > 0 ? result.playlistsDetail : null,
   });
 
   return { needsReview: result.needsReview };

@@ -36,6 +36,12 @@ interface AdminReport {
   } | null;
 }
 
+interface PlaylistDetail {
+  id: string;
+  name: string;
+  confidence: number;
+}
+
 interface AdminLog {
   id: string;
   track_id: string;
@@ -47,6 +53,7 @@ interface AdminLog {
   confidence: number;
   reason: string | null;
   corrected_to: string | null;
+  playlists_detail: PlaylistDetail[] | null;
   created_at: string;
 }
 
@@ -459,9 +466,28 @@ export default function AdminClient() {
                     <td className="px-4 py-3">
                       <LevelBadge level={row.level_used} />
                     </td>
-                    <td className="px-4 py-3 text-neutral-300">{row.suggested ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      {row.playlists_detail?.length ? (
+                        <div className="space-y-0.5">
+                          {row.playlists_detail.map((p) => (
+                            <div key={p.id} className="flex items-center gap-2 text-xs">
+                              <span className={p.confidence >= 0.6 ? "text-white" : "text-neutral-500"}>
+                                {p.name}
+                              </span>
+                              <span className={`tabular-nums font-medium ${
+                                p.confidence >= 0.6 ? "text-emerald-400" : p.confidence >= 0.3 ? "text-yellow-500" : "text-red-500"
+                              }`}>
+                                {Math.round(p.confidence * 100)}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-300">{row.suggested ?? "—"}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right tabular-nums text-neutral-400">
-                      {Math.round(row.confidence * 100)} %
+                      {row.playlists_detail?.length ? "—" : `${Math.round(row.confidence * 100)} %`}
                     </td>
                     <td className="max-w-[200px] px-4 py-3">
                       <p

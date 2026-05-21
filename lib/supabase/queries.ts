@@ -700,6 +700,7 @@ export interface AdminLogV2Row {
   confidence: number;
   reason: string | null;
   corrected_to: string | null;
+  playlists_detail: { id: string; name: string; confidence: number }[] | null;
   created_at: string;
 }
 
@@ -714,7 +715,7 @@ export async function getAdminLogsV2(
 
   let query = supabase
     .from("classification_log")
-    .select("id, track_id, level_used, suggested, confidence, reason, corrected_to, created_at", {
+    .select("id, track_id, level_used, suggested, confidence, reason, corrected_to, playlists_detail, created_at", {
       count: "exact",
     })
     .eq("user_id", userId)
@@ -767,6 +768,7 @@ export async function getAdminLogsV2(
       confidence: row.confidence as number,
       reason: row.reason as string | null,
       corrected_to: row.corrected_to as string | null,
+      playlists_detail: (row.playlists_detail as { id: string; name: string; confidence: number }[] | null) ?? null,
       created_at: row.created_at as string,
     };
   });
@@ -846,6 +848,7 @@ export async function insertClassificationLog(entry: {
   suggested: string | null;
   confidence: number;
   reason: string | null;
+  playlists_detail?: { id: string; name: string; confidence: number }[] | null;
 }): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("classification_log").insert(entry);

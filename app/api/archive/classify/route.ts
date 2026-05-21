@@ -133,9 +133,10 @@ export async function POST(): Promise<Response> {
       track_id: trackDbId,
       user_id: dbUser.id,
       level_used: result.level,
-      suggested: result.playlistId,
+      suggested: result.playlistId ?? result.llmSuggestion,
       confidence: result.confidence,
       reason: result.reason ?? null,
+      playlists_detail: result.playlistsDetail.length > 0 ? result.playlistsDetail : null,
     });
   }
 

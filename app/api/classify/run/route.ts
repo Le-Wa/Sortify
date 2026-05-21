@@ -84,6 +84,7 @@ export async function POST(req: Request): Promise<Response> {
         suggested: result.playlistId ?? result.llmSuggestion,
         confidence: result.confidence,
         reason: result.reason ?? null,
+        playlists_detail: result.playlistsDetail.length > 0 ? result.playlistsDetail : null,
       });
 
       if (result.playlistId) {

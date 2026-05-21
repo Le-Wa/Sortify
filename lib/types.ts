@@ -66,10 +66,17 @@ export interface PlaylistForClassifier {
   centroid: PlaylistCentroid | null;
 }
 
+export interface PlaylistDetail {
+  id: string;
+  name: string;
+  confidence: number;
+}
+
 export interface ClassificationResult {
   playlistId: string | null;
   extraPlaylistIds: string[];
   llmSuggestion: string | null;
+  playlistsDetail: PlaylistDetail[];
   confidence: number;
   level: 1 | 2 | 3;
   reason?: string;
