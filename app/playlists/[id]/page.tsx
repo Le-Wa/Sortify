@@ -11,9 +11,5 @@ export default async function PlaylistDetailPage({ params }: { params: Params })
 
   const { id } = await params;
 
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-white">
-      <PlaylistDetailClient playlistId={id} />
-    </main>
-  );
+  return <PlaylistDetailClient playlistId={id} />;
 }

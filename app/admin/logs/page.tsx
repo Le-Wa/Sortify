@@ -8,7 +8,7 @@ export default async function AdminLogsPage() {
   if (!session?.userId) redirect("/login");
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 text-white">
+    <main style={{ padding: "36px 36px 60px", maxWidth: 1100, position: "relative", zIndex: 10 }}>
       <AdminClient />
     </main>
   );

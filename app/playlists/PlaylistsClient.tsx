@@ -13,6 +13,11 @@ interface PlaylistData {
   not_synced: number;
 }
 
+const SWATCH_COLORS = [
+  "#c89840", "#8878d0", "#6a9070", "#c87a52",
+  "#a06848", "#508860", "#7878b0", "#c08060",
+];
+
 export default function PlaylistsClient({ playlists: initial }: { playlists: PlaylistData[] }) {
   const [playlists, setPlaylists] = useState(initial);
   const [syncing, setSyncing] = useState<Set<string>>(new Set());
@@ -47,9 +52,9 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
   if (playlists.length === 0) {
     return (
-      <div className="flex min-h-64 items-center justify-center text-neutral-500">
+      <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-mid)", fontSize: 13 }}>
         Aucune playlist configurée —{" "}
-        <Link href="/onboarding" className="ml-1 underline hover:text-white">
+        <Link href="/onboarding" style={{ marginLeft: 4, color: "var(--terra)", textDecoration: "none" }}>
           onboarding
         </Link>
       </div>
@@ -57,43 +62,100 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Playlists</h1>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {playlists.map((p) => {
+    <main className="s-page">
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Bibliothèque</div>
+        <h1
+          className="font-fraunces"
+          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+        >
+          {playlists.length}{" "}
+          <em style={{ fontStyle: "italic", color: "var(--terra)" }}>
+            playlist{playlists.length !== 1 ? "s" : ""}
+          </em>
+        </h1>
+      </div>
+
+      <div className="s-pl-grid">
+        {playlists.map((p, i) => {
           const isSyncing = syncing.has(p.id);
+          const swatchColor = SWATCH_COLORS[i % SWATCH_COLORS.length];
           return (
-            <div
-              key={p.id}
-              className="rounded-xl border border-neutral-800 bg-neutral-900 p-5"
-            >
-              {/* Header */}
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 className="truncate font-semibold text-white">{p.name}</h2>
-                  {p.description && (
-                    <p className="mt-0.5 truncate text-xs text-neutral-500">{p.description}</p>
+            <div key={p.id} className="s-pl-card">
+              {/* Color swatch */}
+              <div
+                style={{
+                  width: 28,
+                  height: 3,
+                  borderRadius: 2,
+                  background: swatchColor,
+                  marginBottom: 12,
+                  opacity: 0.8,
+                }}
+              />
+
+              {/* Name */}
+              <h2
+                className="font-fraunces"
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  letterSpacing: "-0.3px",
+                  color: "var(--ink)",
+                  marginBottom: 4,
+                }}
+              >
+                {p.name}
+              </h2>
+
+              {/* Description */}
+              {p.description && (
+                <p style={{ fontSize: 10, color: "var(--ink-dim)", lineHeight: 1.7 }}>
+                  {p.description}
+                </p>
+              )}
+
+              {/* Footer */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  marginTop: 14,
+                  paddingTop: 12,
+                  borderTop: "1px solid var(--border)",
+                }}
+              >
+                <span
+                  className="font-fraunces"
+                  style={{ fontSize: 22, fontWeight: 600, color: "var(--ink-mid)" }}
+                >
+                  {p.total}
+                </span>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {p.not_synced > 0 && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: "var(--terra)",
+                        background: "var(--terra-light)",
+                        border: "1px solid var(--terra-border)",
+                        padding: "2px 8px",
+                        borderRadius: 20,
+                      }}
+                    >
+                      +{p.not_synced}
+                    </span>
                   )}
                 </div>
-                {p.not_synced > 0 && (
-                  <span className="shrink-0 rounded-full bg-orange-900/60 px-2 py-0.5 text-xs font-medium text-orange-300">
-                    {p.not_synced} non sync
-                  </span>
-                )}
-              </div>
-
-              {/* Stats */}
-              <div className="mb-4 flex gap-3 text-xs text-neutral-500">
-                <span>{p.total} tracks</span>
-                <span className="text-neutral-700">·</span>
-                <span>{p.synced} synced</span>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                 <Link
                   href={`/playlists/${p.id}`}
-                  className="flex-1 rounded-lg border border-neutral-700 py-1.5 text-center text-sm text-neutral-300 transition-colors hover:bg-neutral-800"
+                  className="s-btn"
+                  style={{ flex: 1, textAlign: "center", textDecoration: "none", padding: "6px 0" }}
                 >
                   Voir →
                 </Link>
@@ -101,7 +163,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                   <button
                     disabled={isSyncing}
                     onClick={() => handleSync(p.id)}
-                    className="rounded-lg border border-orange-900 px-3 py-1.5 text-sm font-medium text-orange-300 transition-opacity hover:opacity-80 disabled:opacity-40"
+                    className="s-btn s-btn-primary"
                   >
                     {isSyncing ? "…" : "Sync"}
                   </button>
@@ -111,6 +173,6 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
           );
         })}
       </div>
-    </div>
+    </main>
   );
 }

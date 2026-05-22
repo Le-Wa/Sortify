@@ -138,7 +138,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
 
   if (loading) {
     return (
-      <div className="flex min-h-64 items-center justify-center text-neutral-500">
+      <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-dim)", fontSize: 13 }}>
         Chargement…
       </div>
     );
@@ -146,135 +146,148 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
 
   if (!playlist) {
     return (
-      <div className="flex min-h-64 items-center justify-center text-neutral-500">
+      <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-mid)", fontSize: 13 }}>
         Playlist introuvable
       </div>
     );
   }
 
   return (
-    <div>
+    <main className="s-page">
       {/* Breadcrumb */}
       <Link
         href="/playlists"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-white"
+        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ink-dim)", textDecoration: "none", marginBottom: 20 }}
       >
         ← Playlists
       </Link>
 
       {/* Header */}
-      <div className="mb-6 mt-2">
-        <div className="flex items-start justify-between gap-4">
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <h1 className="text-2xl font-bold">{playlist.name}</h1>
+            <h1
+              className="font-fraunces"
+              style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+            >
+              {playlist.name}
+            </h1>
             {playlist.description && (
-              <p className="mt-1 text-sm text-neutral-500">{playlist.description}</p>
+              <p style={{ marginTop: 4, fontSize: 13, color: "var(--ink-dim)" }}>{playlist.description}</p>
             )}
           </div>
           {notSynced > 0 && (
             <button
               disabled={syncing}
               onClick={handleSync}
-              className="shrink-0 rounded-lg border border-orange-900 px-4 py-1.5 text-sm font-medium text-orange-300 transition-opacity hover:opacity-80 disabled:opacity-40"
+              className="s-btn s-btn-primary"
+              style={{ flexShrink: 0 }}
             >
-              {syncing ? "…" : `Re-sync (${notSynced})`}
+              {syncing ? "…" : `Sync (${notSynced})`}
             </button>
           )}
         </div>
-        <div className="mt-3 flex flex-wrap gap-4 text-sm text-neutral-400">
-          <span>{total} tracks</span>
+        <div style={{ marginTop: 10, display: "flex", gap: 16, fontSize: 12, color: "var(--ink-dim)" }}>
+          <span style={{ color: "var(--ink-mid)" }}>{total} tracks</span>
           <span>{synced} synced</span>
           {notSynced > 0 && (
-            <span className="font-medium text-orange-400">{notSynced} non synced</span>
+            <span style={{ color: "var(--terra)" }}>{notSynced} non synced</span>
           )}
         </div>
       </div>
 
       {/* Track list */}
       {tracks.length === 0 ? (
-        <div className="flex min-h-40 items-center justify-center rounded-xl border border-neutral-800 text-sm text-neutral-500">
+        <div style={{ display: "flex", minHeight: 160, alignItems: "center", justifyContent: "center", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)", fontSize: 13, color: "var(--ink-mid)" }}>
           Aucun track dans cette playlist
         </div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-neutral-800">
-            <table className="w-full text-sm">
-              <thead className="border-b border-neutral-800 text-left">
-                <tr className="text-xs text-neutral-600">
-                  <th className="px-4 py-2.5 font-medium">Track</th>
-                  <th className="hidden px-4 py-2.5 font-medium sm:table-cell">Genres</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Conf.</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Sync</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-800">
-                {tracks.map((track) => (
-                  <tr key={track.id} className="bg-neutral-900 hover:bg-neutral-800/50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium">
-                        {track.artist_name && (
-                          <span className="font-normal text-neutral-400">
-                            {track.artist_name} —{" "}
-                          </span>
-                        )}
-                        {track.name ?? track.spotify_track_id}
-                      </p>
-                      <p className="mt-0.5 text-xs text-neutral-600">
-                        {formatDate(track.spotify_added_at)}
-                        {track.classification_level !== null && (
-                          <span className="ml-2 text-neutral-700">
-                            {levelLabel(track.classification_level)}
-                          </span>
-                        )}
-                      </p>
-                    </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {track.genres.slice(0, 2).map((g) => (
-                          <span
-                            key={g}
-                            className="rounded bg-neutral-800 px-1.5 py-0.5 text-xs text-neutral-400"
-                          >
-                            {g}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {track.confidence !== null ? (
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${confidenceBadgeClass(track.confidence)}`}
-                        >
-                          {Math.round(track.confidence * 100)}%
+          <div className="s-table-wrap"><table className="s-table" style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                <th>Track</th>
+                <th style={{ display: "none" }} className="sm-visible">Genres</th>
+                <th style={{ textAlign: "right" }}>Conf.</th>
+                <th style={{ textAlign: "right" }}>Sync</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tracks.map((track) => (
+                <tr key={track.id}>
+                  <td>
+                    <p style={{ fontWeight: 500, fontSize: 13 }}>
+                      {track.artist_name && (
+                        <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>
+                          {track.artist_name} —{" "}
                         </span>
-                      ) : (
-                        <span className="text-xs text-neutral-700">—</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {track.pushed_to_spotify ? (
-                        <span className="text-xs font-medium text-green-600">✓</span>
-                      ) : (
-                        <span className="text-xs text-orange-500">○</span>
+                      {track.name ?? track.spotify_track_id}
+                    </p>
+                    <p style={{ marginTop: 2, fontSize: 10, color: "var(--ink-dim)" }}>
+                      {formatDate(track.spotify_added_at)}
+                      {track.classification_level !== null && (
+                        <span style={{ marginLeft: 6, color: "var(--ink-dimmer)" }}>
+                          {levelLabel(track.classification_level)}
+                        </span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </p>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {track.genres.slice(0, 2).map((g) => (
+                        <span
+                          key={g}
+                          style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 6, padding: "1px 7px", fontSize: 10, color: "var(--ink-mid)" }}
+                        >
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    {track.confidence !== null ? (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          borderRadius: 20,
+                          padding: "2px 8px",
+                          fontSize: 10,
+                          fontWeight: 500,
+                          background: track.confidence >= 0.55 ? "var(--sage-light)" : track.confidence >= 0.4 ? "var(--amber-light)" : "var(--terra-light)",
+                          color: track.confidence >= 0.55 ? "var(--sage)" : track.confidence >= 0.4 ? "var(--amber)" : "var(--terra)",
+                        }}
+                      >
+                        {Math.round(track.confidence * 100)}%
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    {track.pushed_to_spotify ? (
+                      <span style={{ fontSize: 12, color: "var(--sage)" }}>✓</span>
+                    ) : (
+                      <span style={{ fontSize: 12, color: "var(--terra)" }}>○</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
 
           {hasMore && (
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              className="mt-4 w-full rounded-lg border border-neutral-700 py-2.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-800 disabled:opacity-40"
+              className="s-btn"
+              style={{ width: "100%", marginTop: 16, padding: "10px 0", justifyContent: "center" }}
             >
               {loadingMore ? "Chargement…" : "Charger plus"}
             </button>
           )}
         </>
       )}
-    </div>
+    </main>
   );
 }

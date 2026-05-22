@@ -74,56 +74,80 @@ export default function ArchiveClient() {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">
-        {loading
-          ? "Archive"
-          : `${total} track${total !== 1 ? "s" : ""} archivé${total !== 1 ? "s" : ""}`}
-      </h1>
+    <main className="s-page">
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Archive</div>
+        <h1
+          className="font-fraunces"
+          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+        >
+          {loading ? (
+            <span style={{ color: "var(--ink-dimmer)" }}>…</span>
+          ) : (
+            <>
+              <span style={{ color: "var(--terra)" }}>{total}</span>
+              <em style={{ fontStyle: "italic", color: "var(--ink-mid)", fontSize: 20, fontWeight: 400, marginLeft: 8 }}>
+                track{total !== 1 ? "s" : ""} archivé{total !== 1 ? "s" : ""}
+              </em>
+            </>
+          )}
+        </h1>
+      </div>
 
       {loading ? (
-        <div className="flex min-h-64 items-center justify-center text-neutral-500">
+        <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-dim)", fontSize: 13 }}>
           Chargement…
         </div>
       ) : tracks.length === 0 ? (
-        <div className="flex min-h-64 items-center justify-center text-neutral-500">
+        <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-mid)", fontSize: 13 }}>
           Aucun track archivé
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul style={{ display: "flex", flexDirection: "column", gap: 6, listStyle: "none", padding: 0, margin: 0 }}>
           {tracks.map((track) => (
             <li
               key={track.id}
-              className={`flex items-center justify-between gap-4 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-all duration-300 ${
-                exiting.has(track.id) ? "scale-95 opacity-0" : "scale-100 opacity-100"
-              }`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 16,
+                background: "var(--surface)",
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                padding: "12px 16px",
+                transition: "all 0.3s",
+                opacity: exiting.has(track.id) ? 0 : 1,
+                transform: exiting.has(track.id) ? "scale(0.97)" : "scale(1)",
+              }}
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {track.artist_name && (
-                    <span className="font-normal text-neutral-400">{track.artist_name} — </span>
+                    <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>{track.artist_name} — </span>
                   )}
                   {track.name ?? "Titre inconnu"}
                   {track.album_name && (
-                    <span className="font-normal text-neutral-600"> ({track.album_name})</span>
+                    <span style={{ fontWeight: 300, color: "var(--ink-dim)" }}> ({track.album_name})</span>
                   )}
                 </p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
+                <div style={{ marginTop: 4, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                   {track.genres.slice(0, 3).map((g) => (
                     <span
                       key={g}
-                      className="rounded bg-neutral-800 px-1.5 py-0.5 text-xs text-neutral-400"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 6, padding: "1px 7px", fontSize: 10, color: "var(--ink-mid)" }}
                     >
                       {g}
                     </span>
                   ))}
-                  <span className="text-xs text-neutral-600">{formatDate(track.spotify_added_at)}</span>
+                  <span style={{ fontSize: 10, color: "var(--ink-dim)" }}>{formatDate(track.spotify_added_at)}</span>
                 </div>
               </div>
               <button
                 disabled={busy.has(track.id)}
                 onClick={() => handleUnarchive(track.id)}
-                className="shrink-0 rounded-lg border border-neutral-700 px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white disabled:opacity-40"
+                className="s-btn"
+                style={{ flexShrink: 0 }}
               >
                 {busy.has(track.id) ? "…" : "Désarchiver"}
               </button>
@@ -131,6 +155,6 @@ export default function ArchiveClient() {
           ))}
         </ul>
       )}
-    </div>
+    </main>
   );
 }

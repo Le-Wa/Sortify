@@ -30,18 +30,31 @@ function StatCard({
   label,
   value,
   sub,
+  accent,
 }: {
   label: string;
   value: string | number | null;
   sub?: string;
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-5 text-center">
-      <p className="text-3xl font-bold tabular-nums">
-        {value === null ? <span className="text-neutral-600">—</span> : value}
+    <div className="s-stat-card">
+      <p style={{ fontSize: 10, color: "var(--ink-dim)", marginBottom: 6 }}>{label}</p>
+      <p
+        className="font-fraunces"
+        style={{
+          fontSize: 34,
+          fontWeight: 600,
+          color: accent ? "var(--terra)" : "var(--ink)",
+          letterSpacing: "-1px",
+          lineHeight: 1,
+        }}
+      >
+        {value === null ? <span style={{ color: "var(--ink-dimmer)" }}>—</span> : value}
       </p>
-      <p className="mt-1 text-xs text-neutral-400">{label}</p>
-      {sub && <p className="mt-0.5 text-xs text-neutral-600">{sub}</p>}
+      {sub && (
+        <p style={{ fontSize: 10, color: "var(--ink-dim)", marginTop: 4 }}>{sub}</p>
+      )}
     </div>
   );
 }
@@ -57,14 +70,12 @@ function ActionBtn({
   disabled: boolean;
   variant?: "default" | "danger";
 }) {
-  const base =
-    "rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40";
-  const colors =
-    variant === "danger"
-      ? "bg-red-800 hover:bg-red-700 text-white"
-      : "bg-neutral-700 hover:bg-neutral-600 text-white";
   return (
-    <button className={`${base} ${colors}`} onClick={onClick} disabled={disabled}>
+    <button
+      className={`s-btn${variant === "danger" ? " s-btn-danger" : ""}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {label}
     </button>
   );
@@ -123,7 +134,6 @@ export default function DashboardActions() {
     let cursor: string | null = null;
     let total = 0;
     try {
-      // 1. Import
       do {
         const res = await fetch("/api/tracks/import-all", {
           method: "POST",
@@ -136,7 +146,6 @@ export default function DashboardActions() {
         setFeedback(`Import en cours… ${total} tracks`);
       } while (cursor !== null && total < maxTracks);
 
-      // 2. Enrichissement automatique (genres + audio features)
       if (total > 0) {
         setFeedback(`Import terminé (${total}). Enrichissement en cours…`);
         let enriched = 0;
@@ -163,9 +172,10 @@ export default function DashboardActions() {
   }
 
   function handleImportSubmit() {
-    const value = importMode === "months"
-      ? Math.max(0, parseInt(importMonths, 10) || 0)
-      : Math.max(1, parseInt(importSongs, 10) || 1);
+    const value =
+      importMode === "months"
+        ? Math.max(0, parseInt(importMonths, 10) || 0)
+        : Math.max(1, parseInt(importSongs, 10) || 1);
     void importAll(importMode, value);
   }
 
@@ -174,7 +184,7 @@ export default function DashboardActions() {
     try {
       const res = await fetch("/api/tracks/reset-needs-review", { method: "POST" });
       const data = (await res.json()) as { reset: number };
-      flash(`${data.reset} track${data.reset !== 1 ? "s" : ""} remis en file — relance le classifier`);
+      flash(`${data.reset} track${data.reset !== 1 ? "s" : ""} remis en file`);
       await loadStats();
     } catch {
       flash("Erreur lors du reset");
@@ -263,7 +273,7 @@ export default function DashboardActions() {
         body: JSON.stringify({ enabled: !stats.cron_enabled }),
       });
       const data = (await res.json()) as { cron_enabled: boolean };
-      setStats((s) => s ? { ...s, cron_enabled: data.cron_enabled } : s);
+      setStats((s) => (s ? { ...s, cron_enabled: data.cron_enabled } : s));
       flash(`Cron hebdo ${data.cron_enabled ? "activé" : "désactivé"}`);
     } catch {
       flash("Erreur");
@@ -274,74 +284,55 @@ export default function DashboardActions() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-3">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 rounded-xl bg-neutral-900" />
-          ))}
-        </div>
+      <div className="s-stats-grid">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              height: 88,
+              borderRadius: 14,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* ── Stat cards ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Stat cards */}
+      <div className="s-stats-grid">
+        <StatCard label="Inbox" value={stats?.needs_review ?? 0} sub="à valider" accent />
+        <StatCard label="Classifiés" value={stats?.in_playlists ?? 0} sub="au total" />
+        <StatCard label="Importés" value={stats?.imported ?? 0} sub={stats?.spotify_total ? `/ ${stats.spotify_total}` : undefined} />
         <StatCard
-          label="Liked sur Spotify"
-          value={stats?.spotify_total ?? null}
-        />
-        <StatCard
-          label="Importés en base"
-          value={stats?.imported ?? 0}
-          sub={stats?.spotify_total ? `/ ${stats.spotify_total}` : undefined}
-        />
-        <StatCard
-          label="Dans une playlist"
-          value={stats?.in_playlists ?? 0}
-          sub={stats?.imported ? `/ ${stats.imported}` : undefined}
-        />
-        <StatCard
-          label="En review"
-          value={stats?.needs_review ?? 0}
+          label="Taux auto"
+          value={
+            stats && stats.imported > 0
+              ? `${Math.round(((stats.imported - stats.needs_review) / stats.imported) * 100)}%`
+              : null
+          }
+          sub="sans review"
         />
       </div>
 
-      {/* ── Actions ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2">
-        <ActionBtn
-          label="Importer les nouveaux"
-          onClick={importRecent}
-          disabled={busy}
-        />
+      {/* Actions */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <ActionBtn label="Importer les nouveaux" onClick={importRecent} disabled={busy} />
         <button
           disabled={busy}
           onClick={() => setImportPanelOpen((o) => !o)}
-          className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="s-btn"
         >
           Import historique {importPanelOpen ? "▴" : "▾"}
         </button>
-        <ActionBtn
-          label="Enrichir les tracks"
-          onClick={enrichTracks}
-          disabled={busy}
-        />
-        <ActionBtn
-          label="Reset needs_review"
-          onClick={resetNeedsReview}
-          disabled={busy}
-        />
-        <ActionBtn
-          label="Classifier (LLM)"
-          onClick={() => runClassify(false)}
-          disabled={busy}
-        />
-        <ActionBtn
-          label="Classifier rapide"
-          onClick={() => runClassify(true)}
-          disabled={busy}
-        />
+        <ActionBtn label="Enrichir les tracks" onClick={enrichTracks} disabled={busy} />
+        <ActionBtn label="Reset needs_review" onClick={resetNeedsReview} disabled={busy} />
+        <ActionBtn label="Classifier (LLM)" onClick={() => runClassify(false)} disabled={busy} />
+        <ActionBtn label="Classifier rapide" onClick={() => runClassify(true)} disabled={busy} />
         <ActionBtn
           label={stats?.cron_enabled ? "Désactiver cron" : "Activer cron hebdo"}
           onClick={toggleCron}
@@ -349,30 +340,38 @@ export default function DashboardActions() {
         />
       </div>
 
-      {/* ── Import panel ───────────────────────────────────────────────────── */}
+      {/* Import panel */}
       {importPanelOpen && (
-        <div className="rounded-xl border border-neutral-700 bg-neutral-900 p-4 space-y-4">
-          {/* Mode selector */}
-          <div className="flex gap-4 text-sm">
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 14,
+            padding: 16,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", gap: 16, fontSize: 13 }}>
             {(["months", "songs"] as ImportMode[]).map((m) => (
-              <label key={m} className="flex items-center gap-2 cursor-pointer">
+              <label key={m} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                 <input
                   type="radio"
                   name="importMode"
                   value={m}
                   checked={importMode === m}
                   onChange={() => setImportMode(m)}
-                  className="accent-neutral-400"
+                  style={{ accentColor: "var(--terra)" }}
                 />
-                <span className={importMode === m ? "text-white" : "text-neutral-400"}>
+                <span style={{ color: importMode === m ? "var(--ink)" : "var(--ink-mid)" }}>
                   {m === "months" ? "Par mois" : "Par nombre de sons"}
                 </span>
               </label>
             ))}
           </div>
 
-          {/* Value input */}
-          <div className="flex items-center gap-3">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {importMode === "months" ? (
               <>
                 <input
@@ -380,10 +379,11 @@ export default function DashboardActions() {
                   min={0}
                   value={importMonths}
                   onChange={(e) => setImportMonths(e.target.value)}
-                  className="w-24 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                  className="s-input"
+                  style={{ width: 80 }}
                 />
-                <span className="text-sm text-neutral-400">mois</span>
-                <span className="text-xs text-neutral-600">
+                <span style={{ fontSize: 13, color: "var(--ink-mid)" }}>mois</span>
+                <span style={{ fontSize: 11, color: "var(--ink-dim)" }}>
                   {importMonths === "0" || importMonths === ""
                     ? "(tout l'historique)"
                     : `≈ ${parseInt(importMonths, 10) * 30} derniers jours`}
@@ -397,49 +397,48 @@ export default function DashboardActions() {
                   step={100}
                   value={importSongs}
                   onChange={(e) => setImportSongs(e.target.value)}
-                  className="w-28 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                  className="s-input"
+                  style={{ width: 96 }}
                 />
-                <span className="text-sm text-neutral-400">sons les plus récents</span>
+                <span style={{ fontSize: 13, color: "var(--ink-mid)" }}>sons les plus récents</span>
               </>
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleImportSubmit}
-              className="rounded-lg bg-neutral-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-neutral-500"
-            >
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleImportSubmit} className="s-btn s-btn-primary">
               Lancer l'import
             </button>
-            <button
-              onClick={() => setImportPanelOpen(false)}
-              className="rounded-lg border border-neutral-700 px-4 py-1.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-800"
-            >
+            <button onClick={() => setImportPanelOpen(false)} className="s-btn">
               Annuler
             </button>
           </div>
         </div>
       )}
 
-
       {/* Classify progress */}
       {classifyProgress && classifyProgress.total > 0 && (
-        <div className="space-y-1">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-800">
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ height: 2, borderRadius: 2, background: "var(--border-strong)", overflow: "hidden" }}>
             <div
-              className="h-full rounded-full bg-green-600 transition-all duration-300"
-              style={{ width: `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%` }}
+              style={{
+                height: "100%",
+                borderRadius: 2,
+                background: "var(--sage)",
+                transition: "width 0.3s",
+                width: `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%`,
+              }}
             />
           </div>
-          <p className="text-right text-xs tabular-nums text-neutral-500">
+          <p style={{ textAlign: "right", fontSize: 10, color: "var(--ink-dim)" }}>
             {classifyProgress.done} / {classifyProgress.total}
           </p>
         </div>
       )}
-      {/* ── Feedback + last sync ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between text-xs text-neutral-500">
-        <span>{feedback ?? " "}</span>
+
+      {/* Feedback */}
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--ink-dim)" }}>
+        <span style={{ color: feedback ? "var(--terra)" : "transparent" }}>{feedback ?? "·"}</span>
         <span>Dernière sync : {relativeTime(stats?.last_sync_at ?? null)}</span>
       </div>
     </div>

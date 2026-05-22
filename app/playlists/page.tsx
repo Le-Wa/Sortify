@@ -24,9 +24,5 @@ export default async function PlaylistsPage() {
     ...(stats[p.id] ?? { total: 0, synced: 0, not_synced: 0 }),
   }));
 
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-white">
-      <PlaylistsClient playlists={data} />
-    </main>
-  );
+  return <PlaylistsClient playlists={data} />;
 }

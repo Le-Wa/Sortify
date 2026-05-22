@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface InboxTrack {
   id: string;
   spotify_track_id: string;
@@ -35,33 +33,28 @@ interface ApiResponse {
   per_page: number;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 const PER_PAGE = 20;
-
-function confidenceBadgeClass(c: number | null): string {
-  if (c === null) return "bg-neutral-800 text-neutral-400";
-  if (c >= 0.55) return "bg-green-900 text-green-300";
-  if (c >= 0.4) return "bg-yellow-900 text-yellow-300";
-  return "bg-red-900 text-red-300";
-}
 
 function FeatureBar({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="w-20 shrink-0 text-neutral-500">{label}</span>
-      <div className="h-1.5 flex-1 rounded-full bg-neutral-800">
+    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+      <span style={{ width: 72, flexShrink: 0, color: "var(--ink-dim)" }}>{label}</span>
+      <div style={{ flex: 1, height: 3, borderRadius: 3, background: "var(--surface3)" }}>
         <div
-          className="h-full rounded-full bg-neutral-400"
-          style={{ width: `${Math.round(value * 100)}%` }}
+          style={{
+            height: "100%",
+            borderRadius: 3,
+            background: "var(--ink-dim)",
+            width: `${Math.round(value * 100)}%`,
+          }}
         />
       </div>
-      <span className="w-7 text-right text-neutral-500">{Math.round(value * 100)}</span>
+      <span style={{ width: 24, textAlign: "right", color: "var(--ink-dim)" }}>
+        {Math.round(value * 100)}
+      </span>
     </div>
   );
 }
-
-// ── Track card ─────────────────────────────────────────────────────────────────
 
 function TrackCard({
   track,
@@ -91,54 +84,101 @@ function TrackCard({
   onArchive: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   const af = track.audio_features;
   const hasReason = !!track.classification_reason && track.classification_reason.length > 0;
   const isLongReason = (track.classification_reason?.length ?? 0) > 100;
+  const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
+  const isLowConf = track.confidence !== null && track.confidence < 0.55;
 
   return (
     <li
-      className={`rounded-xl border border-neutral-800 bg-neutral-900 p-4 transition-all duration-300 ${
-        isExiting ? "scale-95 opacity-0" : "scale-100 opacity-100"
-      }`}
+      style={{
+        background: "var(--surface)",
+        borderRadius: 14,
+        border: `1px solid var(--border)`,
+        borderLeft: isLowConf ? "3px solid var(--terra)" : undefined,
+        padding: "16px 20px",
+        boxShadow: "var(--shadow)",
+        transition: "all 0.3s",
+        opacity: isExiting ? 0 : 1,
+        transform: isExiting ? "scale(0.97)" : "scale(1)",
+      }}
     >
-      {/* Track identity */}
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-medium leading-tight">
+      {/* Identity + confidence */}
+      <div className="s-inbox-header">
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", lineHeight: 1.3 }}>
             {track.artist_name && (
-              <span className="text-neutral-300">{track.artist_name} — </span>
+              <span style={{ color: "var(--ink-mid)" }}>{track.artist_name} — </span>
             )}
-            <span>{track.name ?? track.spotify_track_id}</span>
+            {track.name ?? track.spotify_track_id}
           </p>
           {track.album_name && (
-            <p className="mt-0.5 truncate text-xs text-neutral-500">({track.album_name})</p>
+            <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 2 }}>({track.album_name})</p>
           )}
         </div>
-
-        {/* Confidence badge */}
-        {track.confidence !== null && (
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${confidenceBadgeClass(track.confidence)}`}
-          >
-            {Math.round(track.confidence * 100)}%
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {track.suggested_playlist && (
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--sage)",
+                background: "var(--sage-light)",
+                border: "1px solid var(--sage-border)",
+                padding: "4px 12px",
+                borderRadius: 20,
+              }}
+            >
+              {track.suggested_playlist}
+            </span>
+          )}
+          {conf !== null && (
+            <span
+              className="font-fraunces"
+              style={{
+                fontSize: 20,
+                fontWeight: 600,
+                color: isLowConf ? "var(--terra)" : "var(--ink-mid)",
+                minWidth: 40,
+                textAlign: "right",
+              }}
+            >
+              {conf}%
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Genres + source */}
-      {track.genres.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+      {(track.genres.length > 0 || track.enrichment_source) && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
           {track.genres.slice(0, 4).map((g) => (
             <span
               key={g}
-              className="rounded-md bg-neutral-800 px-2 py-0.5 text-xs text-neutral-300"
+              style={{
+                background: "var(--surface2)",
+                border: "1px solid var(--border)",
+                borderRadius: 6,
+                padding: "2px 8px",
+                fontSize: 10,
+                color: "var(--ink-mid)",
+              }}
             >
               {g}
             </span>
           ))}
           {track.enrichment_source && (
-            <span className="rounded-md border border-neutral-700 px-2 py-0.5 text-xs text-neutral-500">
+            <span
+              style={{
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: 6,
+                padding: "2px 8px",
+                fontSize: 10,
+                color: "var(--ink-dim)",
+              }}
+            >
               {track.enrichment_source}
             </span>
           )}
@@ -147,48 +187,47 @@ function TrackCard({
 
       {/* Audio features */}
       {af && (
-        <div className="mb-3 flex flex-col gap-1.5">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
           {af.energy !== undefined && <FeatureBar label="Énergie" value={af.energy} />}
-          {af.danceability !== undefined && (
-            <FeatureBar label="Danceabilité" value={af.danceability} />
-          )}
+          {af.danceability !== undefined && <FeatureBar label="Danceabilité" value={af.danceability} />}
           {af.tempo !== undefined && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="w-20 shrink-0 text-neutral-500">Tempo</span>
-              <span className="text-neutral-400">{Math.round(af.tempo)} BPM</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+              <span style={{ width: 72, flexShrink: 0, color: "var(--ink-dim)" }}>Tempo</span>
+              <span style={{ color: "var(--ink-mid)" }}>{Math.round(af.tempo)} BPM</span>
             </div>
           )}
         </div>
       )}
 
-      {/* Suggested playlist */}
-      {track.suggested_playlist && (
-        <p className="mb-3 text-xs text-neutral-500">
-          Suggéré :{" "}
-          <span className="font-medium text-neutral-300">{track.suggested_playlist}</span>
-        </p>
-      )}
-
       {/* Classification reason */}
       {hasReason && (
-        <div className="mb-3 rounded-lg bg-neutral-800/60 px-3 py-2 text-xs text-neutral-400">
+        <div
+          style={{
+            background: "var(--surface2)",
+            borderRadius: 8,
+            padding: "8px 12px",
+            fontSize: 11,
+            color: "var(--ink-mid)",
+            marginBottom: 12,
+          }}
+        >
           {isLongReason && !isReasonExpanded ? (
             <>
-              <span>{track.classification_reason!.slice(0, 100)}…</span>
+              {track.classification_reason!.slice(0, 100)}…{" "}
               <button
                 onClick={onToggleReason}
-                className="ml-1 text-neutral-500 underline hover:text-neutral-300"
+                style={{ color: "var(--terra)", background: "none", border: "none", cursor: "pointer", fontSize: 11 }}
               >
                 voir plus
               </button>
             </>
           ) : (
             <>
-              <span>{track.classification_reason}</span>
+              {track.classification_reason}
               {isLongReason && (
                 <button
                   onClick={onToggleReason}
-                  className="ml-1 text-neutral-500 underline hover:text-neutral-300"
+                  style={{ color: "var(--terra)", background: "none", border: "none", cursor: "pointer", fontSize: 11, marginLeft: 4 }}
                 >
                   voir moins
                 </button>
@@ -199,7 +238,7 @@ function TrackCard({
       )}
 
       {/* Player */}
-      <div className="mb-3">
+      <div style={{ marginBottom: 12 }}>
         {track.deezer_id ? (
           <iframe
             title="deezer-widget"
@@ -208,52 +247,64 @@ function TrackCard({
             height="80"
             frameBorder="0"
             allow="encrypted-media"
-            className="rounded-lg"
+            style={{ borderRadius: 8 }}
           />
         ) : (
           <a
             href={`https://open.spotify.com/track/${track.spotify_track_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="s-btn"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
           >
-            <span>Ouvrir dans Spotify</span>
-            <span className="text-neutral-600">↗</span>
+            Ouvrir dans Spotify ↗
           </a>
         )}
       </div>
 
       {/* Actions */}
       {!isCorrectingThis ? (
-        <div className="flex gap-2">
+        <div style={{ display: "flex", gap: 8 }}>
           <button
             disabled={isBusy || !track.llm_suggestion_id}
             onClick={onValidate}
-            className="flex-1 rounded-lg bg-emerald-700 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+            className="s-btn s-btn-primary"
+            style={{ flex: 1 }}
           >
-            {isBusy ? "…" : "✓ Valider"}
+            {isBusy ? "…" : "Valider"}
           </button>
           <button
             disabled={isBusy}
             onClick={onStartCorrecting}
-            className="flex-1 rounded-lg border border-neutral-700 py-1.5 text-sm font-medium transition-colors hover:bg-neutral-800 disabled:opacity-40"
+            className="s-btn"
+            style={{ flex: 1 }}
           >
-            ✎ Corriger
+            Changer
           </button>
           <button
             disabled={isBusy}
             onClick={onArchive}
-            className="rounded-lg border border-neutral-700 px-3 py-1.5 text-sm transition-colors hover:bg-neutral-800 disabled:opacity-40"
+            className="s-btn"
             title="Archiver"
           >
             ⊘
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div
+            style={{
+              background: "var(--surface2)",
+              border: "1px solid var(--border)",
+              borderRadius: 10,
+              padding: "8px 12px",
+            }}
+          >
             {playlists.map((p) => (
-              <label key={p.id} className="flex cursor-pointer items-center gap-2.5 py-1 text-sm">
+              <label
+                key={p.id}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer", fontSize: 13 }}
+              >
                 <input
                   type="checkbox"
                   checked={selectedIds.includes(p.id)}
@@ -262,26 +313,27 @@ function TrackCard({
                       e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
                     )
                   }
-                  className="accent-blue-500"
+                  style={{ accentColor: "var(--terra)" }}
                 />
-                <span className={selectedIds.includes(p.id) ? "text-white" : "text-neutral-400"}>
+                <span style={{ color: selectedIds.includes(p.id) ? "var(--ink)" : "var(--ink-mid)" }}>
                   {p.name}
                 </span>
               </label>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div style={{ display: "flex", gap: 8 }}>
             <button
               disabled={isBusy || selectedIds.length === 0}
               onClick={() => onCorrect(selectedIds)}
-              className="flex-1 rounded-lg bg-blue-600 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
+              className="s-btn s-btn-primary"
+              style={{ flex: 1 }}
             >
               {isBusy ? "…" : `Assigner (${selectedIds.length})`}
             </button>
             <button
               disabled={isBusy}
               onClick={onCancelCorrecting}
-              className="rounded-lg border border-neutral-700 px-2.5 py-1.5 text-sm transition-colors hover:bg-neutral-800 disabled:opacity-40"
+              className="s-btn"
               aria-label="Annuler"
             >
               ↩
@@ -292,8 +344,6 @@ function TrackCard({
     </li>
   );
 }
-
-// ── Main client component ──────────────────────────────────────────────────────
 
 export default function InboxClient() {
   const [tracks, setTracks] = useState<InboxTrack[]>([]);
@@ -317,7 +367,6 @@ export default function InboxClient() {
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchMessage, setBatchMessage] = useState<string | null>(null);
 
-  // Load playlists once
   useEffect(() => {
     fetch("/api/playlists")
       .then((r) => r.json())
@@ -325,7 +374,6 @@ export default function InboxClient() {
       .catch(() => {});
   }, []);
 
-  // Fetch / re-fetch on filter change
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -416,7 +464,6 @@ export default function InboxClient() {
       });
       const data = await res.json() as { validated: number; errors: string[] };
       setBatchMessage(`${data.validated} track${data.validated !== 1 ? "s" : ""} validé${data.validated !== 1 ? "s" : ""}`);
-      // Re-fetch to reflect new state
       const params = buildParams(1, filterPlaylistId, maxConfidence);
       const fresh = await fetch(`/api/inbox?${params}`).then((r) => r.json()) as ApiResponse;
       setTracks(fresh.tracks);
@@ -430,43 +477,51 @@ export default function InboxClient() {
     }
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
+    <main className="s-page">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">
-            {loading ? "Inbox" : `${total} track${total !== 1 ? "s" : ""} à revoir`}
-          </h1>
+      <div style={{ marginBottom: 28 }}>
+        <div className="s-inbox-page-header">
+          <div>
+            <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Inbox</div>
+            <h1 className="font-fraunces" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1 }}>
+              {loading ? (
+                <span style={{ color: "var(--ink-dimmer)" }}>—</span>
+              ) : (
+                <>
+                  <span style={{ color: "var(--terra)" }}>{total}</span>
+                  <span style={{ fontSize: 16, fontWeight: 400, color: "var(--ink-mid)", marginLeft: 8 }}>
+                    {total !== 1 ? "tracks" : "track"} à revoir
+                  </span>
+                </>
+              )}
+            </h1>
+          </div>
           <button
             onClick={handleBatchValidate}
             disabled={batchLoading || total === 0 || loading}
-            className="shrink-0 rounded-lg border border-neutral-700 px-3 py-1.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="s-btn s-btn-primary"
           >
             {batchLoading ? "…" : "Tout valider (+55%)"}
           </button>
         </div>
 
         {/* Filters */}
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <select
             value={filterPlaylistId}
             onChange={(e) => setFilterPlaylistId(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-600"
+            className="s-input"
           >
             <option value="">Toutes les playlists</option>
             {playlists.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
+              <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
 
-          <div className="flex flex-1 items-center gap-3 text-sm">
-            <span className="shrink-0 text-neutral-500">
-              Confidence max : {sliderValue < 1.0 ? `${Math.round(sliderValue * 100)}%` : "tous"}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 200 }}>
+            <span style={{ fontSize: 11, color: "var(--ink-dim)", flexShrink: 0 }}>
+              Max : {sliderValue < 1.0 ? `${Math.round(sliderValue * 100)}%` : "tous"}
             </span>
             <input
               type="range"
@@ -477,28 +532,29 @@ export default function InboxClient() {
               onChange={(e) => setSliderValue(parseFloat(e.target.value))}
               onMouseUp={(e) => setMaxConfidence(parseFloat((e.target as HTMLInputElement).value))}
               onTouchEnd={(e) => setMaxConfidence(parseFloat((e.target as HTMLInputElement).value))}
-              className="flex-1 accent-neutral-400"
+              style={{ flex: 1, accentColor: "var(--terra)" }}
             />
           </div>
         </div>
 
         {batchMessage && (
-          <p className="mt-2 text-sm text-green-400">{batchMessage}</p>
+          <p style={{ marginTop: 8, fontSize: 12, color: "var(--sage)" }}>{batchMessage}</p>
         )}
       </div>
 
       {/* Content */}
       {loading ? (
-        <div className="flex min-h-64 items-center justify-center text-neutral-500">
+        <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-dim)", fontSize: 13 }}>
           Chargement…
         </div>
       ) : tracks.length === 0 ? (
-        <div className="flex min-h-64 items-center justify-center text-neutral-500">
-          Inbox vide — tout est trié ✓
+        <div style={{ display: "flex", minHeight: 200, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "var(--ink-mid)" }}>Inbox vide</p>
+          <p style={{ fontSize: 11, color: "var(--ink-dim)" }}>Tout est trié ✓</p>
         </div>
       ) : (
         <>
-          <ul className="flex flex-col gap-3">
+          <ul style={{ display: "flex", flexDirection: "column", gap: 8, listStyle: "none", padding: 0, margin: 0 }}>
             {tracks.map((track) => (
               <TrackCard
                 key={track.id}
@@ -532,7 +588,8 @@ export default function InboxClient() {
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              className="mt-6 w-full rounded-lg border border-neutral-700 py-2.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-800 disabled:opacity-40"
+              className="s-btn"
+              style={{ width: "100%", marginTop: 20, padding: "10px 0", justifyContent: "center" }}
             >
               {loadingMore ? "Chargement…" : "Charger plus"}
             </button>
