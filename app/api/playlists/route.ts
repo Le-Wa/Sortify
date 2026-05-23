@@ -13,7 +13,6 @@ const EMPTY_RULES: PlaylistRules = {
   genres: { include: [], exclude: [] },
   audio_features: {},
   hard_constraints: { max_age_days: null, require_genre_signal: false },
-  priority: 0,
 };
 
 // ── GET /api/playlists ────────────────────────────────────────────────────────
@@ -43,8 +42,9 @@ export async function POST(req: Request): Promise<Response> {
     spotifyPlaylistId?: string;
     name?: string;
     description?: string;
+    rules?: PlaylistRules;
   };
-  const { spotifyPlaylistId, name, description } = body;
+  const { spotifyPlaylistId, name, description, rules } = body;
 
   if (!spotifyPlaylistId || !name) {
     return Response.json(
@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<Response> {
     name,
     description: description ?? null,
     centroid: null,
-    rules: EMPTY_RULES,
+    rules: rules ?? EMPTY_RULES,
   });
 
   return Response.json(playlist, { status: 201 });

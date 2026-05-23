@@ -78,13 +78,130 @@ export async function getPlaylistAssignedFeatures(
 
 // ── Playlists ─────────────────────────────────────────────────────────────────
 
+export interface PlaylistRow {
+  id: string;
+  spotify_playlist_id: string;
+  name: string;
+  description: string | null;
+  enabled: boolean;
+  priority: number;
+  llm_help_text: string | null;
+  learned_at: string | null;
+}
+
+export type PlaylistPatchData = Partial<{
+  name: string;
+  description: string | null;
+  enabled: boolean;
+  llm_help_text: string | null;
+  rules: PlaylistRules;
+  learned_at: string | null;
+}>;
+
+export async function updatePlaylist(
+  playlistId: string,
+  userId: string,
+  data: PlaylistPatchData
+): Promise<PlaylistRow | null> {
+  const supabase = createClient();
+  const { data: result, error } = await supabase
+    .from("playlists")
+    .update(data)
+    .eq("id", playlistId)
+    .eq("user_id", userId)
+    .select("id, spotify_playlist_id, name, description, enabled, priority, llm_help_text, learned_at")
+    .single();
+  if (error) throw error;
+  return result as PlaylistRow | null;
+}
+
+export async function reassignPlaylistTracksToInbox(
+  playlistId: string,
+  userId: string
+): Promise<number> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .update({ assigned_playlist: null, needs_review: true })
+    .eq("user_id", userId)
+    .eq("assigned_playlist", playlistId)
+    .select("id");
+  if (error) throw error;
+  return (data ?? []).length;
+}
+
+export async function removeFromExtraPlaylists(
+  playlistId: string,
+  userId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("id, extra_playlists")
+    .eq("user_id", userId)
+    .contains("extra_playlists", [playlistId]);
+  if (error) throw error;
+
+  for (const track of data ?? []) {
+    const newExtras = (track.extra_playlists as string[]).filter((id) => id !== playlistId);
+    await supabase
+      .from("tracks")
+      .update({ extra_playlists: newExtras })
+      .eq("id", track.id as string)
+      .eq("user_id", userId);
+  }
+}
+
+export async function reorderPlaylists(
+  userId: string,
+  items: { id: string; priority: number }[]
+): Promise<void> {
+  if (items.length === 0) return;
+  const supabase = createClient();
+  await Promise.all(
+    items.map(async ({ id, priority }) => {
+      const { error } = await supabase
+        .from("playlists")
+        .update({ priority })
+        .eq("id", id)
+        .eq("user_id", userId);
+      if (error) throw error;
+    })
+  );
+}
+
+export async function deactivatePlaylist(
+  playlistId: string,
+  userId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("playlists")
+    .update({ enabled: false })
+    .eq("id", playlistId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+/** Returns all playlists for a user — active and inactive. Used by the management UI. */
+export async function getAllPlaylists(userId: string): Promise<PlaylistRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("playlists")
+    .select("id, spotify_playlist_id, name, description, enabled, priority, llm_help_text, learned_at")
+    .eq("user_id", userId)
+    .order("priority", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as PlaylistRow[];
+}
+
 export async function getUserPlaylists(
   userId: string
 ): Promise<PlaylistForClassifier[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("playlists")
-    .select("id, spotify_playlist_id, name, description, rules, centroid")
+    .select("id, spotify_playlist_id, name, description, rules, centroid, priority, llm_help_text")
     .eq("user_id", userId)
     .eq("enabled", true);
   if (error) throw error;
@@ -98,11 +215,16 @@ export async function insertPlaylist(data: {
   description: string | null;
   centroid: PlaylistCentroid | null;
   rules: PlaylistRules;
+  priority?: number;
+  llm_help_text?: string | null;
 }): Promise<{ id: string }> {
   const supabase = createClient();
   const { data: result, error } = await supabase
     .from("playlists")
-    .upsert({ ...data, enabled: true }, { onConflict: "user_id,spotify_playlist_id" })
+    .upsert(
+      { ...data, enabled: true, priority: data.priority ?? 0 },
+      { onConflict: "user_id,spotify_playlist_id" }
+    )
     .select("id")
     .single();
   if (error) throw error;

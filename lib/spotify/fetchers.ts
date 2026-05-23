@@ -161,6 +161,89 @@ export async function getSpotifyTracks(
   return result;
 }
 
+export interface PlaylistTrackItem {
+  id: string;
+  name: string;
+  isrc: string | null;
+  artist_ids: string[];
+  artist_names: string[];
+}
+
+/**
+ * Fetches all tracks from a Spotify playlist with name, ISRC, and artist info.
+ * Used by the "Learn from playlist" feature.
+ */
+export async function getPlaylistTrackItems(
+  token: string,
+  spotifyPlaylistId: string
+): Promise<PlaylistTrackItem[]> {
+  const items: PlaylistTrackItem[] = [];
+  let url: string | null =
+    `${BASE}/playlists/${spotifyPlaylistId}/items` +
+    `?fields=next,items(track(id,name,external_ids,artists(id,name)))&limit=100`;
+
+  while (url) {
+    const res = await spotifyFetch(url, token);
+    await assertOk(res, "getPlaylistTrackItems");
+
+    const data = (await res.json()) as {
+      next: string | null;
+      items: Array<{
+        track: {
+          id: string;
+          name: string;
+          external_ids?: { isrc?: string };
+          artists: Array<{ id: string; name: string }>;
+        } | null;
+      }>;
+    };
+
+    for (const item of data.items) {
+      if (!item.track?.id) continue;
+      items.push({
+        id: item.track.id,
+        name: item.track.name,
+        isrc: item.track.external_ids?.isrc ?? null,
+        artist_ids: item.track.artists.map((a) => a.id),
+        artist_names: item.track.artists.map((a) => a.name),
+      });
+    }
+
+    url = data.next;
+  }
+
+  return items;
+}
+
+/**
+ * Batch-fetches genres for a list of artist IDs (up to 50 per Spotify API call).
+ */
+export async function getArtistGenresBatch(
+  artistIds: string[],
+  token: string
+): Promise<Map<string, string[]>> {
+  if (artistIds.length === 0) return new Map();
+
+  const result = new Map<string, string[]>();
+  const BATCH = 50;
+
+  for (let i = 0; i < artistIds.length; i += BATCH) {
+    const batch = artistIds.slice(i, i + BATCH);
+    const res = await spotifyFetch(`${BASE}/artists?ids=${batch.join(",")}`, token);
+    if (!res.ok) continue;
+
+    const data = (await res.json()) as {
+      artists: Array<{ id: string; genres: string[] } | null>;
+    };
+
+    for (const artist of data.artists ?? []) {
+      if (artist) result.set(artist.id, artist.genres);
+    }
+  }
+
+  return result;
+}
+
 export interface SpotifyUserPlaylist {
   id: string;
   name: string;

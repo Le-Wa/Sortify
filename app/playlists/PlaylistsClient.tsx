@@ -2,177 +2,724 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { PlaylistRules } from "@/lib/types";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface PlaylistData {
   id: string;
   spotify_playlist_id: string;
   name: string;
   description: string | null;
+  priority: number;
+  enabled: boolean;
+  llm_help_text: string | null;
+  learned_at: string | null;
   total: number;
   synced: number;
   not_synced: number;
 }
+
+interface PreviewData {
+  rules: PlaylistRules;
+  llm_help_text: string | null;
+  sample_size?: number;
+  total_tracks?: number;
+}
+
+type ModalState =
+  | null
+  | { type: "from-desc"; playlistId: string; playlistName: string }
+  | { type: "preview"; playlistId: string; playlistName: string; preview: PreviewData }
+  | { type: "confirm-delete"; playlistId: string; playlistName: string }
+  | { type: "new" };
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const SWATCH_COLORS = [
   "#c89840", "#8878d0", "#6a9070", "#c87a52",
   "#a06848", "#508860", "#7878b0", "#c08060",
 ];
 
-export default function PlaylistsClient({ playlists: initial }: { playlists: PlaylistData[] }) {
-  const [playlists, setPlaylists] = useState(initial);
-  const [syncing, setSyncing] = useState<Set<string>>(new Set());
+function parseSpotifyId(raw: string): string {
+  const m = raw.match(/playlist\/([a-zA-Z0-9]+)/);
+  return m ? m[1] : raw.trim();
+}
 
-  async function handleSync(playlistId: string) {
-    setSyncing((prev) => new Set([...prev, playlistId]));
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function PlaylistsClient({ playlists: initial }: { playlists: PlaylistData[] }) {
+
+  // Lists
+  const [active, setActive] = useState<PlaylistData[]>(() =>
+    initial.filter((p) => p.enabled).sort((a, b) => a.priority - b.priority)
+  );
+  const [inactive, setInactive] = useState<PlaylistData[]>(() =>
+    initial.filter((p) => !p.enabled)
+  );
+  const [inactiveOpen, setInactiveOpen] = useState(false);
+
+  // Per-card loading: id → 'toggle' | 'learn' | 'delete'
+  const [cardLoading, setCardLoading] = useState<Record<string, string>>({});
+
+  // Drag state
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  // Toast
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Modal
+  const [modal, setModal] = useState<ModalState>(null);
+
+  // From-desc modal transient state
+  const [fromDescText, setFromDescText] = useState("");
+  const [fromDescLoading, setFromDescLoading] = useState(false);
+  const [fromDescError, setFromDescError] = useState<string | null>(null);
+
+  // Preview modal transient state
+  const [previewHelp, setPreviewHelp] = useState("");
+  const [previewSaving, setPreviewSaving] = useState(false);
+
+  // New playlist modal transient state
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newSpotifyRaw, setNewSpotifyRaw] = useState("");
+  const [newVibe, setNewVibe] = useState("");
+  const [newRules, setNewRules] = useState<PlaylistRules | null>(null);
+  const [newLoading, setNewLoading] = useState<string | null>(null);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
+  }
+
+  function setLoad(id: string, state: string | null) {
+    setCardLoading((prev) => {
+      const n = { ...prev };
+      if (state === null) delete n[id];
+      else n[id] = state;
+      return n;
+    });
+  }
+
+  function closeModal() {
+    setModal(null);
+    setFromDescText("");
+    setFromDescLoading(false);
+    setFromDescError(null);
+    setPreviewHelp("");
+    setPreviewSaving(false);
+  }
+
+  function resetNew() {
+    setNewName(""); setNewDesc(""); setNewSpotifyRaw("");
+    setNewVibe(""); setNewRules(null); setNewLoading(null);
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────────
+
+  async function toggle(p: PlaylistData) {
+    if (cardLoading[p.id]) return;
+    setLoad(p.id, "toggle");
     try {
-      const res = await fetch(`/api/playlists/${playlistId}/sync`, { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
-      const data = (await res.json()) as { synced: number; errors: string[] };
-      setPlaylists((prev) =>
-        prev.map((p) =>
-          p.id === playlistId
-            ? {
-                ...p,
-                synced: p.synced + data.synced,
-                not_synced: Math.max(0, p.not_synced - data.synced),
-              }
-            : p
-        )
-      );
-    } catch (err) {
-      alert(`Erreur sync : ${String(err)}`);
-    } finally {
-      setSyncing((prev) => {
-        const n = new Set(prev);
-        n.delete(playlistId);
-        return n;
+      const res = await fetch(`/api/playlists/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !p.enabled }),
       });
+      if (!res.ok) throw new Error();
+      if (p.enabled) {
+        setActive((prev) => prev.filter((x) => x.id !== p.id));
+        setInactive((prev) => [{ ...p, enabled: false }, ...prev]);
+        setInactiveOpen(true);
+      } else {
+        setInactive((prev) => prev.filter((x) => x.id !== p.id));
+        setActive((prev) => [...prev, { ...p, enabled: true }]);
+      }
+    } catch {
+      showToast("Erreur lors du changement de statut");
+    } finally {
+      setLoad(p.id, null);
     }
   }
 
-  if (playlists.length === 0) {
-    return (
-      <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-mid)", fontSize: 13 }}>
-        Aucune playlist configurée —{" "}
-        <Link href="/onboarding" style={{ marginLeft: 4, color: "var(--terra)", textDecoration: "none" }}>
-          onboarding
-        </Link>
-      </div>
-    );
+  async function learn(p: PlaylistData) {
+    if (cardLoading[p.id]) return;
+    setLoad(p.id, "learn");
+    try {
+      const res = await fetch(`/api/playlists/${p.id}/learn`, { method: "POST" });
+      const data = (await res.json()) as { error?: string } & Partial<PreviewData>;
+      if (!res.ok || data.error) throw new Error(data.error ?? "");
+      setPreviewHelp(data.llm_help_text ?? "");
+      setModal({ type: "preview", playlistId: p.id, playlistName: p.name, preview: data as PreviewData });
+    } catch (err) {
+      showToast(err instanceof Error && err.message ? err.message : "Analyse échouée");
+    } finally {
+      setLoad(p.id, null);
+    }
   }
 
+  async function submitFromDesc(playlistId: string, playlistName: string) {
+    if (!fromDescText.trim()) return;
+    setFromDescLoading(true);
+    setFromDescError(null);
+    try {
+      const res = await fetch("/api/playlists/from-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: fromDescText.trim() }),
+      });
+      const data = (await res.json()) as { error?: string } & Partial<PreviewData>;
+      if (data.error) throw new Error(data.error);
+      if (!res.ok) throw new Error("Génération échouée");
+      setPreviewHelp(data.llm_help_text ?? "");
+      setModal({ type: "preview", playlistId, playlistName, preview: data as PreviewData });
+      setFromDescText("");
+      setFromDescError(null);
+    } catch (err) {
+      setFromDescError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setFromDescLoading(false);
+    }
+  }
+
+  async function savePreview(playlistId: string, preview: PreviewData) {
+    setPreviewSaving(true);
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rules: preview.rules,
+          llm_help_text: previewHelp.trim() || null,
+          learned_at: new Date().toISOString(),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const now = new Date().toISOString();
+      const patch = (list: PlaylistData[]) =>
+        list.map((p) =>
+          p.id === playlistId
+            ? { ...p, llm_help_text: previewHelp.trim() || null, learned_at: now }
+            : p
+        );
+      setActive(patch);
+      setInactive(patch);
+      closeModal();
+    } catch {
+      showToast("Erreur lors de la sauvegarde");
+    } finally {
+      setPreviewSaving(false);
+    }
+  }
+
+  async function confirmDelete(playlistId: string) {
+    setLoad(playlistId, "delete");
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setInactive((prev) => prev.filter((p) => p.id !== playlistId));
+      closeModal();
+    } catch {
+      showToast("Erreur lors de la suppression");
+    } finally {
+      setLoad(playlistId, null);
+    }
+  }
+
+  // Drag handlers (active list only)
+  function onDragStart(id: string) { setDragId(id); }
+  function onDragOver(e: React.DragEvent, id: string) { e.preventDefault(); setOverId(id); }
+  function onDragEnd() { setDragId(null); setOverId(null); }
+  async function onDrop(e: React.DragEvent, targetId: string) {
+    e.preventDefault();
+    const from = dragId;
+    setDragId(null); setOverId(null);
+    if (!from || from === targetId) return;
+
+    const prev = [...active];
+    const next = [...active];
+    const fi = next.findIndex((p) => p.id === from);
+    const ti = next.findIndex((p) => p.id === targetId);
+    const [item] = next.splice(fi, 1);
+    next.splice(ti, 0, item);
+    setActive(next);
+
+    try {
+      const res = await fetch("/api/playlists/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next.map((p, i) => ({ id: p.id, priority: i }))),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setActive(prev);
+      showToast("Ordre non sauvegardé");
+    }
+  }
+
+  // New playlist: generate vibe rules
+  async function generateVibe() {
+    if (!newVibe.trim() || newLoading) return;
+    setNewLoading("vibe");
+    try {
+      const res = await fetch("/api/playlists/from-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: newVibe.trim() }),
+      });
+      const data = (await res.json()) as { error?: string; rules?: PlaylistRules };
+      if (data.error) throw new Error(data.error);
+      if (!res.ok || !data.rules) throw new Error("Génération échouée");
+      setNewRules(data.rules);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Génération échouée");
+    } finally {
+      setNewLoading(null);
+    }
+  }
+
+  // New playlist: create
+  async function createPlaylist() {
+    if (!newName.trim() || !newSpotifyRaw.trim() || newLoading) return;
+    const spotifyId = parseSpotifyId(newSpotifyRaw);
+    setNewLoading("saving");
+    try {
+      const res = await fetch("/api/playlists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          spotifyPlaylistId: spotifyId,
+          name: newName.trim(),
+          description: newDesc.trim() || undefined,
+          rules: newRules ?? undefined,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const { id } = (await res.json()) as { id: string };
+
+      setActive((prev) => [
+        ...prev,
+        {
+          id, spotify_playlist_id: spotifyId, name: newName.trim(),
+          description: newDesc.trim() || null, priority: prev.length,
+          enabled: true, llm_help_text: null, learned_at: null,
+          total: 0, synced: 0, not_synced: 0,
+        },
+      ]);
+      resetNew();
+      closeModal();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur création");
+      setNewLoading(null);
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   return (
-    <main className="s-page">
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Bibliothèque</div>
-        <h1
-          className="font-fraunces"
-          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
-        >
-          {playlists.length}{" "}
-          <em style={{ fontStyle: "italic", color: "var(--terra)" }}>
-            playlist{playlists.length !== 1 ? "s" : ""}
-          </em>
-        </h1>
-      </div>
+    <>
+      <main className="s-page">
 
-      <div className="s-pl-grid">
-        {playlists.map((p, i) => {
-          const isSyncing = syncing.has(p.id);
-          const swatchColor = SWATCH_COLORS[i % SWATCH_COLORS.length];
-          return (
-            <div key={p.id} className="s-pl-card">
-              {/* Color swatch */}
-              <div
-                style={{
-                  width: 28,
-                  height: 3,
-                  borderRadius: 2,
-                  background: swatchColor,
-                  marginBottom: 12,
-                  opacity: 0.8,
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 28, gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Bibliothèque</div>
+            <h1 className="font-fraunces" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
+              {active.length}{" "}
+              <em style={{ fontStyle: "italic", color: "var(--terra)" }}>
+                playlist{active.length !== 1 ? "s" : ""}
+              </em>
+            </h1>
+          </div>
+          <button className="s-btn s-btn-primary" onClick={() => setModal({ type: "new" })} style={{ flexShrink: 0 }}>
+            + Nouvelle
+          </button>
+        </div>
+
+        {/* Active playlists */}
+        {active.length === 0 ? (
+          <div style={{ textAlign: "center", color: "var(--ink-mid)", fontSize: 13, padding: "48px 0" }}>
+            Aucune playlist active
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {active.map((p, i) => (
+              <PlaylistRow
+                key={p.id}
+                p={p}
+                swatch={SWATCH_COLORS[i % SWATCH_COLORS.length]}
+                load={cardLoading[p.id]}
+                isDragging={dragId === p.id}
+                isOver={overId === p.id && dragId !== p.id}
+                draggable
+                onToggle={() => toggle(p)}
+                onLearn={() => learn(p)}
+                onFromDesc={() => {
+                  setFromDescText(""); setFromDescError(null);
+                  setModal({ type: "from-desc", playlistId: p.id, playlistName: p.name });
                 }}
+                onDragStart={() => onDragStart(p.id)}
+                onDragOver={(e) => onDragOver(e, p.id)}
+                onDragEnd={onDragEnd}
+                onDrop={(e) => onDrop(e, p.id)}
               />
+            ))}
+          </div>
+        )}
 
-              {/* Name */}
-              <h2
-                className="font-fraunces"
-                style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  letterSpacing: "-0.3px",
-                  color: "var(--ink)",
-                  marginBottom: 4,
-                }}
+        {/* Inactive playlists */}
+        {inactive.length > 0 && (
+          <div style={{ marginTop: 36 }}>
+            <button
+              onClick={() => setInactiveOpen((v) => !v)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}
+            >
+              <span style={{ fontSize: 9, color: "var(--ink-dim)", display: "inline-block", transform: inactiveOpen ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}>▶</span>
+              <span style={{ fontSize: 12, color: "var(--ink-dim)" }}>
+                {inactive.length} playlist{inactive.length !== 1 ? "s" : ""} désactivée{inactive.length !== 1 ? "s" : ""}
+              </span>
+            </button>
+            {inactiveOpen && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {inactive.map((p, i) => (
+                  <PlaylistRow
+                    key={p.id}
+                    p={p}
+                    swatch={SWATCH_COLORS[i % SWATCH_COLORS.length]}
+                    load={cardLoading[p.id]}
+                    isDragging={false}
+                    isOver={false}
+                    draggable={false}
+                    onToggle={() => toggle(p)}
+                    onDelete={() => setModal({ type: "confirm-delete", playlistId: p.id, playlistName: p.name })}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* ── From description modal ──────────────────────────────────────────── */}
+      {modal?.type === "from-desc" && (
+        <div className="s-modal-overlay" onClick={closeModal}>
+          <div className="s-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>
+              Décrire la vibe
+            </h2>
+            <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>{modal.playlistName}</p>
+            <textarea
+              autoFocus
+              className="s-input"
+              rows={4}
+              style={{ width: "100%", resize: "vertical", lineHeight: 1.6, marginBottom: 8 }}
+              placeholder="Ex : Rap français boom-bap des années 2000, pas de trap ni de drill…"
+              value={fromDescText}
+              onChange={(e) => setFromDescText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                  void submitFromDesc(modal.playlistId, modal.playlistName);
+              }}
+            />
+            {fromDescError && (
+              <p style={{ fontSize: 11, color: "var(--terra)", marginBottom: 10 }}>{fromDescError}</p>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+              <button className="s-btn" onClick={closeModal}>Annuler</button>
+              <button
+                className="s-btn s-btn-primary"
+                disabled={fromDescLoading || !fromDescText.trim()}
+                onClick={() => void submitFromDesc(modal.playlistId, modal.playlistName)}
               >
-                {p.name}
-              </h2>
+                {fromDescLoading ? "Génération…" : "Générer →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Description */}
-              {p.description && (
-                <p style={{ fontSize: 10, color: "var(--ink-dim)", lineHeight: 1.7 }}>
-                  {p.description}
-                </p>
+      {/* ── Preview modal ───────────────────────────────────────────────────── */}
+      {modal?.type === "preview" && (
+        <div className="s-modal-overlay" onClick={closeModal}>
+          <div className="s-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>
+              Aperçu des règles
+            </h2>
+            <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>
+              {modal.playlistName}
+              {modal.preview.sample_size != null && (
+                <> · <span style={{ color: "var(--sage)" }}>{modal.preview.sample_size} tracks</span> analysés
+                  {modal.preview.total_tracks != null ? ` / ${modal.preview.total_tracks}` : ""}</>
               )}
+            </p>
 
-              {/* Footer */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  justifyContent: "space-between",
-                  marginTop: 14,
-                  paddingTop: 12,
-                  borderTop: "1px solid var(--border)",
-                }}
+            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+              Description vibe — éditable
+            </label>
+            <textarea
+              className="s-input"
+              rows={3}
+              style={{ width: "100%", resize: "vertical", lineHeight: 1.6, marginBottom: 20 }}
+              placeholder="Description de la vibe pour le classifier LLM…"
+              value={previewHelp}
+              onChange={(e) => setPreviewHelp(e.target.value)}
+            />
+
+            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+              Règles générées — lecture seule
+            </label>
+            <pre style={{
+              background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8,
+              padding: "12px 14px", fontSize: 10, lineHeight: 1.7, color: "var(--ink-mid)",
+              overflow: "auto", maxHeight: 200, marginBottom: 24,
+            }}>
+              {JSON.stringify(modal.preview.rules, null, 2)}
+            </pre>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="s-btn" onClick={closeModal} disabled={previewSaving}>Annuler</button>
+              <button
+                className="s-btn s-btn-primary"
+                disabled={previewSaving}
+                onClick={() => void savePreview(modal.playlistId, modal.preview)}
               >
-                <span
-                  className="font-fraunces"
-                  style={{ fontSize: 22, fontWeight: 600, color: "var(--ink-mid)" }}
-                >
-                  {p.total}
-                </span>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  {p.not_synced > 0 && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        color: "var(--terra)",
-                        background: "var(--terra-light)",
-                        border: "1px solid var(--terra-border)",
-                        padding: "2px 8px",
-                        borderRadius: 20,
-                      }}
-                    >
-                      +{p.not_synced}
-                    </span>
-                  )}
-                </div>
+                {previewSaving ? "Sauvegarde…" : "Sauvegarder"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Confirm delete modal ────────────────────────────────────────────── */}
+      {modal?.type === "confirm-delete" && (
+        <div className="s-modal-overlay" onClick={closeModal}>
+          <div className="s-modal" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "var(--ink)" }}>
+              Supprimer la playlist ?
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--ink-mid)", marginBottom: 24, lineHeight: 1.65 }}>
+              <strong style={{ color: "var(--ink)" }}>{modal.playlistName}</strong> sera désactivée définitivement.
+              Les tracks assignées repasseront en inbox.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="s-btn" onClick={closeModal}>Annuler</button>
+              <button
+                className="s-btn s-btn-danger"
+                disabled={cardLoading[modal.playlistId] === "delete"}
+                onClick={() => void confirmDelete(modal.playlistId)}
+              >
+                {cardLoading[modal.playlistId] === "delete" ? "Suppression…" : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── New playlist modal ──────────────────────────────────────────────── */}
+      {modal?.type === "new" && (
+        <div className="s-modal-overlay" onClick={() => { resetNew(); closeModal(); }}>
+          <div className="s-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: "var(--ink)" }}>
+              Nouvelle playlist
+            </h2>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>Nom *</label>
+                <input
+                  type="text" autoFocus className="s-input" style={{ width: "100%" }}
+                  value={newName} onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Rap Français, Électro Workout…"
+                />
               </div>
 
-              {/* Actions */}
-              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                <Link
-                  href={`/playlists/${p.id}`}
-                  className="s-btn"
-                  style={{ flex: 1, textAlign: "center", textDecoration: "none", padding: "6px 0" }}
-                >
-                  Voir →
-                </Link>
-                {p.not_synced > 0 && (
+              <div>
+                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>Description</label>
+                <input
+                  type="text" className="s-input" style={{ width: "100%" }}
+                  value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="Optionnel"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>
+                  Spotify Playlist *
+                </label>
+                <input
+                  type="text" className="s-input" style={{ width: "100%" }}
+                  value={newSpotifyRaw} onChange={(e) => setNewSpotifyRaw(e.target.value)}
+                  placeholder="https://open.spotify.com/playlist/…"
+                />
+                <p style={{ fontSize: 10, color: "var(--ink-dimmer)", marginTop: 4 }}>
+                  URL ou ID de la playlist Spotify à lier
+                </p>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--ink-dimmer)", fontSize: 10 }}>
+                <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                Générer les règles (optionnel)
+                <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>Décris la vibe</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text" className="s-input" style={{ flex: 1 }}
+                    value={newVibe}
+                    onChange={(e) => { setNewVibe(e.target.value); setNewRules(null); }}
+                    placeholder="Rap français boom-bap, pas de trap…"
+                  />
                   <button
-                    disabled={isSyncing}
-                    onClick={() => handleSync(p.id)}
-                    className="s-btn s-btn-primary"
+                    className="s-btn"
+                    disabled={!newVibe.trim() || newLoading === "vibe"}
+                    onClick={() => void generateVibe()}
+                    style={{ flexShrink: 0 }}
                   >
-                    {isSyncing ? "…" : "Sync"}
+                    {newLoading === "vibe" ? "…" : "Générer"}
                   </button>
+                </div>
+                {newRules && (
+                  <p style={{ fontSize: 10, color: "var(--sage)", marginTop: 6 }}>
+                    ✓ Règles générées · {newRules.genres.include.length} genre{newRules.genres.include.length !== 1 ? "s" : ""} inclus
+                  </p>
                 )}
               </div>
             </div>
-          );
-        })}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 24 }}>
+              <button className="s-btn" onClick={() => { resetNew(); closeModal(); }}>Annuler</button>
+              <button
+                className="s-btn s-btn-primary"
+                disabled={!newName.trim() || !newSpotifyRaw.trim() || newLoading === "saving"}
+                onClick={() => void createPlaylist()}
+              >
+                {newLoading === "saving" ? "Création…" : "Créer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && <div className="s-toast">{toast}</div>}
+    </>
+  );
+}
+
+// ── PlaylistRow ───────────────────────────────────────────────────────────────
+
+interface RowProps {
+  p: PlaylistData;
+  swatch: string;
+  load: string | undefined;
+  isDragging: boolean;
+  isOver: boolean;
+  draggable: boolean;
+  onToggle: () => void;
+  onLearn?: () => void;
+  onFromDesc?: () => void;
+  onDelete?: () => void;
+  onDragStart?: () => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
+  onDrop?: (e: React.DragEvent) => void;
+}
+
+function PlaylistRow({
+  p, swatch, load, isDragging, isOver, draggable,
+  onToggle, onLearn, onFromDesc, onDelete,
+  onDragStart, onDragOver, onDragEnd, onDrop,
+}: RowProps) {
+  const learnedAt = p.learned_at
+    ? new Date(p.learned_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
+    : null;
+
+  return (
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDrop={onDrop}
+      className="s-pl-row"
+      style={{
+        opacity: isDragging ? 0.35 : 1,
+        borderColor: isOver ? "var(--terra)" : undefined,
+        outline: isOver ? "1px solid var(--terra-border)" : "none",
+      }}
+    >
+      {/* Drag handle */}
+      {draggable && <div className="s-drag-handle" title="Réordonner">⠿</div>}
+
+      {/* Swatch */}
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
+
+      {/* Info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <span className="font-fraunces" style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+            {p.name}
+          </span>
+          {!p.enabled && (
+            <span style={{
+              fontSize: 9, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase",
+              color: "var(--ink-dim)", background: "var(--surface2)",
+              border: "1px solid var(--border-strong)", borderRadius: 4, padding: "1px 5px",
+            }}>
+              inactif
+            </span>
+          )}
+        </div>
+        {p.description && (
+          <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {p.description}
+          </p>
+        )}
+        {learnedAt && (
+          <p style={{ fontSize: 10, color: "var(--sage)", marginTop: 2 }}>Appris le {learnedAt}</p>
+        )}
       </div>
-    </main>
+
+      {/* Stats */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <span className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink-mid)" }}>{p.total}</span>
+        {p.not_synced > 0 && (
+          <span style={{ fontSize: 10, color: "var(--terra)", background: "var(--terra-light)", border: "1px solid var(--terra-border)", padding: "1px 6px", borderRadius: 12 }}>
+            +{p.not_synced}
+          </span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
+        <Link href={`/playlists/${p.id}`} className="s-btn" style={{ textDecoration: "none", fontSize: 11, padding: "4px 10px" }}>
+          Voir →
+        </Link>
+        <button className="s-btn" onClick={onToggle} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }} title={p.enabled ? "Désactiver" : "Activer"}>
+          {load === "toggle" ? "…" : p.enabled ? "Off" : "On"}
+        </button>
+        {p.enabled && onLearn && (
+          <button className="s-btn" onClick={onLearn} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
+            {load === "learn" ? "…" : "Learn"}
+          </button>
+        )}
+        {p.enabled && onFromDesc && (
+          <button className="s-btn" onClick={onFromDesc} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
+            Décrire
+          </button>
+        )}
+        {!p.enabled && onDelete && (
+          <button className="s-btn s-btn-danger" onClick={onDelete} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
+            {load === "delete" ? "…" : "Supprimer"}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

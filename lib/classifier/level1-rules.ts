@@ -78,10 +78,10 @@ export function matchLevel1(
     const isBetter =
       !best ||
       confidence > best.confidence ||
-      (confidence === best.confidence && rules.priority > best.priority);
+      (confidence === best.confidence && playlist.priority > best.priority);
 
     if (isBetter) {
-      best = { playlistId: playlist.id, confidence, threshold, priority: rules.priority };
+      best = { playlistId: playlist.id, confidence, threshold, priority: playlist.priority };
     }
   }
 

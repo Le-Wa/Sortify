@@ -32,9 +32,10 @@ function formatCentroid(c: PlaylistCentroid): string {
 
 function buildPlaylistContext(playlists: PlaylistForClassifier[]): string {
   return playlists
-    .filter((p) => p.description || p.centroid)
+    .filter((p) => p.llm_help_text || p.description || p.centroid)
     .map((p) => {
-      const base = p.description ? `${p.name} : ${p.description}` : p.name;
+      const vibe = p.llm_help_text ?? p.description;
+      const base = vibe ? `${p.name} : ${vibe}` : p.name;
       const audio = p.centroid ? ` | audio moyen : ${formatCentroid(p.centroid)}` : "";
       return base + audio;
     })

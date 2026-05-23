@@ -45,7 +45,6 @@ export interface PlaylistRules {
     max_age_days: number | null;
     require_genre_signal: boolean;
   };
-  priority: number;
 }
 
 export interface PlaylistCentroid {
@@ -64,6 +63,8 @@ export interface PlaylistForClassifier {
   description: string | null;
   rules: PlaylistRules;
   centroid: PlaylistCentroid | null;
+  priority: number;
+  llm_help_text: string | null;
 }
 
 export interface PlaylistDetail {
