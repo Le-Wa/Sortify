@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 
 interface PlaylistInfo {
@@ -32,6 +32,9 @@ interface ApiResponse {
   per_page: number;
 }
 
+type FilterValue = "all" | "synced" | "not_synced";
+type SortValue = "default" | "name" | "confidence";
+
 const PER_PAGE = 50;
 
 function formatDate(iso: string | null): string {
@@ -41,13 +44,6 @@ function formatDate(iso: string | null): string {
     month: "short",
     year: "numeric",
   });
-}
-
-function confidenceBadgeClass(c: number | null): string {
-  if (c === null) return "bg-neutral-800 text-neutral-400";
-  if (c >= 0.55) return "bg-green-900 text-green-300";
-  if (c >= 0.4) return "bg-yellow-900 text-yellow-300";
-  return "bg-red-900 text-red-300";
 }
 
 function levelLabel(level: number | null): string {
@@ -68,6 +64,9 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [syncing, setSyncing] = useState(false);
+
+  const [filter, setFilter] = useState<FilterValue>("all");
+  const [sort, setSort] = useState<SortValue>("default");
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +119,6 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       setSynced((prev) => prev + data.synced);
       setNotSynced((prev) => Math.max(0, prev - data.synced));
       if (data.synced > 0) {
-        // Optimistically mark visible tracks as synced
         setTracks((prev) =>
           prev.map((t) =>
             t.pushed_to_spotify === null
@@ -135,6 +133,15 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       setSyncing(false);
     }
   }
+
+  const displayedTracks = useMemo(() => {
+    let arr = tracks;
+    if (filter === "synced") arr = arr.filter((t) => t.pushed_to_spotify !== null);
+    else if (filter === "not_synced") arr = arr.filter((t) => t.pushed_to_spotify === null);
+    if (sort === "name") arr = [...arr].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "fr"));
+    else if (sort === "confidence") arr = [...arr].sort((a, b) => (b.confidence ?? -1) - (a.confidence ?? -1));
+    return arr;
+  }, [tracks, filter, sort]);
 
   if (loading) {
     return (
@@ -163,9 +170,9 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       </Link>
 
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
-          <div>
+      <div style={{ marginBottom: 24 }}>
+        <div className="s-page-header">
+          <div style={{ minWidth: 0 }}>
             <h1
               className="font-fraunces"
               style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
@@ -196,10 +203,45 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         </div>
       </div>
 
+      {/* Filter + sort bar */}
+      <div className="s-filter-bar">
+        <div className="s-filter-chips">
+          <button
+            className={`s-chip${filter === "all" ? " active" : ""}`}
+            onClick={() => setFilter("all")}
+          >
+            Tous ({total})
+          </button>
+          <button
+            className={`s-chip${filter === "synced" ? " active" : ""}`}
+            onClick={() => setFilter("synced")}
+          >
+            Syncés ({synced})
+          </button>
+          <button
+            className={`s-chip${filter === "not_synced" ? " active" : ""}`}
+            onClick={() => setFilter("not_synced")}
+          >
+            Non syncés ({notSynced})
+          </button>
+        </div>
+        <div className="s-filter-sep" />
+        <select
+          className="s-sort-select"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortValue)}
+          aria-label="Trier par"
+        >
+          <option value="default">Ordre par défaut</option>
+          <option value="name">Nom A→Z</option>
+          <option value="confidence">Confiance ↓</option>
+        </select>
+      </div>
+
       {/* Track list */}
-      {tracks.length === 0 ? (
+      {displayedTracks.length === 0 ? (
         <div style={{ display: "flex", minHeight: 160, alignItems: "center", justifyContent: "center", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)", fontSize: 13, color: "var(--ink-mid)" }}>
-          Aucun track dans cette playlist
+          {filter !== "all" ? "Aucun track pour ce filtre" : "Aucun track dans cette playlist"}
         </div>
       ) : (
         <>
@@ -207,13 +249,13 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
             <thead>
               <tr>
                 <th>Track</th>
-                <th style={{ display: "none" }} className="sm-visible">Genres</th>
+                <th>Genres</th>
                 <th style={{ textAlign: "right" }}>Conf.</th>
                 <th style={{ textAlign: "right" }}>Sync</th>
               </tr>
             </thead>
             <tbody>
-              {tracks.map((track) => (
+              {displayedTracks.map((track) => (
                 <tr key={track.id}>
                   <td>
                     <p style={{ fontWeight: 500, fontSize: 13 }}>
@@ -276,7 +318,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
             </tbody>
           </table></div>
 
-          {hasMore && (
+          {hasMore && filter === "all" && sort === "default" && (
             <button
               onClick={loadMore}
               disabled={loadingMore}
@@ -285,6 +327,11 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
             >
               {loadingMore ? "Chargement…" : "Charger plus"}
             </button>
+          )}
+          {hasMore && (filter !== "all" || sort !== "default") && (
+            <p style={{ marginTop: 12, fontSize: 11, color: "var(--ink-dim)", textAlign: "center" }}>
+              {total - tracks.length} tracks non chargés · réinitialiser le filtre pour voir tout
+            </p>
           )}
         </>
       )}

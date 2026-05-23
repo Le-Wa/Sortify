@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { PlaylistRules } from "@/lib/types";
 
@@ -59,12 +59,24 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
   );
   const [inactiveOpen, setInactiveOpen] = useState(false);
 
-  // Per-card loading: id → 'toggle' | 'learn' | 'delete'
+  // Per-card loading: id → 'toggle' | 'learn' | 'delete' | 'recompute'
   const [cardLoading, setCardLoading] = useState<Record<string, string>>({});
 
   // Drag state
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+
+  // Bottom sheet
+  const [bottomSheet, setBottomSheet] = useState<string | null>(null);
+
+  // Pointer type — coarse = touch device, disable drag-and-drop
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  useEffect(() => {
+    setIsCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
+
+  // Sync all loading
+  const [syncingAll, setSyncingAll] = useState(false);
 
   // Toast
   const [toast, setToast] = useState<string | null>(null);
@@ -162,6 +174,20 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
     }
   }
 
+  async function recompute(id: string) {
+    setLoad(id, "recompute");
+    setBottomSheet(null);
+    try {
+      const res = await fetch(`/api/playlists/${id}/recompute-centroid`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      showToast("Centroïde recalculé");
+    } catch {
+      showToast("Erreur recompute");
+    } finally {
+      setLoad(id, null);
+    }
+  }
+
   async function submitFromDesc(playlistId: string, playlistName: string) {
     if (!fromDescText.trim()) return;
     setFromDescLoading(true);
@@ -230,7 +256,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
     }
   }
 
-  // Drag handlers (active list only)
+  // Drag handlers (active list, desktop only)
   function onDragStart(id: string) { setDragId(id); }
   function onDragOver(e: React.DragEvent, id: string) { e.preventDefault(); setOverId(id); }
   function onDragEnd() { setDragId(null); setOverId(null); }
@@ -248,6 +274,79 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
     next.splice(ti, 0, item);
     setActive(next);
 
+    try {
+      const res = await fetch("/api/playlists/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next.map((p, i) => ({ id: p.id, priority: i }))),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setActive(prev);
+      showToast("Ordre non sauvegardé");
+    }
+  }
+
+  // Sync all playlists with pending tracks
+  async function syncAll() {
+    if (syncingAll) return;
+    setSyncingAll(true);
+    const toSync = active.filter((p) => p.not_synced > 0);
+    try {
+      await Promise.all(
+        toSync.map(async (p) => {
+          try {
+            const res = await fetch(`/api/playlists/${p.id}/sync`, { method: "POST" });
+            if (!res.ok) return;
+            const data = (await res.json()) as { synced: number };
+            if (data.synced > 0) {
+              setActive((prev) =>
+                prev.map((ap) =>
+                  ap.id === p.id
+                    ? { ...ap, synced: ap.synced + data.synced, not_synced: Math.max(0, ap.not_synced - data.synced) }
+                    : ap
+                )
+              );
+            }
+          } catch {
+            // individual failure — continue
+          }
+        })
+      );
+      showToast("Sync terminé");
+    } finally {
+      setSyncingAll(false);
+    }
+  }
+
+  // Move up/down — used from bottom sheet (mobile reorder)
+  async function moveUp(id: string) {
+    const idx = active.findIndex((p) => p.id === id);
+    if (idx <= 0) return;
+    const prev = [...active];
+    const next = [...active];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    setActive(next);
+    try {
+      const res = await fetch("/api/playlists/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next.map((p, i) => ({ id: p.id, priority: i }))),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setActive(prev);
+      showToast("Ordre non sauvegardé");
+    }
+  }
+
+  async function moveDown(id: string) {
+    const idx = active.findIndex((p) => p.id === id);
+    if (idx < 0 || idx >= active.length - 1) return;
+    const prev = [...active];
+    const next = [...active];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    setActive(next);
     try {
       const res = await fetch("/api/playlists/reorder", {
         method: "POST",
@@ -318,6 +417,13 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
     }
   }
 
+  // ── Bottom sheet data ─────────────────────────────────────────────────────────
+
+  const bsPlaylist = bottomSheet
+    ? [...active, ...inactive].find((p) => p.id === bottomSheet) ?? null
+    : null;
+  const bsIdx = bsPlaylist?.enabled ? active.findIndex((p) => p.id === bottomSheet) : -1;
+
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -325,7 +431,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       <main className="s-page">
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 28, gap: 16 }}>
+        <div className="s-page-header" style={{ marginBottom: 28 }}>
           <div>
             <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Bibliothèque</div>
             <h1 className="font-fraunces" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
@@ -335,9 +441,20 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               </em>
             </h1>
           </div>
-          <button className="s-btn s-btn-primary" onClick={() => setModal({ type: "new" })} style={{ flexShrink: 0 }}>
-            + Nouvelle
-          </button>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            {active.some((p) => p.not_synced > 0) && (
+              <button
+                className="s-btn"
+                onClick={() => void syncAll()}
+                disabled={syncingAll}
+              >
+                {syncingAll ? "Sync…" : `Sync All (${active.reduce((s, p) => s + p.not_synced, 0)})`}
+              </button>
+            )}
+            <button className="s-btn s-btn-primary" onClick={() => setModal({ type: "new" })}>
+              + Nouvelle
+            </button>
+          </div>
         </div>
 
         {/* Active playlists */}
@@ -355,13 +472,15 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 load={cardLoading[p.id]}
                 isDragging={dragId === p.id}
                 isOver={overId === p.id && dragId !== p.id}
-                draggable
+                draggable={!isCoarsePointer}
                 onToggle={() => toggle(p)}
                 onLearn={() => learn(p)}
                 onFromDesc={() => {
-                  setFromDescText(""); setFromDescError(null);
+                  setFromDescText(p.llm_help_text ?? "");
+                  setFromDescError(null);
                   setModal({ type: "from-desc", playlistId: p.id, playlistName: p.name });
                 }}
+                onOpenBottomSheet={() => setBottomSheet(p.id)}
                 onDragStart={() => onDragStart(p.id)}
                 onDragOver={(e) => onDragOver(e, p.id)}
                 onDragEnd={onDragEnd}
@@ -395,7 +514,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                     isOver={false}
                     draggable={false}
                     onToggle={() => toggle(p)}
-                    onDelete={() => setModal({ type: "confirm-delete", playlistId: p.id, playlistName: p.name })}
+                    onOpenBottomSheet={() => setBottomSheet(p.id)}
                   />
                 ))}
               </div>
@@ -606,6 +725,73 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
         </div>
       )}
 
+      {/* ── Bottom sheet ────────────────────────────────────────────────────── */}
+      {bsPlaylist && (
+        <>
+          <div className="s-bs-backdrop" onClick={() => setBottomSheet(null)} />
+          <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Options — ${bsPlaylist.name}`}>
+            <div className="s-bs-handle" />
+            <p className="s-bs-title">{bsPlaylist.name}</p>
+
+            {/* Reorder — active playlists */}
+            {bsPlaylist.enabled && (bsIdx > 0 || bsIdx < active.length - 1) && (
+              <>
+                {bsIdx > 0 && (
+                  <button
+                    className="s-bs-item"
+                    onClick={() => { void moveUp(bsPlaylist.id); setBottomSheet(null); }}
+                  >
+                    ↑ Remonter
+                  </button>
+                )}
+                {bsIdx < active.length - 1 && (
+                  <button
+                    className="s-bs-item"
+                    onClick={() => { void moveDown(bsPlaylist.id); setBottomSheet(null); }}
+                  >
+                    ↓ Descendre
+                  </button>
+                )}
+                <div className="s-bs-sep" />
+              </>
+            )}
+
+            {/* Recompute — active playlists */}
+            {bsPlaylist.enabled && (
+              <button
+                className="s-bs-item"
+                disabled={cardLoading[bsPlaylist.id] === "recompute"}
+                onClick={() => void recompute(bsPlaylist.id)}
+              >
+                {cardLoading[bsPlaylist.id] === "recompute" ? "Calcul…" : "Recompute centroïde"}
+              </button>
+            )}
+
+            {/* Supprimer — inactive playlists */}
+            {!bsPlaylist.enabled && (
+              <>
+                <div className="s-bs-sep" />
+                <button
+                  className="s-bs-item s-bs-item-danger"
+                  disabled={cardLoading[bsPlaylist.id] === "delete"}
+                  onClick={() => {
+                    setBottomSheet(null);
+                    setModal({ type: "confirm-delete", playlistId: bsPlaylist.id, playlistName: bsPlaylist.name });
+                  }}
+                >
+                  Supprimer
+                </button>
+              </>
+            )}
+
+            <div className="s-bs-sep" style={{ marginTop: 4 }} />
+            <button className="s-bs-item s-bs-item-dim" onClick={() => setBottomSheet(null)}>
+              Annuler
+            </button>
+          </div>
+        </>
+      )}
+
       {/* Toast */}
       {toast && <div className="s-toast">{toast}</div>}
     </>
@@ -624,7 +810,7 @@ interface RowProps {
   onToggle: () => void;
   onLearn?: () => void;
   onFromDesc?: () => void;
-  onDelete?: () => void;
+  onOpenBottomSheet?: () => void;
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
@@ -633,7 +819,7 @@ interface RowProps {
 
 function PlaylistRow({
   p, swatch, load, isDragging, isOver, draggable,
-  onToggle, onLearn, onFromDesc, onDelete,
+  onToggle, onLearn, onFromDesc, onOpenBottomSheet,
   onDragStart, onDragOver, onDragEnd, onDrop,
 }: RowProps) {
   const learnedAt = p.learned_at
@@ -654,56 +840,58 @@ function PlaylistRow({
         outline: isOver ? "1px solid var(--terra-border)" : "none",
       }}
     >
-      {/* Drag handle */}
+      {/* Drag handle — hidden on touch devices via CSS */}
       {draggable && <div className="s-drag-handle" title="Réordonner">⠿</div>}
 
-      {/* Swatch */}
-      <div style={{ width: 8, height: 8, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
+      {/* Main zone — navigable */}
+      <Link href={`/playlists/${p.id}`} className="s-pl-row-main">
+        {/* Swatch */}
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
 
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <span className="font-fraunces" style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-            {p.name}
-          </span>
-          {!p.enabled && (
-            <span style={{
-              fontSize: 9, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase",
-              color: "var(--ink-dim)", background: "var(--surface2)",
-              border: "1px solid var(--border-strong)", borderRadius: 4, padding: "1px 5px",
-            }}>
-              inactif
+        {/* Info */}
+        <div className="s-pl-row-info">
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span className="font-fraunces" style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+              {p.name}
             </span>
+            {!p.enabled && (
+              <span style={{
+                fontSize: 9, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase",
+                color: "var(--ink-dim)", background: "var(--surface2)",
+                border: "1px solid var(--border-strong)", borderRadius: 4, padding: "1px 5px",
+              }}>
+                inactif
+              </span>
+            )}
+          </div>
+          {p.description && (
+            <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {p.description}
+            </p>
+          )}
+          {learnedAt && (
+            <p style={{ fontSize: 10, color: "var(--sage)", marginTop: 2 }}>Appris le {learnedAt}</p>
           )}
         </div>
-        {p.description && (
-          <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {p.description}
-          </p>
-        )}
-        {learnedAt && (
-          <p style={{ fontSize: 10, color: "var(--sage)", marginTop: 2 }}>Appris le {learnedAt}</p>
-        )}
-      </div>
 
-      {/* Stats */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-        <span className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink-mid)" }}>{p.total}</span>
-        {p.not_synced > 0 && (
-          <span style={{ fontSize: 10, color: "var(--terra)", background: "var(--terra-light)", border: "1px solid var(--terra-border)", padding: "1px 6px", borderRadius: 12 }}>
-            +{p.not_synced}
+        {/* Stats */}
+        <div className="s-pl-row-stats" style={{ flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+            <span className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink-mid)" }}>{p.total}</span>
+            {p.not_synced > 0 && (
+              <span style={{ fontSize: 10, color: "var(--terra)", background: "var(--terra-light)", border: "1px solid var(--terra-border)", padding: "1px 6px", borderRadius: 12 }}>
+                +{p.not_synced}
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: 9, color: "var(--ink-dimmer)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            tracks
           </span>
-        )}
-      </div>
+        </div>
+      </Link>
 
-      {/* Actions */}
-      <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-        <Link href={`/playlists/${p.id}`} className="s-btn" style={{ textDecoration: "none", fontSize: 11, padding: "4px 10px" }}>
-          Voir →
-        </Link>
-        <button className="s-btn" onClick={onToggle} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }} title={p.enabled ? "Désactiver" : "Activer"}>
-          {load === "toggle" ? "…" : p.enabled ? "Off" : "On"}
-        </button>
+      {/* Actions zone — always visible, never hover-only */}
+      <div className="s-pl-row-actions">
         {p.enabled && onLearn && (
           <button className="s-btn" onClick={onLearn} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
             {load === "learn" ? "…" : "Learn"}
@@ -714,11 +902,24 @@ function PlaylistRow({
             Décrire
           </button>
         )}
-        {!p.enabled && onDelete && (
-          <button className="s-btn s-btn-danger" onClick={onDelete} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
-            {load === "delete" ? "…" : "Supprimer"}
-          </button>
-        )}
+        <button
+          className="s-btn"
+          onClick={onToggle}
+          disabled={!!load}
+          style={{ fontSize: 11, padding: "4px 10px" }}
+          title={p.enabled ? "Désactiver" : "Activer"}
+        >
+          {load === "toggle" ? "…" : p.enabled ? "Off" : "On"}
+        </button>
+        <button
+          className="s-btn"
+          onClick={onOpenBottomSheet}
+          style={{ fontSize: 14, padding: "2px 8px", lineHeight: 1.2 }}
+          title="Plus d'options"
+          aria-label="Plus d'options"
+        >
+          ⋯
+        </button>
       </div>
     </div>
   );
