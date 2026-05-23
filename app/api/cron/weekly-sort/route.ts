@@ -1,7 +1,8 @@
+import { after } from "next/server";
 import { resolveGenres } from "@/lib/enrichment";
-import { classify } from "@/lib/classifier/engine";
+import { classifyBatch } from "@/lib/classifier/engine";
 import {
-  addTrackToPlaylist,
+  addTracksToPlaylist,
   getAudioFeaturesBatch,
   getLikedSinceDate,
   type SavedTrackItem,
@@ -19,7 +20,8 @@ import {
   upsertTrack,
   updateLastSyncAt,
 } from "@/lib/supabase/queries";
-import type { ClassifierTrack, PlaylistCentroid } from "@/lib/types";
+import type { ClassificationResult, ClassifierTrack, PlaylistCentroid } from "@/lib/types";
+import type { AudioFeatures } from "@/lib/enrichment/reccobeats";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -50,29 +52,22 @@ export async function GET(request: Request): Promise<Response> {
   const since = new Date(Date.now() - SEVEN_DAYS_MS);
   const users = await getCronEnabledUsers();
 
-  const results: {
-    userId: string;
-    status: "ok" | "error";
-    processed?: number;
-    error?: string;
-  }[] = [];
-
-  for (const user of users) {
-    try {
-      const report = await processUser(user, since);
-      const fullReport = { ran_at: new Date().toISOString(), ...report };
-      await Promise.all([
-        saveLastCronReport(user.id, fullReport),
-        updateLastSyncAt(user.id),
-      ]);
-      results.push({ userId: user.spotify_id, status: "ok", processed: report.imported });
-    } catch (err) {
-      console.error(`[cron] user ${user.spotify_id} failed:`, err);
-      results.push({ userId: user.spotify_id, status: "error", error: String(err) });
+  after(async () => {
+    for (const user of users) {
+      try {
+        const report = await processUser(user, since);
+        const fullReport = { ran_at: new Date().toISOString(), ...report };
+        await Promise.all([
+          saveLastCronReport(user.id, fullReport),
+          updateLastSyncAt(user.id),
+        ]);
+      } catch (err) {
+        console.error(`[cron] user ${user.spotify_id} failed:`, err);
+      }
     }
-  }
+  });
 
-  return Response.json({ total_users: users.length, results });
+  return Response.json({ status: "queued", total_users: users.length });
 }
 
 async function processUser(
@@ -122,21 +117,95 @@ async function processUser(
     .filter((i) => i.track.external_ids?.isrc)
     .map((i) => ({ id: i.track.id, isrc: i.track.external_ids!.isrc! }));
 
-  let featuresMap = new Map<string, Awaited<ReturnType<typeof getAudioFeaturesBatch>>[number]>();
-  try {
-    const featuresList = await getAudioFeaturesBatch(tracksWithIsrc, token);
-    featuresMap = new Map(featuresList.map((f) => [f.id, f]));
+  // Deezer (genres) and ReccoBeats (audio features) run in parallel across all tracks
+  const [featuresResult, genresResult] = await Promise.allSettled([
+    getAudioFeaturesBatch(tracksWithIsrc, token),
+    Promise.all(
+      toProcess.map((item) =>
+        resolveGenres(
+          item.track.external_ids?.isrc,
+          item.track.artists[0]?.name ?? "",
+          item.track.name
+        )
+      )
+    ),
+  ]);
+
+  const featuresMap = new Map<string, AudioFeatures & { id: string }>();
+  if (featuresResult.status === "fulfilled") {
+    for (const f of featuresResult.value) featuresMap.set(f.id, f);
     report.enriched = featuresMap.size;
     report.enrichment_failures = tracksWithIsrc.length - featuresMap.size;
-  } catch {
+  } else {
     report.enrichment_failures = tracksWithIsrc.length;
+    console.error("[cron] audio features batch failed:", featuresResult.reason);
   }
 
-  const affectedPlaylists = new Set<string>();
+  const genresList: string[][] =
+    genresResult.status === "fulfilled"
+      ? genresResult.value
+      : toProcess.map(() => []);
 
-  for (const item of toProcess) {
+  // Batch classify all tracks in a single pass (10 per LLM call)
+  const batchInputs = toProcess.map((item, i) => ({
+    track: {
+      spotify_track_id: item.track.id,
+      spotify_added_at: item.added_at,
+      name: item.track.name,
+      artists: item.track.artists.map((a) => a.name),
+    } as ClassifierTrack,
+    audioFeatures: featuresMap.get(item.track.id) ?? null,
+    genres: genresList[i] ?? [],
+  }));
+
+  let classifyResults: ClassificationResult[];
+  try {
+    classifyResults = await classifyBatch(batchInputs, playlists);
+  } catch (err) {
+    report.errors.push(`classifyBatch failed: ${String(err)}`);
+    return report;
+  }
+
+  // Collect spotify track IDs to push per playlist (one fetch per playlist, not per track)
+  const tracksByPlaylist = new Map<string, string[]>();
+
+  for (let i = 0; i < toProcess.length; i++) {
+    const item = toProcess[i];
+    const result = classifyResults[i];
+
     try {
-      const result = await processTrack(item, user, token, playlists, featuresMap, affectedPlaylists);
+      const { id: trackDbId } = await upsertTrack({
+        user_id: user.id,
+        spotify_track_id: item.track.id,
+        spotify_added_at: item.added_at,
+        name: item.track.name,
+        artists: item.track.artists.map((a) => a.name),
+        audio_features: batchInputs[i].audioFeatures,
+        genres: batchInputs[i].genres,
+        assigned_playlist: result.playlistId,
+        extra_playlists: result.extraPlaylistIds,
+        llm_suggestion: result.llmSuggestion,
+        classified_at: new Date().toISOString(),
+        classification_level: result.level,
+        needs_review: result.needsReview,
+      });
+
+      if (result.playlistId && result.confidence >= 0.60) {
+        const existing = tracksByPlaylist.get(result.playlistId) ?? [];
+        existing.push(item.track.id);
+        tracksByPlaylist.set(result.playlistId, existing);
+      }
+
+      await insertClassificationLog({
+        track_id: trackDbId,
+        user_id: user.id,
+        level_used: result.level,
+        suggested: result.playlistId ?? result.llmSuggestion,
+        confidence: result.confidence,
+        reason: result.reason ?? null,
+        playlists_detail: result.playlistsDetail.length > 0 ? result.playlistsDetail : null,
+      });
+
       if (result.needsReview) report.needs_review++;
       else report.classified_auto++;
       report.imported++;
@@ -145,71 +214,14 @@ async function processUser(
     }
   }
 
-  for (const playlistId of affectedPlaylists) {
+  // One Spotify fetch per playlist instead of one per track
+  for (const [playlistId, spotifyTrackIds] of tracksByPlaylist) {
+    const playlist = playlists.find((p) => p.id === playlistId)!;
+    await addTracksToPlaylist(token, playlist.spotify_playlist_id, spotifyTrackIds);
     await recalculateCentroid(user.id, playlistId);
   }
 
   return report;
-}
-
-async function processTrack(
-  item: SavedTrackItem,
-  user: { id: string; spotify_id: string },
-  token: string,
-  playlists: Awaited<ReturnType<typeof getUserPlaylists>>,
-  featuresMap: Map<string, Awaited<ReturnType<typeof getAudioFeaturesBatch>>[number]>,
-  affectedPlaylists: Set<string>
-): Promise<{ needsReview: boolean }> {
-  const features = featuresMap.get(item.track.id) ?? null;
-
-  const genres = await resolveGenres(
-    item.track.external_ids?.isrc,
-    item.track.artists[0]?.name ?? "",
-    item.track.name
-  );
-
-  const classifierTrack: ClassifierTrack = {
-    spotify_track_id: item.track.id,
-    spotify_added_at: item.added_at,
-    name: item.track.name,
-    artists: item.track.artists.map((a) => a.name),
-  };
-
-  const result = await classify(classifierTrack, features, genres, playlists);
-
-  const { id: trackDbId } = await upsertTrack({
-    user_id: user.id,
-    spotify_track_id: item.track.id,
-    spotify_added_at: item.added_at,
-    name: item.track.name,
-    artists: item.track.artists.map((a) => a.name),
-    audio_features: features,
-    genres,
-    assigned_playlist: result.playlistId,
-    extra_playlists: result.extraPlaylistIds,
-    llm_suggestion: result.llmSuggestion,
-    classified_at: new Date().toISOString(),
-    classification_level: result.level,
-    needs_review: result.needsReview,
-  });
-
-  if (result.playlistId && result.confidence >= 0.60) {
-    const playlist = playlists.find((p) => p.id === result.playlistId)!;
-    await addTrackToPlaylist(token, playlist.spotify_playlist_id, item.track.id);
-    affectedPlaylists.add(result.playlistId);
-  }
-
-  await insertClassificationLog({
-    track_id: trackDbId,
-    user_id: user.id,
-    level_used: result.level,
-    suggested: result.playlistId ?? result.llmSuggestion,
-    confidence: result.confidence,
-    reason: result.reason ?? null,
-    playlists_detail: result.playlistsDetail.length > 0 ? result.playlistsDetail : null,
-  });
-
-  return { needsReview: result.needsReview };
 }
 
 async function recalculateCentroid(userId: string, playlistId: string): Promise<void> {
