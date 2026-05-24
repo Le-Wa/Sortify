@@ -46,6 +46,15 @@ function parseSpotifyId(raw: string): string {
   return m ? m[1] : raw.trim();
 }
 
+// ── Spotify picker item ───────────────────────────────────────────────────────
+
+interface SpotifyPickerItem {
+  id: string;
+  name: string;
+  tracks_total: number;
+  already_linked: boolean;
+}
+
 // ── Genre tag colors ──────────────────────────────────────────────────────────
 
 const GENRE_PALETTES = [
@@ -115,12 +124,18 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
   const [editSaving, setEditSaving] = useState(false);
 
   // New playlist modal transient state
+  const [newMode, setNewMode] = useState<"link" | "create">("link");
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [newSpotifyRaw, setNewSpotifyRaw] = useState("");
   const [newVibe, setNewVibe] = useState("");
   const [newRules, setNewRules] = useState<PlaylistRules | null>(null);
   const [newLoading, setNewLoading] = useState<string | null>(null);
+  // Picker state (link mode)
+  const [newPickerPlaylists, setNewPickerPlaylists] = useState<SpotifyPickerItem[] | null>(null);
+  const [newPickerLoading, setNewPickerLoading] = useState(false);
+  const [newPickerError, setNewPickerError] = useState<string | null>(null);
+  const [newSelectedId, setNewSelectedId] = useState("");
+  const [newManualId, setNewManualId] = useState(""); // fallback when picker fails
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -148,8 +163,9 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
   }
 
   function resetNew() {
-    setNewName(""); setNewDesc(""); setNewSpotifyRaw("");
-    setNewVibe(""); setNewRules(null); setNewLoading(null);
+    setNewMode("link"); setNewName(""); setNewDesc(""); setNewVibe(""); setNewRules(null); setNewLoading(null);
+    setNewPickerPlaylists(null); setNewPickerLoading(false); setNewPickerError(null);
+    setNewSelectedId(""); setNewManualId("");
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────────
@@ -411,6 +427,26 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
     }
   }
 
+  // New playlist: load Spotify picker
+  async function loadPicker() {
+    if (newPickerLoading) return;
+    setNewPickerLoading(true);
+    setNewPickerError(null);
+    try {
+      const res = await fetch("/api/spotify/my-playlists");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as SpotifyPickerItem[];
+      setNewPickerPlaylists(data);
+    } catch (err) {
+      setNewPickerError(err instanceof Error ? err.message : "Erreur chargement");
+    } finally {
+      setNewPickerLoading(false);
+    }
+  }
+
   // New playlist: generate vibe rules
   async function generateVibe() {
     if (!newVibe.trim() || newLoading) return;
@@ -434,28 +470,38 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
   // New playlist: create
   async function createPlaylist() {
-    if (!newName.trim() || !newSpotifyRaw.trim() || newLoading) return;
-    const spotifyId = parseSpotifyId(newSpotifyRaw);
+    if (!newName.trim() || newLoading) return;
+
+    let spotifyPlaylistId: string | undefined;
+    if (newMode === "link") {
+      const raw = newSelectedId || parseSpotifyId(newManualId);
+      if (!raw) return;
+      spotifyPlaylistId = raw;
+    }
+
     setNewLoading("saving");
     try {
+      const body: Record<string, unknown> = { name: newName.trim() };
+      if (newDesc.trim()) body.description = newDesc.trim();
+      if (newRules) body.rules = newRules;
+      if (spotifyPlaylistId) body.spotifyPlaylistId = spotifyPlaylistId;
+
       const res = await fetch("/api/playlists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          spotifyPlaylistId: spotifyId,
-          name: newName.trim(),
-          description: newDesc.trim() || undefined,
-          rules: newRules ?? undefined,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(await res.text());
-      const { id } = (await res.json()) as { id: string };
+      const data = (await res.json()) as { id: string; spotify_playlist_id: string };
 
       setActive((prev) => [
         ...prev,
         {
-          id, spotify_playlist_id: spotifyId, name: newName.trim(),
-          description: newDesc.trim() || null, priority: prev.length,
+          id: data.id,
+          spotify_playlist_id: data.spotify_playlist_id,
+          name: newName.trim(),
+          description: newDesc.trim() || null,
+          priority: prev.length,
           enabled: true, llm_help_text: null, learned_at: null, color: null,
           total: 0, synced: 0, not_synced: 0,
         },
@@ -502,7 +548,10 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 {syncingAll ? "Sync…" : `Sync All (${active.reduce((s, p) => s + p.not_synced, 0)})`}
               </button>
             )}
-            <button className="s-btn s-btn-primary" onClick={() => setModal({ type: "new" })}>
+            <button
+              className="s-btn s-btn-primary"
+              onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
+            >
               + Nouvelle
             </button>
           </div>
@@ -758,16 +807,133 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       {modal?.type === "new" && (
         <div className="s-modal-overlay" onClick={() => { resetNew(); closeModal(); }}>
           <div className="s-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: "var(--ink)" }}>
+            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: "var(--ink)" }}>
               Nouvelle playlist
             </h2>
 
+            {/* Mode tabs */}
+            <div style={{ display: "flex", gap: 3, marginBottom: 20, background: "var(--surface2)", borderRadius: 8, padding: 3 }}>
+              <button
+                onClick={() => { setNewMode("link"); if (!newPickerPlaylists && !newPickerLoading) void loadPicker(); }}
+                style={{
+                  flex: 1, padding: "7px 10px", borderRadius: 6, border: "none",
+                  background: newMode === "link" ? "var(--surface)" : "transparent",
+                  color: newMode === "link" ? "var(--ink)" : "var(--ink-dim)",
+                  fontSize: 12, fontWeight: newMode === "link" ? 600 : 400,
+                  cursor: "pointer", transition: "all 0.15s",
+                  boxShadow: newMode === "link" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                }}
+              >
+                Lier une existante
+              </button>
+              <button
+                onClick={() => { setNewMode("create"); setNewSelectedId(""); }}
+                style={{
+                  flex: 1, padding: "7px 10px", borderRadius: 6, border: "none",
+                  background: newMode === "create" ? "var(--surface)" : "transparent",
+                  color: newMode === "create" ? "var(--ink)" : "var(--ink-dim)",
+                  fontSize: 12, fontWeight: newMode === "create" ? 600 : 400,
+                  cursor: "pointer", transition: "all 0.15s",
+                  boxShadow: newMode === "create" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                }}
+              >
+                Créer dans Spotify
+              </button>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+              {/* ── Link mode: Spotify picker ── */}
+              {newMode === "link" && (
+                <div>
+                  <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+                    Choisir depuis Spotify *
+                  </label>
+
+                  {newPickerLoading && (
+                    <div style={{ padding: "20px 0", textAlign: "center", fontSize: 12, color: "var(--ink-dim)" }}>
+                      Chargement…
+                    </div>
+                  )}
+
+                  {!newPickerLoading && newPickerError && (
+                    <div>
+                      <p style={{ fontSize: 11, color: "var(--terra)", marginBottom: 8 }}>
+                        Erreur : {newPickerError}
+                      </p>
+                      <input
+                        type="text" className="s-input" style={{ width: "100%" }}
+                        value={newManualId}
+                        onChange={(e) => setNewManualId(e.target.value)}
+                        placeholder="https://open.spotify.com/playlist/… ou ID"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
+                  {!newPickerLoading && newPickerPlaylists && (
+                    <div style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
+                      {newPickerPlaylists.length === 0 ? (
+                        <div style={{ padding: "16px 14px", fontSize: 12, color: "var(--ink-dim)", textAlign: "center" }}>
+                          Aucune playlist Spotify trouvée
+                        </div>
+                      ) : (
+                        newPickerPlaylists.map((p, i) => (
+                          <button
+                            key={p.id}
+                            disabled={p.already_linked}
+                            onClick={() => {
+                              if (p.already_linked) return;
+                              setNewSelectedId(p.id);
+                              setNewName(p.name);
+                            }}
+                            style={{
+                              display: "flex", alignItems: "center", justifyContent: "space-between",
+                              width: "100%", padding: "10px 14px", border: "none",
+                              borderBottom: i < newPickerPlaylists.length - 1 ? "1px solid var(--border)" : "none",
+                              background: newSelectedId === p.id ? "var(--terra-light)" : "transparent",
+                              cursor: p.already_linked ? "default" : "pointer",
+                              opacity: p.already_linked ? 0.4 : 1,
+                              textAlign: "left",
+                              transition: "background 0.1s",
+                            }}
+                          >
+                            <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: newSelectedId === p.id ? 600 : 400, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {p.name}
+                              {p.already_linked && (
+                                <span style={{ fontSize: 10, color: "var(--ink-dim)", marginLeft: 7, fontWeight: 400 }}>déjà importée</span>
+                              )}
+                            </span>
+                            <span style={{ fontSize: 11, color: "var(--ink-dim)", flexShrink: 0, marginLeft: 12 }}>
+                              {p.tracks_total}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Create mode: info note ── */}
+              {newMode === "create" && (
+                <p style={{ fontSize: 11, color: "var(--ink-dim)", background: "var(--surface2)", borderRadius: 6, padding: "8px 10px", margin: 0 }}>
+                  Une nouvelle playlist privée sera créée dans votre Spotify.
+                </p>
+              )}
+
+              {/* Common fields */}
               <div>
-                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>Nom *</label>
+                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>
+                  {newMode === "link" ? "Nom Sortify *" : "Nom *"}
+                </label>
                 <input
-                  type="text" autoFocus className="s-input" style={{ width: "100%" }}
-                  value={newName} onChange={(e) => setNewName(e.target.value)}
+                  type="text"
+                  autoFocus={newMode === "create"}
+                  className="s-input"
+                  style={{ width: "100%" }}
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
                   placeholder="Rap Français, Électro Workout…"
                 />
               </div>
@@ -779,20 +945,6 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                   value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Optionnel"
                 />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>
-                  Spotify Playlist *
-                </label>
-                <input
-                  type="text" className="s-input" style={{ width: "100%" }}
-                  value={newSpotifyRaw} onChange={(e) => setNewSpotifyRaw(e.target.value)}
-                  placeholder="https://open.spotify.com/playlist/…"
-                />
-                <p style={{ fontSize: 10, color: "var(--ink-dimmer)", marginTop: 4 }}>
-                  URL ou ID de la playlist Spotify à lier
-                </p>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--ink-dimmer)", fontSize: 10 }}>
@@ -831,7 +983,11 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               <button className="s-btn" onClick={() => { resetNew(); closeModal(); }}>Annuler</button>
               <button
                 className="s-btn s-btn-primary"
-                disabled={!newName.trim() || !newSpotifyRaw.trim() || newLoading === "saving"}
+                disabled={
+                  !newName.trim() ||
+                  (newMode === "link" && !newSelectedId && !newManualId.trim()) ||
+                  newLoading === "saving"
+                }
                 onClick={() => void createPlaylist()}
               >
                 {newLoading === "saving" ? "Création…" : "Créer"}

@@ -249,7 +249,7 @@ export interface SpotifyUserPlaylist {
   name: string;
   description: string | null;
   images: { url: string }[];
-  tracks: { total: number };
+  tracks: { total: number } | null;
 }
 
 /**
@@ -275,6 +275,30 @@ export async function getUserSpotifyPlaylists(
   }
 
   return collected;
+}
+
+/**
+ * Creates a new private playlist in Spotify and returns its id + name.
+ */
+export async function createSpotifyPlaylist(
+  token: string,
+  spotifyUserId: string,
+  name: string,
+  description?: string
+): Promise<{ id: string; name: string }> {
+  const res = await spotifyFetch(
+    `${BASE}/users/${spotifyUserId}/playlists`,
+    token,
+    3,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, description: description ?? "", public: false }),
+    }
+  );
+  await assertOk(res, "createSpotifyPlaylist");
+  const data = (await res.json()) as { id: string; name: string };
+  return { id: data.id, name: data.name };
 }
 
 /**

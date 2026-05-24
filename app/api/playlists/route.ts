@@ -1,5 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { refreshAccessToken } from "@/lib/spotify/token";
+import { createSpotifyPlaylist } from "@/lib/spotify/fetchers";
 import {
   getUserBySpotifyId,
   getUserPlaylists,
@@ -44,17 +46,29 @@ export async function POST(req: Request): Promise<Response> {
     description?: string;
     rules?: PlaylistRules;
   };
-  const { spotifyPlaylistId, name, description, rules } = body;
+  const { name, description, rules } = body;
+  let { spotifyPlaylistId } = body;
 
-  if (!spotifyPlaylistId || !name) {
-    return Response.json(
-      { error: "Missing spotifyPlaylistId or name" },
-      { status: 400 }
-    );
+  if (!name) {
+    return Response.json({ error: "Missing name" }, { status: 400 });
   }
 
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
+
+  // No Spotify playlist linked — create one automatically
+  if (!spotifyPlaylistId) {
+    try {
+      const token = await refreshAccessToken(session.userId);
+      const created = await createSpotifyPlaylist(token, session.userId, name, description);
+      spotifyPlaylistId = created.id;
+    } catch (err) {
+      return Response.json(
+        { error: `Impossible de créer la playlist dans Spotify : ${String(err)}` },
+        { status: 502 }
+      );
+    }
+  }
 
   // Centroid starts null — calculated by the cron after the first tracks are classified
   const playlist = await insertPlaylist({
@@ -66,5 +80,5 @@ export async function POST(req: Request): Promise<Response> {
     rules: rules ?? EMPTY_RULES,
   });
 
-  return Response.json(playlist, { status: 201 });
+  return Response.json({ ...playlist, spotify_playlist_id: spotifyPlaylistId }, { status: 201 });
 }

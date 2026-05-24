@@ -77,7 +77,7 @@ export default function OnboardingClient({ playlists }: Props) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{pl.name}</p>
                   <p className="text-xs text-neutral-500">
-                    {pl.tracks.total} titre{pl.tracks.total !== 1 ? "s" : ""}
+                    {pl.tracks?.total ?? 0} titre{(pl.tracks?.total ?? 0) !== 1 ? "s" : ""}
                   </p>
                 </div>
               </label>
