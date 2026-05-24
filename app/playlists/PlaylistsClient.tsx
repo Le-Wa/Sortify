@@ -434,7 +434,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
         <div className="s-page-header" style={{ marginBottom: 28 }}>
           <div>
             <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Bibliothèque</div>
-            <h1 className="font-fraunces" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
+            <h1 className="font-fraunces s-page-h1" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
               {active.length}{" "}
               <em style={{ fontStyle: "italic", color: "var(--terra)" }}>
                 playlist{active.length !== 1 ? "s" : ""}

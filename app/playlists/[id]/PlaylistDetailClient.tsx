@@ -174,7 +174,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         <div className="s-page-header">
           <div style={{ minWidth: 0 }}>
             <h1
-              className="font-fraunces"
+              className="font-fraunces s-page-h1"
               style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
             >
               {playlist.name}

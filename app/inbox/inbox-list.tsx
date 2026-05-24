@@ -93,10 +93,9 @@ function TrackCard({
   return (
     <li
       style={{
-        background: "var(--surface)",
+        background: isLowConf ? "rgba(200, 122, 82, 0.04)" : "var(--surface)",
         borderRadius: 14,
-        border: `1px solid var(--border)`,
-        borderLeft: isLowConf ? "3px solid var(--terra)" : undefined,
+        border: `1px solid ${isLowConf ? "var(--terra-border)" : "var(--border)"}`,
         padding: "16px 20px",
         boxShadow: "var(--shadow)",
         transition: "all 0.3s",

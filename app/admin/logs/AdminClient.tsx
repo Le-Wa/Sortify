@@ -78,45 +78,104 @@ function formatDate(iso: string): string {
   });
 }
 
+// ── Sub-components ────────────────────────────────────────────────────────────
+
 function LevelBadge({ level }: { level: number }) {
-  const styles: Record<number, string> = {
-    0: "bg-neutral-700 text-neutral-300",
-    1: "bg-blue-900 text-blue-200",
-    2: "bg-purple-900 text-purple-200",
-    3: "bg-emerald-900 text-emerald-200",
+  const styles: Record<number, React.CSSProperties> = {
+    0: { background: "var(--surface3)", color: "var(--ink-mid)", border: "1px solid var(--border-strong)" },
+    1: { background: "var(--sage-light)", color: "var(--sage)", border: "1px solid var(--sage-border)" },
+    2: { background: "var(--amber-light)", color: "var(--amber)", border: "1px solid rgba(200,152,64,0.25)" },
+    3: { background: "var(--terra-light)", color: "var(--terra)", border: "1px solid var(--terra-border)" },
   };
   const labels: Record<number, string> = { 0: "MAN", 1: "L1", 2: "L2", 3: "L3" };
   return (
-    <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-bold ${styles[level] ?? styles[0]}`}>
+    <span
+      style={{
+        display: "inline-block",
+        borderRadius: 6,
+        padding: "1px 7px",
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: "0.04em",
+        ...(styles[level] ?? styles[0]),
+      }}
+    >
       {labels[level] ?? `L${level}`}
     </span>
   );
 }
 
-// ── Section 1 sub-components ──────────────────────────────────────────────────
-
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function AdminStatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-4 text-center">
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-neutral-400">{label}</p>
-      {sub && <p className="mt-0.5 text-xs text-neutral-600">{sub}</p>}
+    <div className="s-stat-card">
+      <p style={{ fontSize: 10, color: "var(--ink-dim)", marginBottom: 6 }}>{label}</p>
+      <p
+        className="font-fraunces"
+        style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-1px", lineHeight: 1, color: "var(--ink)" }}
+      >
+        {value}
+      </p>
+      {sub && <p style={{ fontSize: 10, color: "var(--ink-dim)", marginTop: 4 }}>{sub}</p>}
     </div>
   );
 }
 
-// ── Section 3 — Level bar ─────────────────────────────────────────────────────
-
-function LevelBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+function LevelBar({
+  label,
+  count,
+  total,
+  color,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color: string;
+}) {
   const pctVal = total > 0 ? count / total : 0;
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="w-8 font-mono text-xs text-neutral-400">{label}</span>
-      <div className="flex-1 overflow-hidden rounded-full bg-neutral-800 h-3">
-        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pctVal * 100}%` }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <span
+        style={{
+          width: 28,
+          flexShrink: 0,
+          fontSize: 10,
+          fontWeight: 600,
+          color: "var(--ink-mid)",
+          fontFamily: "var(--font-geist-mono)",
+        }}
+      >
+        {label}
+      </span>
+      <div
+        style={{
+          flex: 1,
+          borderRadius: 4,
+          background: "var(--surface3)",
+          height: 6,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            borderRadius: 4,
+            background: color,
+            transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+            width: `${pctVal * 100}%`,
+          }}
+        />
       </div>
-      <span className="w-16 text-right tabular-nums text-xs text-neutral-400">
-        {count} <span className="text-neutral-600">({Math.round(pctVal * 100)}%)</span>
+      <span
+        style={{
+          width: 72,
+          textAlign: "right",
+          fontSize: 10,
+          color: "var(--ink-dim)",
+          flexShrink: 0,
+        }}
+      >
+        {count}{" "}
+        <span style={{ color: "var(--ink-dimmer)" }}>({Math.round(pctVal * 100)}%)</span>
       </span>
     </div>
   );
@@ -142,21 +201,21 @@ export default function AdminClient() {
 
   const PER_PAGE = 50;
 
-  // Load stats + report + playlists on mount
   useEffect(() => {
     Promise.all([
       fetch("/api/admin/stats").then((r) => r.json()),
       fetch("/api/admin/report").then((r) => r.json()),
       fetch("/api/playlists").then((r) => r.json()),
-    ]).then(([s, rep, pl]) => {
-      setStats(s as AdminStats);
-      setReport(rep as AdminReport);
-      setPlaylists(pl as Playlist[]);
-      setLoadingStats(false);
-    }).catch(() => setLoadingStats(false));
+    ])
+      .then(([s, rep, pl]) => {
+        setStats(s as AdminStats);
+        setReport(rep as AdminReport);
+        setPlaylists(pl as Playlist[]);
+        setLoadingStats(false);
+      })
+      .catch(() => setLoadingStats(false));
   }, []);
 
-  // Fetch logs on mount and filter change
   useEffect(() => {
     let cancelled = false;
     setLoadingLogs(true);
@@ -170,8 +229,12 @@ export default function AdminClient() {
         setLogPage(1);
       })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setLoadingLogs(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setLoadingLogs(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [filterPlaylistId, filterLevel, filterCorrectionsOnly, filterFrom, filterTo]);
 
   function buildLogParams(page: number): URLSearchParams {
@@ -193,72 +256,130 @@ export default function AdminClient() {
   }
 
   const hasMoreLogs = logTotal > logPage * PER_PAGE;
+  const hasFilters = !!(filterPlaylistId || filterLevel || filterCorrectionsOnly || filterFrom || filterTo);
 
   const levelTotal = stats
     ? (stats.by_level["1"] ?? 0) + (stats.by_level["2"] ?? 0) + (stats.by_level["3"] ?? 0)
     : 0;
   const l3Pct = levelTotal > 0 ? (stats?.by_level["3"] ?? 0) / levelTotal : 0;
 
+  const skeletonStyle: React.CSSProperties = {
+    borderRadius: 14,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    animation: "pulse 1.5s ease-in-out infinite",
+  };
+
   return (
-    <div className="space-y-10">
-      <h1 className="text-2xl font-bold">Admin — Qualité du classifier</h1>
+    <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+
+      {/* Page title */}
+      <div>
+        <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Admin</div>
+        <h1
+          className="font-fraunces s-page-h1"
+          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+        >
+          Qualité du{" "}
+          <em style={{ fontStyle: "italic", color: "var(--terra)" }}>classifier</em>
+        </h1>
+      </div>
 
       {/* ── Section 1 — Stats globales ──────────────────────────────────────── */}
-      <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Stats globales
-        </h2>
+      <section>
+        <div className="s-section-title">Stats globales</div>
 
-        {/* Cron overdue alert */}
         {report?.cron_overdue && (
-          <div className="rounded-lg border border-yellow-800 bg-yellow-950 px-4 py-3 text-sm text-yellow-300">
-            ⚠️ Cron non déclenché depuis plus de 8 jours
+          <div
+            style={{
+              borderRadius: 10,
+              border: "1px solid rgba(200,152,64,0.3)",
+              background: "rgba(200,152,64,0.08)",
+              padding: "10px 14px",
+              fontSize: 12,
+              color: "var(--amber)",
+              marginBottom: 16,
+            }}
+          >
+            Cron non déclenché depuis plus de 8 jours
             {report.last_cron_at && (
-              <span className="ml-2 text-yellow-600">
-                (dernier : {formatDate(report.last_cron_at)})
+              <span style={{ color: "rgba(200,152,64,0.6)", marginLeft: 8 }}>
+                — dernier : {formatDate(report.last_cron_at)}
               </span>
             )}
           </div>
         )}
 
         {loadingStats ? (
-          <div className="h-20 animate-pulse rounded-xl bg-neutral-900" />
+          <div className="s-stats-grid">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} style={{ ...skeletonStyle, height: 88 }} />
+            ))}
+          </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <StatCard label="Classifiés auto" value={stats?.auto_classified ?? 0} />
-              <StatCard label="Taux needs_review" value={pct(stats?.needs_review_rate ?? 0)} />
-              <StatCard label="Corrections" value={stats?.corrections ?? 0} />
-              <StatCard label="Taux correction" value={pct(stats?.correction_rate ?? 0)} />
+            <div className="s-stats-grid">
+              <AdminStatCard label="Classifiés auto" value={stats?.auto_classified ?? 0} />
+              <AdminStatCard label="Taux needs_review" value={pct(stats?.needs_review_rate ?? 0)} />
+              <AdminStatCard label="Corrections" value={stats?.corrections ?? 0} />
+              <AdminStatCard label="Taux correction" value={pct(stats?.correction_rate ?? 0)} />
             </div>
 
-            {/* Last cron run */}
             {report?.last_run && (
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-                <p className="mb-3 text-xs font-medium text-neutral-400">
-                  Dernier cron{" "}
+              <div
+                style={{
+                  marginTop: 16,
+                  background: "var(--surface)",
+                  borderRadius: 14,
+                  border: "1px solid var(--border)",
+                  padding: "16px 20px",
+                  boxShadow: "var(--shadow)",
+                }}
+              >
+                <p style={{ fontSize: 11, color: "var(--ink-dim)", marginBottom: 14 }}>
+                  Dernier cron
                   {report.last_run.ran_at && (
-                    <span className="text-neutral-600">— {formatDate(report.last_run.ran_at)}</span>
+                    <span style={{ color: "var(--ink-dimmer)", marginLeft: 6 }}>
+                      — {formatDate(report.last_run.ran_at)}
+                    </span>
                   )}
                 </p>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  {[
-                    ["Importés", report.last_run.imported],
-                    ["Déjà existants", report.last_run.already_existing],
-                    ["Enrichis", report.last_run.enriched],
-                    ["Échecs enrichissement", report.last_run.enrichment_failures],
-                    ["Classifiés auto", report.last_run.classified_auto],
-                    ["Needs review", report.last_run.needs_review],
-                  ].map(([label, val]) => (
-                    <div key={label as string} className="text-center">
-                      <p className="text-lg font-bold tabular-nums">{val}</p>
-                      <p className="text-xs text-neutral-500">{label}</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+                  {(
+                    [
+                      ["Importés", report.last_run.imported],
+                      ["Déjà existants", report.last_run.already_existing],
+                      ["Enrichis", report.last_run.enriched],
+                      ["Échecs enrichissement", report.last_run.enrichment_failures],
+                      ["Classifiés auto", report.last_run.classified_auto],
+                      ["Needs review", report.last_run.needs_review],
+                    ] as [string, number][]
+                  ).map(([label, val]) => (
+                    <div key={label} style={{ textAlign: "center" }}>
+                      <p
+                        className="font-fraunces"
+                        style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", lineHeight: 1 }}
+                      >
+                        {val}
+                      </p>
+                      <p style={{ fontSize: 10, color: "var(--ink-dim)", marginTop: 4 }}>{label}</p>
                     </div>
                   ))}
                 </div>
                 {report.last_run.errors.length > 0 && (
-                  <div className="mt-3 rounded-lg bg-red-950 px-3 py-2 text-xs text-red-400">
-                    {report.last_run.errors.length} erreur(s) : {report.last_run.errors.slice(0, 3).join(" · ")}
+                  <div
+                    style={{
+                      marginTop: 14,
+                      borderRadius: 8,
+                      background: "var(--terra-light)",
+                      border: "1px solid var(--terra-border)",
+                      padding: "8px 12px",
+                      fontSize: 11,
+                      color: "var(--terra)",
+                    }}
+                  >
+                    {report.last_run.errors.length} erreur(s) :{" "}
+                    {report.last_run.errors.slice(0, 3).join(" · ")}
                     {report.last_run.errors.length > 3 && " …"}
                   </div>
                 )}
@@ -269,46 +390,53 @@ export default function AdminClient() {
       </section>
 
       {/* ── Section 2 — Qualité par playlist ─────────────────────────────────── */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Qualité par playlist
-        </h2>
+      <section>
+        <div className="s-section-title">Qualité par playlist</div>
         {loadingStats ? (
-          <div className="h-40 animate-pulse rounded-xl bg-neutral-900" />
+          <div style={{ ...skeletonStyle, height: 160 }} />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-neutral-800">
-            <table className="w-full text-sm">
-              <thead className="border-b border-neutral-800 text-left text-xs text-neutral-600">
+          <div className="s-table-wrap">
+            <table className="s-table" style={{ width: "100%" }}>
+              <thead>
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Playlist</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Classifiés</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Conf. moy.</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Corrections</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Taux</th>
+                  <th>Playlist</th>
+                  <th style={{ textAlign: "right" }}>Classifiés</th>
+                  <th style={{ textAlign: "right" }}>Conf. moy.</th>
+                  <th style={{ textAlign: "right" }}>Corrections</th>
+                  <th style={{ textAlign: "right" }}>Taux</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-800">
+              <tbody>
                 {(stats?.by_playlist ?? []).map((row) => (
-                  <tr key={row.playlist} className="bg-neutral-900">
-                    <td className="px-4 py-3 font-medium">{row.playlist}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
-                      {row.classified}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-neutral-400">
+                  <tr key={row.playlist}>
+                    <td style={{ fontWeight: 500 }}>{row.playlist}</td>
+                    <td style={{ textAlign: "right", color: "var(--ink-mid)" }}>{row.classified}</td>
+                    <td style={{ textAlign: "right", color: "var(--ink-mid)" }}>
                       {row.avg_confidence !== null
                         ? `${Math.round(row.avg_confidence * 100)} %`
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-neutral-400">
-                      {row.corrections}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    <td style={{ textAlign: "right", color: "var(--ink-mid)" }}>{row.corrections}</td>
+                    <td style={{ textAlign: "right" }}>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          row.correction_rate > 0.05
-                            ? "bg-red-900 text-red-300"
-                            : "bg-neutral-800 text-neutral-400"
-                        }`}
+                        style={{
+                          display: "inline-block",
+                          borderRadius: 20,
+                          padding: "2px 8px",
+                          fontSize: 10,
+                          fontWeight: 500,
+                          ...(row.correction_rate > 0.05
+                            ? {
+                                background: "var(--terra-light)",
+                                color: "var(--terra)",
+                                border: "1px solid var(--terra-border)",
+                              }
+                            : {
+                                background: "var(--surface2)",
+                                color: "var(--ink-dim)",
+                                border: "1px solid var(--border-strong)",
+                              }),
+                        }}
                       >
                         {pct(row.correction_rate)}
                       </span>
@@ -322,20 +450,39 @@ export default function AdminClient() {
       </section>
 
       {/* ── Section 3 — Distribution par level ──────────────────────────────── */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Distribution par level
-        </h2>
+      <section>
+        <div className="s-section-title">Distribution par level</div>
         {l3Pct > 0.3 && (
-          <p className="rounded-lg border border-yellow-800 bg-yellow-950 px-3 py-2 text-xs text-yellow-300">
-            ⚠️ L3 représente {Math.round(l3Pct * 100)}% des tracks — revoir les règles L1/L2
-          </p>
+          <div
+            style={{
+              marginBottom: 14,
+              borderRadius: 10,
+              border: "1px solid rgba(200,152,64,0.3)",
+              background: "rgba(200,152,64,0.08)",
+              padding: "8px 14px",
+              fontSize: 11,
+              color: "var(--amber)",
+            }}
+          >
+            L3 représente {Math.round(l3Pct * 100)}% des tracks — revoir les règles L1/L2
+          </div>
         )}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5 space-y-3">
+        <div
+          style={{
+            background: "var(--surface)",
+            borderRadius: 14,
+            border: "1px solid var(--border)",
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            boxShadow: "var(--shadow)",
+          }}
+        >
           {[
-            { key: "1", label: "L1", color: "bg-blue-700" },
-            { key: "2", label: "L2", color: "bg-purple-700" },
-            { key: "3", label: "L3", color: "bg-emerald-700" },
+            { key: "1", label: "L1", color: "var(--sage)" },
+            { key: "2", label: "L2", color: "var(--amber)" },
+            { key: "3", label: "L3", color: "var(--terra)" },
           ].map(({ key, label, color }) => (
             <LevelBar
               key={key}
@@ -348,18 +495,24 @@ export default function AdminClient() {
         </div>
       </section>
 
-      {/* ── Section 4 — Log table ────────────────────────────────────────────── */}
-      <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Logs de classification
-        </h2>
+      {/* ── Section 4 — Logs ────────────────────────────────────────────────── */}
+      <section>
+        <div className="s-section-title">Logs de classification</div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 14,
+          }}
+        >
           <select
             value={filterPlaylistId}
             onChange={(e) => setFilterPlaylistId(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-neutral-300"
+            className="s-input"
           >
             <option value="">Toutes les playlists</option>
             {playlists.map((p) => (
@@ -372,7 +525,7 @@ export default function AdminClient() {
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-neutral-300"
+            className="s-input"
           >
             <option value="">Tous les niveaux</option>
             <option value="1">L1 — Règles</option>
@@ -380,12 +533,21 @@ export default function AdminClient() {
             <option value="3">L3 — LLM</option>
           </select>
 
-          <label className="flex items-center gap-2 text-sm text-neutral-400">
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              color: "var(--ink-mid)",
+              cursor: "pointer",
+            }}
+          >
             <input
               type="checkbox"
               checked={filterCorrectionsOnly}
               onChange={(e) => setFilterCorrectionsOnly(e.target.checked)}
-              className="accent-neutral-400"
+              style={{ accentColor: "var(--terra)" }}
             />
             Corrections seulement
           </label>
@@ -394,17 +556,17 @@ export default function AdminClient() {
             type="date"
             value={filterFrom}
             onChange={(e) => setFilterFrom(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-300"
+            className="s-input"
           />
-          <span className="text-neutral-600">→</span>
+          <span style={{ fontSize: 11, color: "var(--ink-dimmer)" }}>→</span>
           <input
             type="date"
             value={filterTo}
             onChange={(e) => setFilterTo(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-300"
+            className="s-input"
           />
 
-          {(filterPlaylistId || filterLevel || filterCorrectionsOnly || filterFrom || filterTo) && (
+          {hasFilters && (
             <button
               onClick={() => {
                 setFilterPlaylistId("");
@@ -413,92 +575,133 @@ export default function AdminClient() {
                 setFilterFrom("");
                 setFilterTo("");
               }}
-              className="text-xs text-neutral-500 hover:text-white"
+              className="s-btn"
             >
               Réinitialiser
             </button>
           )}
         </div>
 
-        <p className="text-xs text-neutral-600">
+        <p style={{ fontSize: 11, color: "var(--ink-dim)", marginBottom: 10 }}>
           {loadingLogs ? "Chargement…" : `${logTotal} entrée(s)`}
         </p>
 
         {/* Table */}
-        <div className="overflow-x-auto rounded-xl border border-neutral-800">
+        <div className="s-table-wrap">
           {logs.length === 0 && !loadingLogs ? (
-            <p className="px-5 py-10 text-center text-sm text-neutral-500">Aucun log trouvé</p>
+            <div
+              style={{
+                background: "var(--surface)",
+                borderRadius: 14,
+                border: "1px solid var(--border)",
+                padding: "40px 0",
+                textAlign: "center",
+                fontSize: 13,
+                color: "var(--ink-mid)",
+              }}
+            >
+              Aucun log trouvé
+            </div>
           ) : (
-            <table className="w-full min-w-[800px] text-sm">
-              <thead className="border-b border-neutral-800 text-left text-xs text-neutral-600">
+            <table className="s-table" style={{ minWidth: 800 }}>
+              <thead>
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Date</th>
-                  <th className="px-4 py-2.5 font-medium">Track</th>
-                  <th className="px-4 py-2.5 font-medium">Enrichi</th>
-                  <th className="px-4 py-2.5 font-medium">Niv.</th>
-                  <th className="px-4 py-2.5 font-medium">Suggestion</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Conf.</th>
-                  <th className="px-4 py-2.5 font-medium">Raison</th>
-                  <th className="px-4 py-2.5 font-medium">Correction</th>
+                  <th>Date</th>
+                  <th>Track</th>
+                  <th>Enrichi</th>
+                  <th>Niv.</th>
+                  <th>Suggestion</th>
+                  <th style={{ textAlign: "right" }}>Conf.</th>
+                  <th>Raison</th>
+                  <th>Correction</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-800">
+              <tbody>
                 {logs.map((row) => (
-                  <tr key={row.id} className="bg-neutral-900 hover:bg-neutral-800/50">
-                    <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">
+                  <tr key={row.id}>
+                    <td style={{ whiteSpace: "nowrap", color: "var(--ink-dim)", fontSize: 11 }}>
                       {formatDate(row.created_at)}
                     </td>
-                    <td className="max-w-[180px] px-4 py-3">
-                      <p className="truncate font-medium text-white">
+                    <td style={{ maxWidth: 180 }}>
+                      <p
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontWeight: 500,
+                        }}
+                      >
                         {row.artist_name && (
-                          <span className="font-normal text-neutral-400">{row.artist_name} — </span>
+                          <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>
+                            {row.artist_name} —{" "}
+                          </span>
                         )}
                         {row.track_name ?? "—"}
                       </p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       {row.enriched ? (
-                        <span className="text-xs font-medium text-green-500">✓</span>
+                        <span style={{ fontSize: 12, color: "var(--sage)" }}>✓</span>
                       ) : (
-                        <span className="text-xs text-neutral-600">—</span>
+                        <span style={{ fontSize: 12, color: "var(--ink-dimmer)" }}>—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <LevelBadge level={row.level_used} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       {row.playlists_detail?.length ? (
-                        <div className="space-y-0.5">
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                           {row.playlists_detail.map((p) => (
-                            <div key={p.id} className="flex items-center gap-2 text-xs">
-                              <span className={p.confidence >= 0.6 ? "text-white" : "text-neutral-500"}>
+                            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+                              <span
+                                style={{
+                                  color: p.confidence >= 0.6 ? "var(--ink)" : "var(--ink-dim)",
+                                }}
+                              >
                                 {p.name}
                               </span>
-                              <span className={`tabular-nums font-medium ${
-                                p.confidence >= 0.6 ? "text-emerald-400" : p.confidence >= 0.3 ? "text-yellow-500" : "text-red-500"
-                              }`}>
+                              <span
+                                style={{
+                                  fontWeight: 500,
+                                  color:
+                                    p.confidence >= 0.6
+                                      ? "var(--sage)"
+                                      : p.confidence >= 0.3
+                                        ? "var(--amber)"
+                                        : "var(--terra)",
+                                }}
+                              >
                                 {Math.round(p.confidence * 100)}%
                               </span>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-neutral-300">{row.suggested ?? "—"}</span>
+                        <span style={{ color: "var(--ink-mid)" }}>{row.suggested ?? "—"}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-neutral-400">
+                    <td style={{ textAlign: "right", color: "var(--ink-mid)" }}>
                       {row.playlists_detail?.length ? "—" : `${Math.round(row.confidence * 100)} %`}
                     </td>
-                    <td className="max-w-[200px] px-4 py-3">
+                    <td style={{ maxWidth: 200 }}>
                       <p
-                        className="truncate text-xs text-neutral-500"
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontSize: 11,
+                          color: "var(--ink-dim)",
+                        }}
                         title={row.reason ?? ""}
                       >
                         {row.reason ?? "—"}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-xs text-amber-400">
-                      {row.corrected_to ?? <span className="text-neutral-700">—</span>}
+                    <td style={{ color: "var(--amber)", fontSize: 11 }}>
+                      {row.corrected_to ?? (
+                        <span style={{ color: "var(--ink-dimmer)" }}>—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -510,7 +713,8 @@ export default function AdminClient() {
         {hasMoreLogs && (
           <button
             onClick={loadMoreLogs}
-            className="w-full rounded-lg border border-neutral-700 py-2.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-800"
+            className="s-btn"
+            style={{ width: "100%", marginTop: 14, padding: "10px 0", justifyContent: "center" }}
           >
             Charger plus
           </button>

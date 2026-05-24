@@ -8,7 +8,7 @@ export default async function AdminLogsPage() {
   if (!session?.userId) redirect("/login");
 
   return (
-    <main style={{ padding: "36px 36px 60px", maxWidth: 1100, position: "relative", zIndex: 10 }}>
+    <main className="s-page-wide">
       <AdminClient />
     </main>
   );
