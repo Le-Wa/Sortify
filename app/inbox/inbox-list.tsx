@@ -102,12 +102,11 @@ function TrackCard({
   onArchive: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
   const hasSuggestion = !!track.llm_suggestion_id && !!track.suggested_playlist;
   const borderColor = hasSuggestion ? "rgba(200,147,90,0.35)" : "rgba(255,255,255,0.07)";
 
-  const player = previewOpen ? (
+  const player = (
     <iframe
       title="spotify-embed"
       src={`https://open.spotify.com/embed/track/${track.spotify_track_id}?utm_source=sortify`}
@@ -118,27 +117,6 @@ function TrackCard({
       allow="encrypted-media; clipboard-write"
       style={{ borderRadius: 12, display: "block", colorScheme: "normal" }}
     />
-  ) : (
-    <button
-      type="button"
-      onClick={() => setPreviewOpen(true)}
-      className="s-btn"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        background: "var(--surface2)",
-        borderColor: "var(--border-strong)",
-        color: "var(--ink-mid)",
-        height: 36,
-        padding: "0 14px",
-      }}
-    >
-      <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 11, height: 11 }}>
-        <path d="M3 2.5v11l10-5.5-10-5.5z" />
-      </svg>
-      Preview
-    </button>
   );
 
   return (
