@@ -35,6 +35,18 @@ interface ApiResponse {
 
 const PER_PAGE = 20;
 
+const GENRE_PALETTES = [
+  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
+  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
+  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
+  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
+];
+function genrePalette(genre: string) {
+  let h = 0;
+  for (const c of genre) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return GENRE_PALETTES[h % GENRE_PALETTES.length];
+}
+
 function FeatureBar({ label, value }: { label: string; value: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
@@ -152,21 +164,24 @@ function TrackCard({
       {/* Genres + source */}
       {(track.genres.length > 0 || track.enrichment_source) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-          {track.genres.slice(0, 4).map((g) => (
-            <span
-              key={g}
-              style={{
-                background: "var(--surface2)",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-                padding: "2px 8px",
-                fontSize: 10,
-                color: "var(--ink-mid)",
-              }}
-            >
-              {g}
-            </span>
-          ))}
+          {track.genres.slice(0, 4).map((g) => {
+            const pal = genrePalette(g);
+            return (
+              <span
+                key={g}
+                style={{
+                  background: pal.bg,
+                  border: `1px solid ${pal.border}`,
+                  borderRadius: 6,
+                  padding: "2px 8px",
+                  fontSize: 10,
+                  color: pal.color,
+                }}
+              >
+                {g}
+              </span>
+            );
+          })}
           {track.enrichment_source && (
             <span
               style={{

@@ -152,6 +152,11 @@ body::after {
   transition: background 0.15s, color 0.15s;
   background: transparent;
   color: var(--ink-mid);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: inherit;
+  line-height: 1.2;
 }
 .s-btn:hover {
   background: var(--surface2);
@@ -160,6 +165,10 @@ body::after {
 .s-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.s-btn-sm {
+  font-size: 11px;
+  padding: 4px 10px;
 }
 .s-btn-primary {
   background: var(--terra-light);
@@ -570,27 +579,52 @@ body::after {
   flex-wrap: nowrap;
 }
 
+/* Mobile-only menu button (hidden on desktop) */
+.s-pl-menu-btn {
+  display: none;
+}
+
 @media (max-width: 639px) {
+  /* Restore single-row layout — no stacked action bar */
   .s-pl-row {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 0 0 14px;
     gap: 0;
-    padding: 0;
   }
 
   .s-pl-row-main {
-    padding: 12px 14px;
+    flex: 1 1 0;
+    padding: 14px 10px 14px 0;
+    overflow: hidden;
   }
 
+  /* Hide desktop action bar */
   .s-pl-row-actions {
-    padding: 8px 14px 12px;
-    border-top: 1px solid var(--border);
-    min-height: 44px;
-    justify-content: space-between;
+    display: none;
   }
 
   .s-drag-handle {
     display: none;
+  }
+
+  /* Show mobile-only ⋯ button with proper 44px touch target */
+  .s-pl-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+    padding: 0;
+    border-color: transparent;
+    border-radius: 10px;
+    color: var(--ink-dim);
+  }
+  .s-pl-menu-btn:hover {
+    background: var(--surface2);
+    border-color: transparent;
   }
 }
 

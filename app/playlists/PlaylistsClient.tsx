@@ -46,6 +46,21 @@ function parseSpotifyId(raw: string): string {
   return m ? m[1] : raw.trim();
 }
 
+// ── Genre tag colors ──────────────────────────────────────────────────────────
+
+const GENRE_PALETTES = [
+  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
+  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
+  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
+  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
+];
+
+function genrePalette(genre: string) {
+  let h = 0;
+  for (const c of genre) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return GENRE_PALETTES[h % GENRE_PALETTES.length];
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function PlaylistsClient({ playlists: initial }: { playlists: PlaylistData[] }) {
@@ -733,6 +748,39 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
             <div className="s-bs-handle" />
             <p className="s-bs-title">{bsPlaylist.name}</p>
 
+            {/* Primary actions */}
+            {bsPlaylist.enabled && (
+              <button
+                className="s-bs-item"
+                disabled={cardLoading[bsPlaylist.id] === "learn"}
+                onClick={() => { setBottomSheet(null); void learn(bsPlaylist); }}
+              >
+                {cardLoading[bsPlaylist.id] === "learn" ? "Analyse…" : "Analyser"}
+              </button>
+            )}
+            {bsPlaylist.enabled && (
+              <button
+                className="s-bs-item"
+                onClick={() => {
+                  setBottomSheet(null);
+                  setFromDescText(bsPlaylist.llm_help_text ?? "");
+                  setFromDescError(null);
+                  setModal({ type: "from-desc", playlistId: bsPlaylist.id, playlistName: bsPlaylist.name });
+                }}
+              >
+                Décrire la vibe
+              </button>
+            )}
+            <button
+              className="s-bs-item"
+              disabled={cardLoading[bsPlaylist.id] === "toggle"}
+              onClick={() => { setBottomSheet(null); void toggle(bsPlaylist); }}
+            >
+              {cardLoading[bsPlaylist.id] === "toggle" ? "…" : bsPlaylist.enabled ? "Désactiver" : "Activer"}
+            </button>
+
+            <div className="s-bs-sep" />
+
             {/* Reorder — active playlists */}
             {bsPlaylist.enabled && (bsIdx > 0 || bsIdx < active.length - 1) && (
               <>
@@ -870,14 +918,14 @@ function PlaylistRow({
             </p>
           )}
           {learnedAt && (
-            <p style={{ fontSize: 10, color: "var(--sage)", marginTop: 2 }}>Appris le {learnedAt}</p>
+            <p style={{ fontSize: 10, color: swatch, opacity: 0.8, marginTop: 2 }}>Appris le {learnedAt}</p>
           )}
         </div>
 
         {/* Stats */}
         <div className="s-pl-row-stats" style={{ flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink-mid)" }}>{p.total}</span>
+            <span className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, color: swatch }}>{p.total}</span>
             {p.not_synced > 0 && (
               <span style={{ fontSize: 10, color: "var(--terra)", background: "var(--terra-light)", border: "1px solid var(--terra-border)", padding: "1px 6px", borderRadius: 12 }}>
                 +{p.not_synced}
@@ -890,37 +938,45 @@ function PlaylistRow({
         </div>
       </Link>
 
-      {/* Actions zone — always visible, never hover-only */}
+      {/* Actions zone — desktop only */}
       <div className="s-pl-row-actions">
         {p.enabled && onLearn && (
-          <button className="s-btn" onClick={onLearn} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
+          <button className="s-btn s-btn-sm" onClick={onLearn} disabled={!!load}>
             {load === "learn" ? "…" : "Learn"}
           </button>
         )}
         {p.enabled && onFromDesc && (
-          <button className="s-btn" onClick={onFromDesc} disabled={!!load} style={{ fontSize: 11, padding: "4px 10px" }}>
+          <button className="s-btn s-btn-sm" onClick={onFromDesc} disabled={!!load}>
             Décrire
           </button>
         )}
         <button
-          className="s-btn"
+          className="s-btn s-btn-sm"
           onClick={onToggle}
           disabled={!!load}
-          style={{ fontSize: 11, padding: "4px 10px" }}
           title={p.enabled ? "Désactiver" : "Activer"}
         >
           {load === "toggle" ? "…" : p.enabled ? "Off" : "On"}
         </button>
         <button
-          className="s-btn"
+          className="s-btn s-btn-sm"
           onClick={onOpenBottomSheet}
-          style={{ fontSize: 14, padding: "2px 8px", lineHeight: 1.2 }}
           title="Plus d'options"
           aria-label="Plus d'options"
         >
           ⋯
         </button>
       </div>
+
+      {/* Mobile-only menu button */}
+      <button
+        className="s-pl-menu-btn s-btn"
+        onClick={onOpenBottomSheet}
+        title="Options"
+        aria-label="Options"
+      >
+        ⋯
+      </button>
     </div>
   );
 }
