@@ -27,3 +27,34 @@ Compagnon Spotify qui trie automatiquement les liked songs dans des playlists pe
 2. Schéma Supabase + migrations
 3. Moteur de classification 3 niveaux
 4. Cron hebdomadaire
+
+## Focus actuel — Design & UX
+
+Le moteur tourne. La phase active est le design et l'UX.
+
+### Pages existantes
+- `/home` — nouvelle page d'accueil centrée sur les playlists (à comparer avec `/dashboard`)
+- `/dashboard` — ancien dashboard avec KPIs, à garder pour comparaison
+- `/playlists` — gestion des playlists (reorder, create, toggle)
+- `/playlists/[id]` — détail avec actions (learn, décrire, sync, toggle, recompute)
+- `/inbox` — review des tracks un par un
+- `/archive` — tracks archivés
+- `/admin/logs` — logs de classification
+
+### Design system
+- Tokens dans `:root` de `globals.css` — modifier là en priorité
+- Classes utilitaires : `s-page`, `s-btn`, `s-btn-sm`, `s-card`, `s-section-title`, etc.
+- Palette swatch playlists : 8 couleurs, assignées par hash de l'ID
+- Genre tags : 24 couleurs, assignées par hash du nom de genre
+- Bottom sheet (`s-bs-*`) : pattern mobile pour toutes les actions secondaires
+
+### Branches design actives
+- `design/variant-warm` — palette plus chaude, touches subtiles
+- `design/impeccable-warm` — version bolder, terra dominant, h1 44px
+
+### Principes UX retenus
+- Mobile-first, bottom sheet pour les actions secondaires (pas de hover-only)
+- Pas de side-stripe (`border-left` coloré) — utiliser tint de fond + border colorée
+- Swatch couleur : sur la barre top des cards, le compteur de tracks, la date "Appris le"
+- Titre de page en blanc (`var(--ink)`), barre courte swatch au-dessus
+- Breadcrumbs en `var(--ink-dim)` neutre
