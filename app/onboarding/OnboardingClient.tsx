@@ -342,7 +342,7 @@ export default function OnboardingClient({ userName }: Props) {
             <button
               className="s-btn s-btn-primary"
               onClick={next}
-              style={{ alignSelf: "stretch", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
+              style={{ alignSelf: "stretch", justifyContent: "center", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
             >
               Commencer
             </button>
@@ -407,7 +407,7 @@ export default function OnboardingClient({ userName }: Props) {
               <button
                 className="s-btn s-btn-primary"
                 onClick={next}
-                style={{ alignSelf: "stretch", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
+                style={{ alignSelf: "stretch", justifyContent: "center", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
               >
                 Continuer
               </button>
@@ -572,7 +572,7 @@ export default function OnboardingClient({ userName }: Props) {
                 className="s-btn s-btn-primary"
                 onClick={next}
                 disabled={linked.length === 0}
-                style={{ alignSelf: "stretch", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
+                style={{ alignSelf: "stretch", justifyContent: "center", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
               >
                 Continuer
               </button>
@@ -680,7 +680,7 @@ export default function OnboardingClient({ userName }: Props) {
               <button
                 className="s-btn s-btn-primary"
                 onClick={next}
-                style={{ alignSelf: "stretch", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
+                style={{ alignSelf: "stretch", justifyContent: "center", padding: "12px 0", fontSize: 14, fontWeight: 500 }}
               >
                 Continuer
               </button>
@@ -746,7 +746,7 @@ export default function OnboardingClient({ userName }: Props) {
                   className="s-btn s-btn-primary"
                   onClick={() => finish(true)}
                   disabled={finishing}
-                  style={{ alignSelf: "stretch", padding: "13px 0", fontSize: 14, fontWeight: 500 }}
+                  style={{ alignSelf: "stretch", justifyContent: "center", padding: "13px 0", fontSize: 14, fontWeight: 500 }}
                 >
                   {finishing ? "Lancement…" : "Lancer le premier tri"}
                 </button>
@@ -754,6 +754,10 @@ export default function OnboardingClient({ userName }: Props) {
                   onClick={() => finish(false)}
                   disabled={finishing}
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
                     background: "none",
                     border: "none",
                     color: "var(--ink-dim)",
@@ -761,7 +765,6 @@ export default function OnboardingClient({ userName }: Props) {
                     cursor: "pointer",
                     fontFamily: "inherit",
                     padding: "6px 0",
-                    textAlign: "center",
                   }}
                 >
                   Passer pour l&apos;instant
