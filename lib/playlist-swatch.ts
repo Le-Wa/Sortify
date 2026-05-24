@@ -1,6 +1,12 @@
 export const SWATCH_COLORS = [
-  "#c89840", "#8878d0", "#6a9070", "#c87a52",
-  "#a06848", "#508860", "#7878b0", "#c08060",
+  "#c8935a", // Ambre
+  "#c4a440", // Moutarde
+  "#b85c48", // Brique
+  "#c4758a", // Rose poudré
+  "#7f77dd", // Lavande
+  "#4e8fa8", // Ardoise
+  "#7a9e5a", // Olive
+  "#3d7a70", // Pétrole
 ];
 
 export function playlistSwatch(id: string, color?: string | null): string {
