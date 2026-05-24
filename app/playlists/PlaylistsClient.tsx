@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import type { PlaylistRules } from "@/lib/types";
 
@@ -40,6 +40,13 @@ type ModalState =
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 import { playlistSwatch, SWATCH_COLORS } from "@/lib/playlist-swatch";
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 function parseSpotifyId(raw: string): string {
   const m = raw.match(/playlist\/([a-zA-Z0-9]+)/);
@@ -573,6 +580,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 isDragging={dragId === p.id}
                 isOver={overId === p.id && dragId !== p.id}
                 draggable={!isCoarsePointer}
+                isDesktop={!isCoarsePointer}
                 onToggle={() => toggle(p)}
                 onLearn={() => learn(p)}
                 onFromDesc={() => {
@@ -580,6 +588,8 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                   setFromDescError(null);
                   setModal({ type: "from-desc", playlistId: p.id, playlistName: p.name });
                 }}
+                onRecompute={() => void recompute(p.id)}
+                onRequestDelete={() => setModal({ type: "confirm-delete", playlistId: p.id, playlistName: p.name })}
                 onOpenBottomSheet={() => setBottomSheet(p.id)}
                 onDragStart={() => onDragStart(p.id)}
                 onDragOver={(e) => onDragOver(e, p.id)}
@@ -613,7 +623,9 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                     isDragging={false}
                     isOver={false}
                     draggable={false}
+                    isDesktop={!isCoarsePointer}
                     onToggle={() => toggle(p)}
+                    onRequestDelete={() => setModal({ type: "confirm-delete", playlistId: p.id, playlistName: p.name })}
                     onOpenBottomSheet={() => setBottomSheet(p.id)}
                   />
                 ))}
@@ -1011,8 +1023,9 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 className="s-bs-item"
                 disabled={cardLoading[bsPlaylist.id] === "learn"}
                 onClick={() => { setBottomSheet(null); void learn(bsPlaylist); }}
+                style={{ color: "#c8935a" }}
               >
-                {cardLoading[bsPlaylist.id] === "learn" ? "Analyse…" : "Analyser"}
+                {cardLoading[bsPlaylist.id] === "learn" ? "Analyse…" : "Learn"}
               </button>
             )}
             {bsPlaylist.enabled && (
@@ -1083,22 +1096,18 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               </button>
             )}
 
-            {/* Supprimer — inactive playlists */}
-            {!bsPlaylist.enabled && (
-              <>
-                <div className="s-bs-sep" />
-                <button
-                  className="s-bs-item s-bs-item-danger"
-                  disabled={cardLoading[bsPlaylist.id] === "delete"}
-                  onClick={() => {
-                    setBottomSheet(null);
-                    setModal({ type: "confirm-delete", playlistId: bsPlaylist.id, playlistName: bsPlaylist.name });
-                  }}
-                >
-                  Supprimer
-                </button>
-              </>
-            )}
+            {/* Supprimer — toutes les playlists */}
+            <div className="s-bs-sep" />
+            <button
+              className="s-bs-item s-bs-item-danger"
+              disabled={cardLoading[bsPlaylist.id] === "delete"}
+              onClick={() => {
+                setBottomSheet(null);
+                setModal({ type: "confirm-delete", playlistId: bsPlaylist.id, playlistName: bsPlaylist.name });
+              }}
+            >
+              Supprimer
+            </button>
 
             <div className="s-bs-sep" style={{ marginTop: 4 }} />
             <button className="s-bs-item s-bs-item-dim" onClick={() => setBottomSheet(null)}>
@@ -1123,9 +1132,12 @@ interface RowProps {
   isDragging: boolean;
   isOver: boolean;
   draggable: boolean;
+  isDesktop: boolean;
   onToggle: () => void;
   onLearn?: () => void;
   onFromDesc?: () => void;
+  onRecompute?: () => void;
+  onRequestDelete?: () => void;
   onOpenBottomSheet?: () => void;
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
@@ -1134,13 +1146,41 @@ interface RowProps {
 }
 
 function PlaylistRow({
-  p, swatch, load, isDragging, isOver, draggable,
-  onToggle, onLearn, onFromDesc, onOpenBottomSheet,
+  p, swatch, load, isDragging, isOver, draggable, isDesktop,
+  onToggle, onLearn, onFromDesc, onRecompute, onRequestDelete, onOpenBottomSheet,
   onDragStart, onDragOver, onDragEnd, onDrop,
 }: RowProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const menuWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function onMouseDown(e: MouseEvent) {
+      if (menuWrapRef.current && !menuWrapRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setDropdownOpen(false);
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [dropdownOpen]);
+
   const learnedAt = p.learned_at
     ? new Date(p.learned_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
     : null;
+
+  const ddItem: React.CSSProperties = {
+    display: "block", width: "100%", textAlign: "left",
+    padding: "9px 14px", background: "transparent", border: "none",
+    cursor: "pointer", fontSize: 12, color: "var(--ink-mid)",
+    transition: "background 0.1s",
+  };
 
   return (
     <div
@@ -1156,15 +1196,11 @@ function PlaylistRow({
         outline: isOver ? "1px solid var(--terra-border)" : "none",
       }}
     >
-      {/* Drag handle — hidden on touch devices via CSS */}
       {draggable && <div className="s-drag-handle" title="Réordonner">⠿</div>}
 
-      {/* Main zone — navigable */}
+      {/* Main zone */}
       <Link href={`/playlists/${p.id}`} className="s-pl-row-main">
-        {/* Swatch */}
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
-
-        {/* Info */}
         <div className="s-pl-row-info">
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <span className="font-fraunces" style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
@@ -1189,8 +1225,6 @@ function PlaylistRow({
             <p style={{ fontSize: 10, color: swatch, opacity: 0.8, marginTop: 2 }}>Appris le {learnedAt}</p>
           )}
         </div>
-
-        {/* Stats */}
         <div className="s-pl-row-stats" style={{ flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
             <span className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, color: swatch }}>{p.total}</span>
@@ -1200,43 +1234,119 @@ function PlaylistRow({
               </span>
             )}
           </div>
-          <span style={{ fontSize: 9, color: "var(--ink-dimmer)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            tracks
-          </span>
+          <span style={{ fontSize: 9, color: "var(--ink-dimmer)", textTransform: "uppercase", letterSpacing: "0.05em" }}>tracks</span>
         </div>
       </Link>
 
-      {/* Actions zone — desktop only */}
+      {/* Desktop actions */}
       <div className="s-pl-row-actions">
+        {/* Learn — amber */}
         {p.enabled && onLearn && (
-          <button className="s-btn s-btn-sm" onClick={onLearn} disabled={!!load}>
+          <button
+            className="s-btn s-btn-sm"
+            onClick={onLearn}
+            disabled={!!load}
+            style={{ background: "rgba(200,147,90,0.12)", borderColor: "rgba(200,147,90,0.3)", color: "#c8935a" }}
+          >
             {load === "learn" ? "…" : "Learn"}
           </button>
         )}
+
+        {/* Décrire — neutral secondary */}
         {p.enabled && onFromDesc && (
-          <button className="s-btn s-btn-sm" onClick={onFromDesc} disabled={!!load}>
+          <button
+            className="s-btn s-btn-sm"
+            onClick={onFromDesc}
+            disabled={!!load}
+            style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.10)", color: "var(--ink-dim)" }}
+          >
             Décrire
           </button>
         )}
+
+        {/* Toggle — playlist color when active, gray when inactive */}
         <button
           className="s-btn s-btn-sm"
           onClick={onToggle}
           disabled={!!load}
           title={p.enabled ? "Désactiver" : "Activer"}
+          style={p.enabled ? {
+            background: hexToRgba(swatch, 0.12),
+            borderColor: hexToRgba(swatch, 0.3),
+            color: swatch,
+          } : {
+            background: "rgba(255,255,255,0.03)",
+            borderColor: "rgba(255,255,255,0.08)",
+            color: "var(--ink-dim)",
+          }}
         >
-          {load === "toggle" ? "…" : p.enabled ? "Off" : "On"}
+          {load === "toggle" ? "…" : (
+            <>
+              <span style={{
+                display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                background: p.enabled ? swatch : "var(--ink-dimmer)",
+                marginRight: 5, verticalAlign: "middle",
+              }} />
+              {p.enabled ? "On" : "Off"}
+            </>
+          )}
         </button>
-        <button
-          className="s-btn s-btn-sm"
-          onClick={onOpenBottomSheet}
-          title="Plus d'options"
-          aria-label="Plus d'options"
-        >
-          ⋯
-        </button>
+
+        {/* ··· — dropdown on desktop, bottom sheet on mobile */}
+        <div ref={menuWrapRef} style={{ position: "relative" }}>
+          <button
+            className="s-btn s-btn-sm"
+            title="Plus d'options"
+            aria-label="Plus d'options"
+            aria-expanded={dropdownOpen}
+            onClick={() => {
+              if (isDesktop) setDropdownOpen((v) => !v);
+              else onOpenBottomSheet?.();
+            }}
+          >
+            ⋯
+          </button>
+
+          {isDesktop && dropdownOpen && (
+            <div style={{
+              position: "absolute", bottom: "calc(100% + 6px)", right: 0,
+              background: "var(--surface)", border: "1px solid var(--border-strong)",
+              borderRadius: 10, boxShadow: "var(--shadow-md)", zIndex: 200,
+              minWidth: 176, overflow: "hidden",
+            }}>
+              {onRecompute && p.enabled && (
+                <button
+                  style={ddItem}
+                  disabled={load === "recompute"}
+                  onClick={() => { setDropdownOpen(false); onRecompute(); }}
+                >
+                  {load === "recompute" ? "Calcul…" : "Recompute centroïde"}
+                </button>
+              )}
+              <div style={{ height: 1, background: "var(--border)" }} />
+              <button
+                style={{ ...ddItem, color: "#b85c48" }}
+                onClick={() => { setDropdownOpen(false); onToggle(); }}
+              >
+                {p.enabled ? "Désactiver" : "Activer"}
+              </button>
+              {onRequestDelete && (
+                <>
+                  <div style={{ height: 1, background: "var(--border)" }} />
+                  <button
+                    style={{ ...ddItem, color: "#b85c48" }}
+                    onClick={() => { setDropdownOpen(false); onRequestDelete(); }}
+                  >
+                    Supprimer
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Mobile-only menu button */}
+      {/* Mobile-only ⋯ button */}
       <button
         className="s-pl-menu-btn s-btn"
         onClick={onOpenBottomSheet}
