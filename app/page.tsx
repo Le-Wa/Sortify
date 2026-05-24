@@ -95,7 +95,7 @@ export default async function RootPage() {
           .lp-section { padding: 48px 20px !important; }
           .lp-nav { padding: 0 16px !important; }
           .lp-nav-btn span { display: none; }
-          .lp-bottom-cta-title { font-size: 26px !important; }
+          .lp-bottom-cta-title { font-size: 34px !important; }
         }
       `}</style>
 
@@ -296,22 +296,22 @@ export default async function RootPage() {
           <section
             className="lp-section"
             style={{
-              padding: "64px 24px",
+              padding: "80px 24px",
               background: "var(--surface)",
               borderTop: "1px solid var(--border)",
               borderBottom: "1px solid var(--border)",
             }}
           >
-            <div style={{ maxWidth: 800, margin: "0 auto" }}>
+            <div style={{ maxWidth: 860, margin: "0 auto" }}>
               <p
                 style={{
                   fontSize: 11,
-                  fontWeight: 500,
+                  fontWeight: 600,
                   color: "var(--ink-dim)",
                   textTransform: "uppercase",
-                  letterSpacing: "0.12em",
+                  letterSpacing: "0.14em",
                   textAlign: "center",
-                  marginBottom: 36,
+                  marginBottom: 48,
                 }}
               >
                 Ce que fait Sortify
@@ -323,22 +323,22 @@ export default async function RootPage() {
                     key={title}
                     style={{
                       background: "var(--surface2)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 16,
-                      padding: "24px 20px",
+                      border: "1px solid var(--border-strong)",
+                      borderRadius: 20,
+                      padding: "28px 24px",
                     }}
                   >
                     <div
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 10,
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
                         background: `${ACCENT}18`,
-                        border: `1px solid ${ACCENT}30`,
+                        border: `1px solid ${ACCENT}35`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        marginBottom: 18,
+                        marginBottom: 20,
                         color: ACCENT,
                       }}
                     >
@@ -346,17 +346,18 @@ export default async function RootPage() {
                     </div>
                     <h3
                       style={{
-                        fontSize: 14,
-                        fontWeight: 500,
+                        fontSize: 17,
+                        fontWeight: 700,
                         color: "var(--ink)",
-                        marginBottom: 8,
+                        letterSpacing: "-0.02em",
+                        marginBottom: 10,
                       }}
                     >
                       {title}
                     </h3>
                     <p
                       style={{
-                        fontSize: 13,
+                        fontSize: 14,
                         color: "var(--ink-mid)",
                         lineHeight: 1.7,
                       }}
@@ -370,17 +371,17 @@ export default async function RootPage() {
           </section>
 
           {/* ── How it works ── */}
-          <section className="lp-section" style={{ padding: "64px 24px" }}>
-            <div style={{ maxWidth: 420, margin: "0 auto" }}>
+          <section className="lp-section" style={{ padding: "80px 24px" }}>
+            <div style={{ maxWidth: 480, margin: "0 auto" }}>
               <p
                 style={{
                   fontSize: 11,
-                  fontWeight: 500,
+                  fontWeight: 600,
                   color: "var(--ink-dim)",
                   textTransform: "uppercase",
-                  letterSpacing: "0.12em",
+                  letterSpacing: "0.14em",
                   textAlign: "center",
-                  marginBottom: 40,
+                  marginBottom: 48,
                 }}
               >
                 Comment ça marche
@@ -393,7 +394,7 @@ export default async function RootPage() {
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
-                      gap: 16,
+                      gap: 20,
                       position: "relative",
                     }}
                   >
@@ -401,11 +402,11 @@ export default async function RootPage() {
                       <div
                         style={{
                           position: "absolute",
-                          left: 17,
-                          top: 38,
+                          left: 19,
+                          top: 42,
                           width: 2,
-                          height: 44,
-                          background: "var(--border-strong)",
+                          height: 48,
+                          background: `${ACCENT}25`,
                           borderRadius: 1,
                         }}
                       />
@@ -413,18 +414,19 @@ export default async function RootPage() {
 
                     <div
                       style={{
-                        width: 36,
-                        height: 36,
+                        width: 40,
+                        height: 40,
                         borderRadius: "50%",
-                        border: `1px solid ${ACCENT}50`,
-                        background: `${ACCENT}10`,
+                        border: `1.5px solid ${ACCENT}60`,
+                        background: `${ACCENT}12`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: 13,
-                        fontWeight: 600,
+                        fontSize: 14,
+                        fontWeight: 700,
                         color: ACCENT,
                         flexShrink: 0,
+                        letterSpacing: "-0.02em",
                       }}
                     >
                       {i + 1}
@@ -432,16 +434,17 @@ export default async function RootPage() {
 
                     <div
                       style={{
-                        paddingTop: 7,
-                        paddingBottom: i < STEPS.length - 1 ? 44 : 0,
+                        paddingTop: 8,
+                        paddingBottom: i < STEPS.length - 1 ? 48 : 0,
                       }}
                     >
                       <p
                         style={{
-                          fontSize: 15,
-                          color: "var(--ink)",
-                          fontWeight: i === STEPS.length - 1 ? 500 : 300,
-                          lineHeight: 1.4,
+                          fontSize: 17,
+                          color: i === STEPS.length - 1 ? ACCENT : "var(--ink)",
+                          fontWeight: 600,
+                          lineHeight: 1.35,
+                          letterSpacing: "-0.02em",
                         }}
                       >
                         {label}
@@ -449,9 +452,10 @@ export default async function RootPage() {
                       {note && (
                         <p
                           style={{
-                            fontSize: 12,
+                            fontSize: 13,
                             color: "var(--ink-dim)",
-                            marginTop: 4,
+                            marginTop: 5,
+                            fontWeight: 300,
                           }}
                         >
                           {note}
@@ -468,32 +472,45 @@ export default async function RootPage() {
           <section
             className="lp-section"
             style={{
-              padding: "72px 24px",
+              padding: "88px 24px",
               textAlign: "center",
               borderTop: "1px solid var(--border)",
               background: "var(--surface)",
             }}
           >
-            <div style={{ maxWidth: 480, margin: "0 auto" }}>
+            <div style={{ maxWidth: 520, margin: "0 auto" }}>
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--ink-dim)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.14em",
+                  marginBottom: 20,
+                }}
+              >
+                Prêt ?
+              </p>
               <h2
                 className="font-fraunces lp-bottom-cta-title"
                 style={{
                   fontStyle: "italic",
                   fontWeight: 600,
-                  fontSize: 32,
+                  fontSize: 48,
                   color: "var(--ink)",
-                  letterSpacing: "-0.5px",
-                  lineHeight: 1.2,
-                  marginBottom: 12,
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1.1,
+                  marginBottom: 16,
                 }}
               >
-                Prêt à ranger ta bibli ?
+                Range ta bibli,<br />
+                <span style={{ color: ACCENT }}>une bonne fois.</span>
               </h2>
               <p
                 style={{
-                  fontSize: 14,
+                  fontSize: 15,
                   color: "var(--ink-mid)",
-                  marginBottom: 28,
+                  marginBottom: 32,
                   lineHeight: 1.65,
                 }}
               >
@@ -507,14 +524,15 @@ export default async function RootPage() {
                   gap: 10,
                   background: SPOTIFY_GREEN,
                   borderRadius: 40,
-                  padding: "13px 28px",
-                  fontSize: 15,
-                  fontWeight: 600,
+                  padding: "15px 32px",
+                  fontSize: 16,
+                  fontWeight: 700,
                   color: "#000",
                   textDecoration: "none",
+                  letterSpacing: "-0.01em",
                 }}
               >
-                <SpotifyIcon />
+                <SpotifyIcon size={20} />
                 Commencer gratuitement
               </a>
             </div>
