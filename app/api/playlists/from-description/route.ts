@@ -3,7 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Anthropic from "@anthropic-ai/sdk";
 import type { PlaylistRules } from "@/lib/types";
 
-const MODEL = "claude-sonnet-4-20250514";
+const MODEL = "claude-sonnet-4-6";
 
 const SYSTEM = `Tu es un système de configuration de classificateur musical.
 À partir d'une description textuelle, tu génères des règles JSON pour un classifier de playlists musicales.

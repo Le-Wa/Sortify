@@ -26,6 +26,7 @@ export interface ClassifierTrack {
   spotify_added_at: string | null;
   name?: string;
   artists?: string[];
+  album_name?: string | null;
 }
 
 export type AudioFeatureRangeKey =

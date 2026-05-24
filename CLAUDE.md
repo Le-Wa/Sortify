@@ -9,7 +9,7 @@ Compagnon Spotify qui trie automatiquement les liked songs dans des playlists pe
 - Supabase (Postgres) pour la DB
 - NextAuth.js avec Spotify OAuth
 - Vercel pour le déploiement + Cron Jobs
-- Claude API (claude-sonnet-4-20250514) pour l'arbitrage LLM
+- Claude API (claude-sonnet-4-6) pour l'arbitrage LLM
 
 ## Conventions
 - Tous les composants en TypeScript strict, pas de `any`
@@ -35,7 +35,7 @@ Le moteur tourne. La phase active est le design et l'UX.
 ### Pages existantes
 - `/home` — nouvelle page d'accueil centrée sur les playlists (à comparer avec `/dashboard`)
 - `/dashboard` — ancien dashboard avec KPIs, à garder pour comparaison
-- `/playlists` — gestion des playlists (reorder, create, toggle)
+- `/playlists` — gestion des playlists (reorder, create, toggle, modifier description+couleur)
 - `/playlists/[id]` — détail avec actions (learn, décrire, sync, toggle, recompute)
 - `/inbox` — review des tracks un par un
 - `/archive` — tracks archivés
@@ -44,7 +44,7 @@ Le moteur tourne. La phase active est le design et l'UX.
 ### Design system
 - Tokens dans `:root` de `globals.css` — modifier là en priorité
 - Classes utilitaires : `s-page`, `s-btn`, `s-btn-sm`, `s-card`, `s-section-title`, etc.
-- Palette swatch playlists : 8 couleurs, assignées par hash de l'ID
+- Palette swatch playlists : 8 couleurs dans `lib/playlist-swatch.ts` — `playlistSwatch(id, color?)` : couleur custom (stockée en DB) prioritaire, hash fallback
 - Genre tags : 24 couleurs, assignées par hash du nom de genre
 - Bottom sheet (`s-bs-*`) : pattern mobile pour toutes les actions secondaires
 

@@ -56,6 +56,7 @@ export async function GET(
       spotify_playlist_id: playlist.spotify_playlist_id,
       name: playlist.name,
       description: playlist.description,
+      color: playlist.color,
     },
     tracks,
     total,

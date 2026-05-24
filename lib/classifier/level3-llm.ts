@@ -47,6 +47,7 @@ function buildTrackSummary(input: Level3BatchInput) {
   return {
     name: track.name ?? track.spotify_track_id,
     artist: track.artists?.[0] ?? "",
+    ...(track.album_name && { album: track.album_name }),
     genres,
     ...(audioFeatures && {
       audio_features: {

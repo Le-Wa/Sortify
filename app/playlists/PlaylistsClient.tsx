@@ -15,6 +15,7 @@ interface PlaylistData {
   enabled: boolean;
   llm_help_text: string | null;
   learned_at: string | null;
+  color: string | null;
   total: number;
   synced: number;
   not_synced: number;
@@ -22,6 +23,7 @@ interface PlaylistData {
 
 interface PreviewData {
   rules: PlaylistRules;
+  short_description: string | null;
   llm_help_text: string | null;
   sample_size?: number;
   total_tracks?: number;
@@ -31,15 +33,13 @@ type ModalState =
   | null
   | { type: "from-desc"; playlistId: string; playlistName: string }
   | { type: "preview"; playlistId: string; playlistName: string; preview: PreviewData }
+  | { type: "edit"; playlistId: string; playlistName: string; currentDescription: string | null; currentColor: string | null }
   | { type: "confirm-delete"; playlistId: string; playlistName: string }
   | { type: "new" };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SWATCH_COLORS = [
-  "#c89840", "#8878d0", "#6a9070", "#c87a52",
-  "#a06848", "#508860", "#7878b0", "#c08060",
-];
+import { playlistSwatch, SWATCH_COLORS } from "@/lib/playlist-swatch";
 
 function parseSpotifyId(raw: string): string {
   const m = raw.match(/playlist\/([a-zA-Z0-9]+)/);
@@ -106,7 +106,13 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
   // Preview modal transient state
   const [previewHelp, setPreviewHelp] = useState("");
+  const [previewShortDesc, setPreviewShortDesc] = useState("");
   const [previewSaving, setPreviewSaving] = useState(false);
+
+  // Edit modal transient state
+  const [editDescription, setEditDescription] = useState("");
+  const [editColor, setEditColor] = useState<string | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   // New playlist modal transient state
   const [newName, setNewName] = useState("");
@@ -181,6 +187,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       const data = (await res.json()) as { error?: string } & Partial<PreviewData>;
       if (!res.ok || data.error) throw new Error(data.error ?? "");
       setPreviewHelp(data.llm_help_text ?? "");
+      setPreviewShortDesc((data as PreviewData).short_description ?? "");
       setModal({ type: "preview", playlistId: p.id, playlistName: p.name, preview: data as PreviewData });
     } catch (err) {
       showToast(err instanceof Error && err.message ? err.message : "Analyse échouée");
@@ -217,6 +224,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       if (data.error) throw new Error(data.error);
       if (!res.ok) throw new Error("Génération échouée");
       setPreviewHelp(data.llm_help_text ?? "");
+      setPreviewShortDesc((data as PreviewData).short_description ?? "");
       setModal({ type: "preview", playlistId, playlistName, preview: data as PreviewData });
       setFromDescText("");
       setFromDescError(null);
@@ -236,15 +244,17 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
         body: JSON.stringify({
           rules: preview.rules,
           llm_help_text: previewHelp.trim() || null,
+          description: previewShortDesc.trim() || null,
           learned_at: new Date().toISOString(),
         }),
       });
       if (!res.ok) throw new Error();
       const now = new Date().toISOString();
+      const shortDesc = previewShortDesc.trim() || null;
       const patch = (list: PlaylistData[]) =>
         list.map((p) =>
           p.id === playlistId
-            ? { ...p, llm_help_text: previewHelp.trim() || null, learned_at: now }
+            ? { ...p, llm_help_text: previewHelp.trim() || null, description: shortDesc, learned_at: now }
             : p
         );
       setActive(patch);
@@ -254,6 +264,32 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       showToast("Erreur lors de la sauvegarde");
     } finally {
       setPreviewSaving(false);
+    }
+  }
+
+  async function saveEdit(playlistId: string) {
+    setEditSaving(true);
+    try {
+      const body: Record<string, unknown> = {
+        description: editDescription.trim() || null,
+        color: editColor,
+      };
+      const res = await fetch(`/api/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error();
+      const desc = editDescription.trim() || null;
+      const patch = (list: PlaylistData[]) =>
+        list.map((p) => p.id === playlistId ? { ...p, description: desc, color: editColor } : p);
+      setActive(patch);
+      setInactive(patch);
+      closeModal();
+    } catch {
+      showToast("Erreur lors de la sauvegarde");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -420,7 +456,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
         {
           id, spotify_playlist_id: spotifyId, name: newName.trim(),
           description: newDesc.trim() || null, priority: prev.length,
-          enabled: true, llm_help_text: null, learned_at: null,
+          enabled: true, llm_help_text: null, learned_at: null, color: null,
           total: 0, synced: 0, not_synced: 0,
         },
       ]);
@@ -483,7 +519,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               <PlaylistRow
                 key={p.id}
                 p={p}
-                swatch={SWATCH_COLORS[i % SWATCH_COLORS.length]}
+                swatch={playlistSwatch(p.id, p.color)}
                 load={cardLoading[p.id]}
                 isDragging={dragId === p.id}
                 isOver={overId === p.id && dragId !== p.id}
@@ -523,7 +559,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                   <PlaylistRow
                     key={p.id}
                     p={p}
-                    swatch={SWATCH_COLORS[i % SWATCH_COLORS.length]}
+                    swatch={playlistSwatch(p.id, p.color)}
                     load={cardLoading[p.id]}
                     isDragging={false}
                     isOver={false}
@@ -592,7 +628,18 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
             </p>
 
             <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
-              Description vibe — éditable
+              Sous-titre (court)
+            </label>
+            <input
+              className="s-input"
+              style={{ width: "100%", marginBottom: 14 }}
+              placeholder="Ex : Rap FR boom-bap, flows techniques, énergie haute"
+              value={previewShortDesc}
+              onChange={(e) => setPreviewShortDesc(e.target.value)}
+            />
+
+            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+              Description vibe LLM — éditable
             </label>
             <textarea
               className="s-input"
@@ -622,6 +669,60 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 onClick={() => void savePreview(modal.playlistId, modal.preview)}
               >
                 {previewSaving ? "Sauvegarde…" : "Sauvegarder"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit modal (description + color) ────────────────────────────────── */}
+      {modal?.type === "edit" && (
+        <div className="s-modal-overlay" onClick={closeModal}>
+          <div className="s-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>
+              Modifier
+            </h2>
+            <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>{modal.playlistName}</p>
+
+            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+              Sous-titre
+            </label>
+            <input
+              className="s-input"
+              style={{ width: "100%", marginBottom: 20 }}
+              placeholder="Ex : Rap FR boom-bap, flows techniques"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+            />
+
+            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 10 }}>
+              Couleur
+            </label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+              {SWATCH_COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setEditColor(editColor === c ? null : c)}
+                  style={{
+                    width: 32, height: 32, borderRadius: "50%",
+                    background: c, border: "none", cursor: "pointer",
+                    outline: editColor === c ? `3px solid ${c}` : "3px solid transparent",
+                    outlineOffset: 2,
+                    opacity: editColor && editColor !== c ? 0.45 : 1,
+                    transition: "opacity 0.15s, outline 0.15s",
+                  }}
+                />
+              ))}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="s-btn" onClick={closeModal} disabled={editSaving}>Annuler</button>
+              <button
+                className="s-btn s-btn-primary"
+                disabled={editSaving}
+                onClick={() => void saveEdit(modal.playlistId)}
+              >
+                {editSaving ? "Sauvegarde…" : "Sauvegarder"}
               </button>
             </div>
           </div>
@@ -771,6 +872,17 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 Décrire la vibe
               </button>
             )}
+            <button
+              className="s-bs-item"
+              onClick={() => {
+                setBottomSheet(null);
+                setEditDescription(bsPlaylist.description ?? "");
+                setEditColor(bsPlaylist.color ?? null);
+                setModal({ type: "edit", playlistId: bsPlaylist.id, playlistName: bsPlaylist.name, currentDescription: bsPlaylist.description, currentColor: bsPlaylist.color });
+              }}
+            >
+              Modifier
+            </button>
             <button
               className="s-bs-item"
               disabled={cardLoading[bsPlaylist.id] === "toggle"}

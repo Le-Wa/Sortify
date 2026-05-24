@@ -87,6 +87,7 @@ export interface PlaylistRow {
   priority: number;
   llm_help_text: string | null;
   learned_at: string | null;
+  color: string | null;
 }
 
 export type PlaylistPatchData = Partial<{
@@ -96,6 +97,7 @@ export type PlaylistPatchData = Partial<{
   llm_help_text: string | null;
   rules: PlaylistRules;
   learned_at: string | null;
+  color: string | null;
 }>;
 
 export async function updatePlaylist(
@@ -109,7 +111,7 @@ export async function updatePlaylist(
     .update(data)
     .eq("id", playlistId)
     .eq("user_id", userId)
-    .select("id, spotify_playlist_id, name, description, enabled, priority, llm_help_text, learned_at")
+    .select("id, spotify_playlist_id, name, description, enabled, priority, llm_help_text, learned_at, color")
     .single();
   if (error) throw error;
   return result as PlaylistRow | null;
@@ -188,7 +190,7 @@ export async function getAllPlaylists(userId: string): Promise<PlaylistRow[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("playlists")
-    .select("id, spotify_playlist_id, name, description, enabled, priority, llm_help_text, learned_at")
+    .select("id, spotify_playlist_id, name, description, enabled, priority, llm_help_text, learned_at, color")
     .eq("user_id", userId)
     .order("priority", { ascending: true });
   if (error) throw error;
@@ -379,11 +381,11 @@ export async function getPlaylistsStats(
 export async function getPlaylistDetail(
   playlistId: string,
   userId: string
-): Promise<{ id: string; spotify_playlist_id: string; name: string; description: string | null } | null> {
+): Promise<{ id: string; spotify_playlist_id: string; name: string; description: string | null; color: string | null } | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("playlists")
-    .select("id, spotify_playlist_id, name, description")
+    .select("id, spotify_playlist_id, name, description, color")
     .eq("id", playlistId)
     .eq("user_id", userId)
     .single();
@@ -419,6 +421,29 @@ export async function getPlaylistTracksAssigned(
     .order("spotify_added_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as PlaylistTrackRow[];
+}
+
+export interface PlaylistTrackForLearn {
+  name: string | null;
+  artists: string[] | null;
+  artist_name: string | null;
+  genres: string[] | null;
+  audio_features: Record<string, number> | null;
+}
+
+export async function getPlaylistTracksForLearn(
+  playlistId: string,
+  userId: string
+): Promise<PlaylistTrackForLearn[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("name, artists, artist_name, genres, audio_features")
+    .eq("user_id", userId)
+    .eq("is_archived", false)
+    .or(`assigned_playlist.eq.${playlistId},extra_playlists.cs.{${playlistId}}`);
+  if (error) throw error;
+  return (data ?? []) as PlaylistTrackForLearn[];
 }
 
 export async function getUnsyncedPlaylistTracks(
@@ -508,8 +533,8 @@ export async function getInboxTracksNeedsReview(
       "id, spotify_track_id, name, artist_name, artists, album_name, isrc, spotify_added_at, genres, enrichment_source, audio_features, llm_suggestion, suggestion_playlist:playlists!llm_suggestion(id, name, spotify_playlist_id)"
     )
     .eq("user_id", userId)
-    .eq("needs_review", true)
-    .eq("is_archived", false);
+    .eq("is_archived", false)
+    .or("needs_review.eq.true,classified_at.is.null");
 
   if (playlistId) {
     query = query.eq("llm_suggestion", playlistId);
@@ -1185,6 +1210,7 @@ export interface TrackForClassification {
   spotify_added_at: string | null;
   name: string | null;
   artists: string[] | null;
+  album_name: string | null;
   isrc: string | null;
   audio_features: AudioFeatures | null;
   genres: string[] | null;
@@ -1197,7 +1223,7 @@ export async function getTracksForClassification(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("tracks")
-    .select("id, spotify_track_id, spotify_added_at, name, artists, isrc, audio_features, genres")
+    .select("id, spotify_track_id, spotify_added_at, name, artists, album_name, isrc, audio_features, genres")
     .eq("user_id", userId)
     .is("classified_at", null)
     .eq("is_archived", false)

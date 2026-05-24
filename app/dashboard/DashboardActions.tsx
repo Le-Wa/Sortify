@@ -217,7 +217,7 @@ export default function DashboardActions() {
 
   async function runClassify(skipLlm = false) {
     setBusy(true);
-    setClassifyProgress(null);
+    setClassifyProgress({ done: 0, total: 0 });
     let totalClassified = 0;
     let totalReview = 0;
     let totalErrors = 0;
@@ -255,6 +255,7 @@ export default function DashboardActions() {
       const errPart = totalErrors > 0 ? ` · ${totalErrors} erreur${totalErrors > 1 ? "s" : ""}` : "";
       flash(`Terminé — ${totalClassified} classifiés · ${totalReview} en review${errPart}`);
       await loadStats();
+      window.dispatchEvent(new CustomEvent("classify:complete"));
     } catch (err) {
       flash(`Erreur : ${String(err)}`);
     } finally {
@@ -417,7 +418,7 @@ export default function DashboardActions() {
       )}
 
       {/* Classify progress */}
-      {classifyProgress && classifyProgress.total > 0 && (
+      {classifyProgress && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <div style={{ height: 2, borderRadius: 2, background: "var(--border-strong)", overflow: "hidden" }}>
             <div
@@ -425,13 +426,16 @@ export default function DashboardActions() {
                 height: "100%",
                 borderRadius: 2,
                 background: "var(--sage)",
-                transition: "width 0.3s",
-                width: `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%`,
+                transition: classifyProgress.total === 0 ? "none" : "width 0.3s",
+                width: classifyProgress.total === 0
+                  ? "100%"
+                  : `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%`,
+                animation: classifyProgress.total === 0 ? "pulse 1.5s ease-in-out infinite" : "none",
               }}
             />
           </div>
           <p style={{ textAlign: "right", fontSize: 10, color: "var(--ink-dim)" }}>
-            {classifyProgress.done} / {classifyProgress.total}
+            {classifyProgress.total === 0 ? "…" : `${classifyProgress.done} / ${classifyProgress.total}`}
           </p>
         </div>
       )}

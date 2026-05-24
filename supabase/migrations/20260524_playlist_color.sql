@@ -1,0 +1,1 @@
+ALTER TABLE playlists ADD COLUMN IF NOT EXISTS color TEXT;

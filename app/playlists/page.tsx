@@ -25,6 +25,7 @@ export default async function PlaylistsPage() {
     enabled: p.enabled,
     llm_help_text: p.llm_help_text,
     learned_at: p.learned_at,
+    color: p.color ?? null,
     ...(stats[p.id] ?? { total: 0, synced: 0, not_synced: 0 }),
   }));
 

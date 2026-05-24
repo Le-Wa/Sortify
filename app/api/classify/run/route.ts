@@ -50,6 +50,7 @@ export async function POST(req: Request): Promise<Response> {
       spotify_added_at: row.spotify_added_at,
       name: row.name ?? undefined,
       artists: row.artists ?? undefined,
+      album_name: row.album_name,
     };
 
     try {

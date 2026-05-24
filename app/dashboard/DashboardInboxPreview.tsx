@@ -19,7 +19,7 @@ export default function DashboardInboxPreview() {
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [exiting, setExiting] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  function loadInbox() {
     fetch("/api/inbox?per_page=3&page=1")
       .then((r) => r.json())
       .then((data: { tracks: PreviewTrack[]; total: number }) => {
@@ -28,6 +28,12 @@ export default function DashboardInboxPreview() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadInbox();
+    window.addEventListener("classify:complete", loadInbox);
+    return () => window.removeEventListener("classify:complete", loadInbox);
   }, []);
 
   async function validate(trackId: string) {

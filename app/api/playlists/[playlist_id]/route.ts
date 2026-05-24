@@ -34,6 +34,7 @@ export async function PATCH(
   if ("llm_help_text" in body) patch.llm_help_text = body.llm_help_text === null ? null : String(body.llm_help_text);
   if ("rules" in body && typeof body.rules === "object" && body.rules !== null) patch.rules = body.rules as PlaylistRules;
   if ("learned_at" in body) patch.learned_at = body.learned_at === null ? null : String(body.learned_at);
+  if ("color" in body) patch.color = body.color === null ? null : String(body.color);
 
   if (Object.keys(patch).length === 0) {
     return Response.json({ error: "No valid fields to update" }, { status: 400 });

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { playlistSwatch } from "@/lib/playlist-swatch";
 
 // ── Palette genre (24 couleurs) ───────────────────────────────────────────────
 
@@ -38,18 +39,12 @@ function genrePalette(genre: string) {
   return GENRE_PALETTES[h % GENRE_PALETTES.length];
 }
 
-const SWATCH_COLORS = ["#c89840","#8878d0","#6a9070","#c87a52","#a06848","#508860","#7878b0","#c08060"];
-function playlistSwatch(id: string): string {
-  let h = 0;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
-  return SWATCH_COLORS[h % SWATCH_COLORS.length];
-}
-
 interface PlaylistInfo {
   id: string;
   spotify_playlist_id: string;
   name: string;
   description: string | null;
+  color: string | null;
   enabled?: boolean;
 }
 
@@ -180,8 +175,17 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
     setBottomSheet(false);
     try {
       const res = await fetch(`/api/playlists/${playlistId}/learn`, { method: "POST" });
-      const data = await res.json() as { error?: string };
+      const data = await res.json() as { error?: string; rules?: unknown; llm_help_text?: string | null };
       if (!res.ok || data.error) throw new Error(data.error ?? "Erreur");
+      await fetch(`/api/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rules: data.rules,
+          llm_help_text: data.llm_help_text ?? null,
+          learned_at: new Date().toISOString(),
+        }),
+      });
       showToast("Analyse terminée");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Analyse échouée");
@@ -274,7 +278,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
     );
   }
 
-  const swatch = playlistSwatch(playlist.id);
+  const swatch = playlistSwatch(playlist.id, playlist.color);
 
   return (
     <main className="s-page">

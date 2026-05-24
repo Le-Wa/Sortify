@@ -144,7 +144,7 @@ function TrackCard({
               {track.suggested_playlist}
             </span>
           )}
-          {conf !== null && (
+          {conf !== null ? (
             <span
               className="font-fraunces"
               style={{
@@ -156,6 +156,21 @@ function TrackCard({
               }}
             >
               {conf}%
+            </span>
+          ) : (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 500,
+                color: "var(--ink-dimmer)",
+                background: "var(--surface3)",
+                border: "1px solid var(--border)",
+                padding: "3px 8px",
+                borderRadius: 20,
+                letterSpacing: "0.02em",
+              }}
+            >
+              À classer
             </span>
           )}
         </div>
