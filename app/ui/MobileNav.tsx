@@ -48,11 +48,12 @@ const LINKS = [
     ),
   },
   {
-    href: "/admin/logs",
-    label: "Admin",
+    href: "/settings",
+    label: "Paramètres",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 20, height: 20 }}>
-        <path d="M2 12L6 4l4 5 2-3 2 6" />
+        <circle cx="8" cy="8" r="2.5" />
+        <path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M12.6 3.4l-.7.7M4.1 11.9l-.7.7" strokeLinecap="round" />
       </svg>
     ),
   },

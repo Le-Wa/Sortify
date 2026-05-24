@@ -284,6 +284,18 @@ export async function getUserBySpotifyId(
   return data;
 }
 
+export async function getUserSettings(
+  spotifyId: string
+): Promise<{ id: string; cron_enabled: boolean; import_since: number | null } | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("users")
+    .select("id, cron_enabled, import_since")
+    .eq("spotify_id", spotifyId)
+    .single();
+  return data;
+}
+
 export async function getUserOnboarding(
   spotifyId: string
 ): Promise<{ id: string; onboarding_completed: boolean; cron_enabled: boolean } | null> {
