@@ -74,10 +74,8 @@ function TrackCard({
   isExiting,
   isBusy,
   isCorrectingThis,
-  isReasonExpanded,
   onStartCorrecting,
   onCancelCorrecting,
-  onToggleReason,
   onValidate,
   onCorrect,
   onArchive,
@@ -96,257 +94,169 @@ function TrackCard({
   onArchive: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const af = track.audio_features;
-  const hasReason = !!track.classification_reason && track.classification_reason.length > 0;
-  const isLongReason = (track.classification_reason?.length ?? 0) > 100;
   const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
-  const isLowConf = track.confidence !== null && track.confidence < 0.55;
+  const hasSuggestion = !!track.llm_suggestion_id && !!track.suggested_playlist;
+  const accentColor = hasSuggestion ? "#c8935a" : "var(--ink-dimmer)";
+  const borderColor = hasSuggestion ? "rgba(200,147,90,0.35)" : "rgba(255,255,255,0.07)";
+
+  const player = track.deezer_id ? (
+    <iframe
+      title="deezer-widget"
+      src={`https://widget.deezer.com/widget/dark/track/${track.deezer_id}`}
+      width="100%"
+      height="80"
+      frameBorder="0"
+      allow="encrypted-media"
+      style={{ borderRadius: 8, display: "block" }}
+    />
+  ) : (
+    <a
+      href={`https://open.spotify.com/track/${track.spotify_track_id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="s-btn"
+      style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+    >
+      Ouvrir dans Spotify ↗
+    </a>
+  );
 
   return (
     <li
       style={{
-        background: isLowConf ? "rgba(200, 122, 82, 0.04)" : "var(--surface)",
+        background: "var(--surface)",
         borderRadius: 14,
-        border: `1px solid ${isLowConf ? "var(--terra-border)" : "var(--border)"}`,
-        padding: "16px 20px",
+        border: `1px solid var(--border)`,
+        borderLeft: `4px solid ${borderColor}`,
+        padding: "14px 18px 14px 16px",
         boxShadow: "var(--shadow)",
-        transition: "all 0.3s",
+        transition: "opacity 0.3s, transform 0.3s",
         opacity: isExiting ? 0 : 1,
         transform: isExiting ? "scale(0.97)" : "scale(1)",
       }}
     >
-      {/* Identity + confidence */}
-      <div className="s-inbox-header">
+      {/* Header — titre + badge top-right */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", lineHeight: 1.3 }}>
-            {track.artist_name && (
-              <span style={{ color: "var(--ink-mid)" }}>{track.artist_name} — </span>
-            )}
+          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3, margin: 0 }}>
             {track.name ?? track.spotify_track_id}
           </p>
+          {track.artist_name && (
+            <p style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 2, margin: 0 }}>{track.artist_name}</p>
+          )}
           {track.album_name && (
-            <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 2 }}>({track.album_name})</p>
+            <p style={{ fontSize: 10, color: "var(--ink-dimmer)", marginTop: 1, margin: 0 }}>({track.album_name})</p>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          {track.suggested_playlist && (
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 500,
-                color: "var(--sage)",
-                background: "var(--sage-light)",
-                border: "1px solid var(--sage-border)",
-                padding: "4px 12px",
-                borderRadius: 20,
-              }}
-            >
+        {/* Badge */}
+        <div style={{ flexShrink: 0 }}>
+          {hasSuggestion ? (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              fontSize: 11, fontWeight: 500, color: "#c8935a",
+              background: "rgba(200,147,90,0.12)", border: "1px solid rgba(200,147,90,0.28)",
+              padding: "3px 10px", borderRadius: 20,
+            }}>
               {track.suggested_playlist}
-            </span>
-          )}
-          {conf !== null ? (
-            <span
-              className="font-fraunces"
-              style={{
-                fontSize: 20,
-                fontWeight: 600,
-                color: isLowConf ? "var(--terra)" : "var(--ink-mid)",
-                minWidth: 40,
-                textAlign: "right",
-              }}
-            >
-              {conf}%
+              {conf !== null && <span style={{ opacity: 0.75 }}>· {conf}%</span>}
             </span>
           ) : (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                color: "var(--ink-dimmer)",
-                background: "var(--surface3)",
-                border: "1px solid var(--border)",
-                padding: "3px 8px",
-                borderRadius: 20,
-                letterSpacing: "0.02em",
-              }}
-            >
-              À classer
+            <span style={{
+              fontSize: 10, fontWeight: 500, color: "var(--ink-dimmer)",
+              background: "var(--surface3)", border: "1px solid var(--border)",
+              padding: "3px 9px", borderRadius: 20, letterSpacing: "0.02em",
+            }}>
+              Aucun signal
             </span>
           )}
         </div>
       </div>
 
-      {/* Genres + source */}
-      {(track.genres.length > 0 || track.enrichment_source) && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+      {/* Genres */}
+      {track.genres.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
           {track.genres.slice(0, 4).map((g) => {
             const pal = genrePalette(g);
             return (
-              <span
-                key={g}
-                style={{
-                  background: pal.bg,
-                  border: `1px solid ${pal.border}`,
-                  borderRadius: 6,
-                  padding: "2px 8px",
-                  fontSize: 10,
-                  color: pal.color,
-                }}
-              >
+              <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "2px 8px", fontSize: 10, color: pal.color }}>
                 {g}
               </span>
             );
           })}
           {track.enrichment_source && (
-            <span
-              style={{
-                background: "transparent",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-                padding: "2px 8px",
-                fontSize: 10,
-                color: "var(--ink-dim)",
-              }}
-            >
+            <span style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "var(--ink-dim)" }}>
               {track.enrichment_source}
             </span>
           )}
         </div>
       )}
 
-      {/* Audio features */}
-      {af && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-          {af.energy !== undefined && <FeatureBar label="Énergie" value={af.energy} />}
-          {af.danceability !== undefined && <FeatureBar label="Danceabilité" value={af.danceability} />}
-          {af.tempo !== undefined && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-              <span style={{ width: 72, flexShrink: 0, color: "var(--ink-dim)" }}>Tempo</span>
-              <span style={{ color: "var(--ink-mid)" }}>{Math.round(af.tempo)} BPM</span>
-            </div>
-          )}
+      {/* Raison LLM — texte complet, pas de truncate */}
+      {track.classification_reason && (
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 11, color: "var(--ink-mid)", marginBottom: 10, lineHeight: 1.6 }}>
+          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-dim)", display: "block", marginBottom: 3 }}>Raison</span>
+          {track.classification_reason}
         </div>
       )}
 
-      {/* Classification reason */}
-      {hasReason && (
-        <div
-          style={{
-            background: "var(--surface2)",
-            borderRadius: 8,
-            padding: "8px 12px",
-            fontSize: 11,
-            color: "var(--ink-mid)",
-            marginBottom: 12,
-          }}
-        >
-          {isLongReason && !isReasonExpanded ? (
-            <>
-              {track.classification_reason!.slice(0, 100)}…{" "}
-              <button
-                onClick={onToggleReason}
-                style={{ color: "var(--terra)", background: "none", border: "none", cursor: "pointer", fontSize: 11 }}
-              >
-                voir plus
-              </button>
-            </>
-          ) : (
-            <>
-              {track.classification_reason}
-              {isLongReason && (
-                <button
-                  onClick={onToggleReason}
-                  style={{ color: "var(--terra)", background: "none", border: "none", cursor: "pointer", fontSize: 11, marginLeft: 4 }}
-                >
-                  voir moins
-                </button>
-              )}
-            </>
-          )}
+      {/* Suggestion encart */}
+      {hasSuggestion && (
+        <div style={{ background: "var(--surface2)", border: "1px solid rgba(200,147,90,0.18)", borderRadius: 6, padding: "7px 12px", marginBottom: 10, fontSize: 12, color: "#c8935a" }}>
+          → {track.suggested_playlist}
         </div>
       )}
 
-      {/* Player */}
-      <div style={{ marginBottom: 12 }}>
-        {track.deezer_id ? (
-          <iframe
-            title="deezer-widget"
-            src={`https://widget.deezer.com/widget/dark/track/${track.deezer_id}`}
-            width="100%"
-            height="80"
-            frameBorder="0"
-            allow="encrypted-media"
-            style={{ borderRadius: 8 }}
-          />
-        ) : (
-          <a
-            href={`https://open.spotify.com/track/${track.spotify_track_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="s-btn"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
-          >
-            Ouvrir dans Spotify ↗
-          </a>
-        )}
-      </div>
-
-      {/* Actions */}
+      {/* Body — deux colonnes sur desktop */}
       {!isCorrectingThis ? (
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            disabled={isBusy || !track.llm_suggestion_id}
-            onClick={onValidate}
-            className="s-btn s-btn-primary"
-            style={{ flex: 1 }}
-          >
-            {isBusy ? "…" : "Valider"}
-          </button>
-          <button
-            disabled={isBusy}
-            onClick={onStartCorrecting}
-            className="s-btn"
-            style={{ flex: 1 }}
-          >
-            Changer
-          </button>
-          <button
-            disabled={isBusy}
-            onClick={onArchive}
-            className="s-btn"
-            title="Archiver"
-          >
-            ⊘
-          </button>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          {/* Player — left column */}
+          <div style={{ flex: 1, minWidth: 0 }}>{player}</div>
+
+          {/* Buttons — right column, empilés verticalement */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, width: 120 }}>
+            {hasSuggestion && (
+              <button
+                disabled={isBusy}
+                onClick={onValidate}
+                className="s-btn s-btn-primary"
+                style={{ minHeight: 36, width: "100%", justifyContent: "center" }}
+              >
+                {isBusy ? "…" : "Valider"}
+              </button>
+            )}
+            <button
+              disabled={isBusy}
+              onClick={onStartCorrecting}
+              className="s-btn"
+              style={{ minHeight: 36, width: "100%", justifyContent: "center" }}
+            >
+              Changer
+            </button>
+            <button
+              disabled={isBusy}
+              onClick={onArchive}
+              className="s-btn"
+              title="Archiver"
+              style={{ minHeight: 36, width: "100%", justifyContent: "center", color: "var(--ink-dim)" }}
+            >
+              ⊘
+            </button>
+          </div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div
-            style={{
-              background: "var(--surface2)",
-              border: "1px solid var(--border)",
-              borderRadius: 10,
-              padding: "8px 12px",
-            }}
-          >
+          <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: "8px 12px" }}>
             {playlists.map((p) => (
-              <label
-                key={p.id}
-                style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer", fontSize: 13 }}
-              >
+              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer", fontSize: 13 }}>
                 <input
                   type="checkbox"
                   checked={selectedIds.includes(p.id)}
                   onChange={(e) =>
-                    setSelectedIds((prev) =>
-                      e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
-                    )
+                    setSelectedIds((prev) => e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id))
                   }
                   style={{ accentColor: "var(--terra)" }}
                 />
-                <span style={{ color: selectedIds.includes(p.id) ? "var(--ink)" : "var(--ink-mid)" }}>
-                  {p.name}
-                </span>
+                <span style={{ color: selectedIds.includes(p.id) ? "var(--ink)" : "var(--ink-mid)" }}>{p.name}</span>
               </label>
             ))}
           </div>
@@ -359,14 +269,7 @@ function TrackCard({
             >
               {isBusy ? "…" : `Assigner (${selectedIds.length})`}
             </button>
-            <button
-              disabled={isBusy}
-              onClick={onCancelCorrecting}
-              className="s-btn"
-              aria-label="Annuler"
-            >
-              ↩
-            </button>
+            <button disabled={isBusy} onClick={onCancelCorrecting} className="s-btn" aria-label="Annuler">↩</button>
           </div>
         </div>
       )}
