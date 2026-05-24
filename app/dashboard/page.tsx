@@ -108,12 +108,13 @@ export default async function DashboardPage() {
     <main className="s-page">
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>
-          {greeting()}, {firstName}
+        <div style={{ fontSize: 16, fontWeight: 300, color: "var(--ink-mid)", marginBottom: 8, letterSpacing: "0.01em" }}>
+          {greeting()},{" "}
+          <span style={{ color: "var(--terra)", fontWeight: 400 }}>{firstName}</span>
         </div>
         <h1
-          className="font-fraunces"
-          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+          className="font-fraunces s-page-h1"
+          style={{ fontSize: 44, fontWeight: 600, letterSpacing: "-1px", color: "var(--ink)", lineHeight: 1.05 }}
         >
           Tout va{" "}
           <em style={{ fontStyle: "italic", color: "var(--terra)" }}>bien</em>{" "}
@@ -157,7 +158,7 @@ export default async function DashboardPage() {
                     style={{
                       fontSize: 16,
                       fontWeight: 600,
-                      color: "var(--ink)",
+                      color: swatch,
                       marginBottom: 6,
                       lineHeight: 1.2,
                     }}

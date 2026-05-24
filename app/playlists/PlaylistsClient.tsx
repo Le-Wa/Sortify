@@ -49,10 +49,14 @@ function parseSpotifyId(raw: string): string {
 // ── Genre tag colors ──────────────────────────────────────────────────────────
 
 const GENRE_PALETTES = [
-  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
-  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
-  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
-  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
+  { bg: "var(--sage-light)",      color: "var(--sage)",   border: "var(--sage-border)" },
+  { bg: "var(--amber-light)",     color: "var(--amber)",  border: "rgba(216,170,66,0.28)" },
+  { bg: "var(--terra-light)",     color: "var(--terra)",  border: "var(--terra-border)" },
+  { bg: "rgba(136,120,208,0.13)", color: "#8878d0",       border: "rgba(136,120,208,0.26)" },
+  { bg: "rgba(80,148,108,0.13)",  color: "#4e9468",       border: "rgba(80,148,108,0.24)" },
+  { bg: "rgba(192,112,80,0.13)",  color: "#c07050",       border: "rgba(192,112,80,0.24)" },
+  { bg: "rgba(120,120,180,0.13)", color: "#7878b4",       border: "rgba(120,120,180,0.24)" },
+  { bg: "rgba(168,128,60,0.13)",  color: "#a8803c",       border: "rgba(168,128,60,0.24)" },
 ];
 
 function genrePalette(genre: string) {
@@ -746,7 +750,9 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
           <div className="s-bs-backdrop" onClick={() => setBottomSheet(null)} />
           <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Options — ${bsPlaylist.name}`}>
             <div className="s-bs-handle" />
-            <p className="s-bs-title">{bsPlaylist.name}</p>
+            <p className="s-bs-title" style={{ color: SWATCH_COLORS[active.findIndex(p => p.id === bsPlaylist.id) % SWATCH_COLORS.length] || SWATCH_COLORS[0] }}>
+              {bsPlaylist.name}
+            </p>
 
             {/* Primary actions */}
             {bsPlaylist.enabled && (

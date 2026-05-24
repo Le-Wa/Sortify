@@ -4,15 +4,26 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 
 const GENRE_PALETTES = [
-  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
-  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
-  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
-  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
+  { bg: "var(--sage-light)",      color: "var(--sage)",   border: "var(--sage-border)" },
+  { bg: "var(--amber-light)",     color: "var(--amber)",  border: "rgba(216,170,66,0.28)" },
+  { bg: "var(--terra-light)",     color: "var(--terra)",  border: "var(--terra-border)" },
+  { bg: "rgba(136,120,208,0.13)", color: "#8878d0",       border: "rgba(136,120,208,0.26)" },
+  { bg: "rgba(80,148,108,0.13)",  color: "#4e9468",       border: "rgba(80,148,108,0.24)" },
+  { bg: "rgba(192,112,80,0.13)",  color: "#c07050",       border: "rgba(192,112,80,0.24)" },
+  { bg: "rgba(120,120,180,0.13)", color: "#7878b4",       border: "rgba(120,120,180,0.24)" },
+  { bg: "rgba(168,128,60,0.13)",  color: "#a8803c",       border: "rgba(168,128,60,0.24)" },
 ];
 function genrePalette(genre: string) {
   let h = 0;
   for (const c of genre) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
   return GENRE_PALETTES[h % GENRE_PALETTES.length];
+}
+
+const SWATCH_COLORS = ["#c89840","#8878d0","#6a9070","#c87a52","#a06848","#508860","#7878b0","#c08060"];
+function playlistSwatch(id: string): string {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return SWATCH_COLORS[h % SWATCH_COLORS.length];
 }
 
 interface PlaylistInfo {
@@ -187,7 +198,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
           <div style={{ minWidth: 0 }}>
             <h1
               className="font-fraunces s-page-h1"
-              style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+              style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.8px", color: playlistSwatch(playlist.id), lineHeight: 1.05 }}
             >
               {playlist.name}
             </h1>
