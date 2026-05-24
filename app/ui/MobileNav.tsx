@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 
 const LINKS = [
   {
@@ -70,7 +71,7 @@ export default function MobileNav() {
       .catch(() => {});
   }, []);
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname === "/") return null;
 
   return (
     <nav className="s-mobile-nav">
@@ -137,6 +138,28 @@ export default function MobileNav() {
           </Link>
         );
       })}
+
+      <button
+        onClick={() => signOut({ callbackUrl: "/" })}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 3,
+          padding: "4px 6px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "var(--ink-dimmer)",
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 20, height: 20, opacity: 0.6 }}>
+          <path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span style={{ fontSize: 9, fontWeight: 300, letterSpacing: "0.02em" }}>Logout</span>
+      </button>
     </nav>
   );
 }

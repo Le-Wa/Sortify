@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 
 function nextMonday(): string {
   const d = new Date();
@@ -84,7 +85,7 @@ export default function Sidebar() {
       .catch(() => {});
   }, []);
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname === "/") return null;
 
   return (
     <aside
@@ -188,6 +189,31 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
+
+      <button
+        onClick={() => signOut({ callbackUrl: "/" })}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginTop: 12,
+          padding: "8px",
+          background: "none",
+          border: "none",
+          borderRadius: 8,
+          cursor: "pointer",
+          color: "var(--ink-dim)",
+          fontSize: 12,
+          fontWeight: 400,
+          width: "100%",
+          textAlign: "left",
+        }}
+      >
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 14, height: 14, flexShrink: 0 }}>
+          <path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Déconnexion
+      </button>
     </aside>
   );
 }
