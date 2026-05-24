@@ -283,14 +283,14 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       </Link>
 
       <div style={{ marginBottom: 24 }}>
+        {/* Barre couleur accent */}
+        <div style={{ height: 3, width: 48, borderRadius: 2, background: swatch, marginBottom: 14 }} />
+
         <div className="s-page-header">
           <div style={{ minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 2 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
-              <h1 className="font-fraunces s-page-h1" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: swatch, lineHeight: 1.1 }}>
-                {playlist.name}
-              </h1>
-            </div>
+            <h1 className="font-fraunces s-page-h1" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
+              {playlist.name}
+            </h1>
             {playlist.description && (
               <p style={{ marginTop: 4, fontSize: 13, color: "var(--ink-dim)", paddingLeft: 20 }}>{playlist.description}</p>
             )}
