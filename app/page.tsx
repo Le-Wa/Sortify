@@ -3,12 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getUserOnboarding } from "@/lib/supabase/queries";
 
-const ACCENT = "#c8935a";
+const ACCENT = "#c6925a";
 const SPOTIFY_GREEN = "#1DB954";
 const SIGNIN_URL = "/api/auth/signin/spotify?callbackUrl=%2Fdashboard";
 
 const PILLS = [
-  { name: "Late Night Drive", color: "#c8935a" },
+  { name: "Late Night Drive", color: "#c6925a" },
   { name: "Dark Club", color: "#4e8fa8" },
   { name: "Sunday Morning", color: "#7a9e5a" },
   { name: "Mediterranean Vibes", color: "#3d7a70" },
@@ -90,8 +90,8 @@ export default async function RootPage() {
         @media (max-width: 640px) {
           .lp-features-grid { grid-template-columns: 1fr; }
           .lp-hero { padding: 52px 20px 40px !important; }
-          .lp-hero-title { font-size: 28px !important; }
-          .lp-logo-hero { font-size: 44px !important; }
+          .lp-hero-title { font-size: 36px !important; }
+          .lp-logo-hero { font-size: 52px !important; }
           .lp-section { padding: 48px 20px !important; }
           .lp-nav { padding: 0 16px !important; }
           .lp-nav-btn span { display: none; }
@@ -179,9 +179,9 @@ export default async function RootPage() {
               style={{
                 fontStyle: "italic",
                 fontWeight: 600,
-                fontSize: 56,
+                fontSize: 72,
                 color: "var(--ink)",
-                letterSpacing: "-1.5px",
+                letterSpacing: "-0.02em",
                 lineHeight: 1,
                 marginBottom: 20,
               }}
@@ -193,16 +193,17 @@ export default async function RootPage() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 7,
-                background: `${ACCENT}18`,
-                border: `1px solid ${ACCENT}35`,
-                borderRadius: 40,
-                padding: "5px 14px",
+                gap: 8,
+                background: `${ACCENT}14`,
+                border: `0.5px solid ${ACCENT}4d`,
+                borderRadius: 20,
+                padding: "7px 16px",
                 fontSize: 12,
                 fontWeight: 500,
                 color: ACCENT,
                 marginBottom: 20,
-                letterSpacing: "0.03em",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
               }}
             >
               ✦ Compagnon Spotify
@@ -211,16 +212,16 @@ export default async function RootPage() {
             <h1
               className="lp-hero-title"
               style={{
-                fontSize: 38,
-                fontWeight: 300,
+                fontSize: "clamp(36px, 6vw, 56px)",
+                fontWeight: 700,
                 color: "var(--ink)",
-                letterSpacing: "-0.6px",
-                lineHeight: 1.2,
+                letterSpacing: "-0.03em",
+                lineHeight: 1.1,
                 marginBottom: 32,
               }}
             >
-              T&apos;as liké.{" "}
-              <em style={{ fontStyle: "normal", color: ACCENT }}>C&apos;est trié.</em>
+              Tes liked songs,
+              <em style={{ fontStyle: "normal", color: ACCENT, display: "block" }}>enfin rangées</em>
             </h1>
 
 
