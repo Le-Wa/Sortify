@@ -278,7 +278,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
 
   return (
     <main className="s-page">
-      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: swatch, opacity: 0.7, textDecoration: "none", marginBottom: 20 }}>
+      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ink-dim)", textDecoration: "none", marginBottom: 20 }}>
         ← Playlists
       </Link>
 
