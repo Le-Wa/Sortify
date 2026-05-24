@@ -35,7 +35,7 @@ function StatCard({
 }) {
   return (
     <div className="s-stat-card">
-      <p style={{ fontSize: 10, color: "var(--ink-dim)", marginBottom: 6 }}>{label}</p>
+      <p style={{ fontSize: 12, fontWeight: 500, color: "var(--ink-mid)", marginBottom: 6 }}>{label}</p>
       <p
         className="font-fraunces"
         style={{
@@ -49,7 +49,7 @@ function StatCard({
         {value === null ? <span style={{ color: "var(--ink-dimmer)" }}>—</span> : value}
       </p>
       {sub && (
-        <p style={{ fontSize: 10, color: "var(--ink-dim)", marginTop: 4 }}>{sub}</p>
+        <p style={{ fontSize: 12, color: "var(--ink-mid)", marginTop: 4 }}>{sub}</p>
       )}
     </div>
   );
@@ -109,7 +109,7 @@ export default function DashboardActions() {
           sub="sans review"
         />
       </div>
-      <p style={{ fontSize: 11, color: "var(--ink-dim)", textAlign: "right" }}>
+      <p style={{ fontSize: 12, color: "var(--ink-mid)", textAlign: "right" }}>
         Dernière sync : {relativeTime(stats?.last_sync_at ?? null)}
       </p>
     </div>

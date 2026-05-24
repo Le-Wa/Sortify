@@ -282,7 +282,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
 
   return (
     <main className="s-page">
-      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ink-dim)", textDecoration: "none", marginBottom: 20 }}>
+      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--ink-mid)", textDecoration: "none", marginBottom: 20 }}>
         ← Playlists
       </Link>
 
@@ -296,7 +296,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
               {playlist.name}
             </h1>
             {playlist.description && (
-              <p style={{ marginTop: 4, fontSize: 13, color: "var(--ink-dim)", paddingLeft: 20 }}>{playlist.description}</p>
+              <p style={{ marginTop: 4, fontSize: 14, color: "var(--ink-mid)", paddingLeft: 20 }}>{playlist.description}</p>
             )}
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "flex-start" }}>
@@ -311,8 +311,8 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
           </div>
         </div>
 
-        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "var(--ink-dim)", alignItems: "center" }}>
-          <span style={{ color: "var(--ink-mid)" }}>{total} tracks</span>
+        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 12, fontSize: 13, color: "var(--ink-mid)", alignItems: "center" }}>
+          <span style={{ color: "var(--ink)", fontWeight: 500 }}>{total} tracks</span>
           <span>{synced} syncés</span>
           {notSynced > 0 && <span style={{ color: "var(--terra)" }}>{notSynced} non syncés</span>}
           {!enabled && (
@@ -325,7 +325,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
 
       {descOpen && (
         <div style={{ marginBottom: 20, background: "var(--surface)", border: "1px solid var(--border-strong)", borderRadius: 12, padding: "14px 16px" }}>
-          <p style={{ fontSize: 11, color: "var(--ink-dim)", marginBottom: 8 }}>Décris la vibe de cette playlist</p>
+          <p style={{ fontSize: 13, color: "var(--ink-mid)", marginBottom: 8 }}>Décris la vibe de cette playlist</p>
           <textarea
             autoFocus
             className="s-input"
@@ -381,27 +381,27 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
                 {displayedTracks.map((track) => (
                   <tr key={track.id}>
                     <td>
-                      <p style={{ fontWeight: 500, fontSize: 13 }}>
-                        {track.artist_name && <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>{track.artist_name} — </span>}
+                      <p style={{ fontWeight: 500, fontSize: 14 }}>
+                        {track.artist_name && <span style={{ fontWeight: 400, color: "var(--ink-mid)" }}>{track.artist_name} — </span>}
                         {track.name ?? track.spotify_track_id}
                       </p>
-                      <p style={{ marginTop: 2, fontSize: 10, color: "var(--ink-dim)" }}>
+                      <p style={{ marginTop: 2, fontSize: 11, color: "var(--ink-mid)" }}>
                         {formatDate(track.spotify_added_at)}
-                        {track.classification_level !== null && <span style={{ marginLeft: 6, color: "var(--ink-dimmer)" }}>{levelLabel(track.classification_level)}</span>}
+                        {track.classification_level !== null && <span style={{ marginLeft: 6, color: "var(--ink-dim)" }}>{levelLabel(track.classification_level)}</span>}
                       </p>
                     </td>
                     <td>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                         {track.genres.slice(0, 2).map((g) => {
                           const pal = genrePalette(g);
-                          return <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "1px 7px", fontSize: 10, color: pal.color }}>{g}</span>;
+                          return <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "1px 7px", fontSize: 11, fontWeight: 500, color: pal.color }}>{g}</span>;
                         })}
                       </div>
                     </td>
                     <td style={{ textAlign: "right" }}>
                       {track.confidence !== null ? (
                         <span style={{
-                          display: "inline-block", borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 500,
+                          display: "inline-block", borderRadius: 20, padding: "2px 8px", fontSize: 11, fontWeight: 500,
                           background: track.confidence >= 0.55 ? "var(--sage-light)" : track.confidence >= 0.4 ? "var(--amber-light)" : "var(--terra-light)",
                           color: track.confidence >= 0.55 ? "var(--sage)" : track.confidence >= 0.4 ? "var(--amber)" : "var(--terra)",
                         }}>{Math.round(track.confidence * 100)}%</span>
@@ -421,7 +421,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
             </button>
           )}
           {hasMore && (filter !== "all" || sort !== "default") && (
-            <p style={{ marginTop: 12, fontSize: 11, color: "var(--ink-dim)", textAlign: "center" }}>
+            <p style={{ marginTop: 12, fontSize: 12, color: "var(--ink-mid)", textAlign: "center" }}>
               {total - tracks.length} tracks non chargés · réinitialiser le filtre pour voir tout
             </p>
           )}

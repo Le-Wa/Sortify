@@ -83,7 +83,7 @@ export default function DashboardInboxPreview() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {total > 3 && (
-            <span style={{ fontSize: 11, color: "var(--ink-dim)" }}>
+            <span style={{ fontSize: 12, color: "var(--ink-mid)" }}>
               {total - tracks.length} de plus
             </span>
           )}
@@ -112,7 +112,7 @@ export default function DashboardInboxPreview() {
                 <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>
                   {track.name ?? "—"}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-mid)", marginTop: 2 }}>
                   {track.artist_name}
                 </div>
               </div>
@@ -121,7 +121,7 @@ export default function DashboardInboxPreview() {
                 <span
                   className="s-inbox-row-method"
                   style={{
-                    fontSize: 10,
+                    fontSize: 11,
                     color: "var(--ink-mid)",
                     background: "var(--surface2)",
                     border: "1px solid var(--border)",

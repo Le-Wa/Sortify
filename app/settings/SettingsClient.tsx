@@ -126,7 +126,7 @@ export default function SettingsClient({ cronEnabled: initialCron, importSince }
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
             <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>Cron hebdomadaire</p>
-            <p style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 2 }}>Chaque lundi · 08h00</p>
+            <p style={{ fontSize: 13, color: "var(--ink-mid)", marginTop: 2 }}>Chaque lundi · 08h00</p>
           </div>
           <button
             onClick={toggleCron}
@@ -252,7 +252,7 @@ export default function SettingsClient({ cronEnabled: initialCron, importSince }
                       style={{ width: 80 }}
                     />
                     <span style={{ fontSize: 13, color: "var(--ink-mid)" }}>mois</span>
-                    <span style={{ fontSize: 11, color: "var(--ink-dim)" }}>
+                    <span style={{ fontSize: 12, color: "var(--ink-mid)" }}>
                       {importMonths === "0" || importMonths === ""
                         ? "(tout l'historique)"
                         : `≈ ${parseInt(importMonths, 10) * 30} jours`}
@@ -286,7 +286,7 @@ export default function SettingsClient({ cronEnabled: initialCron, importSince }
           )}
 
           {(progress || feedback) && (
-            <p style={{ fontSize: 12, color: feedback ? "var(--terra)" : "var(--ink-dim)", marginTop: 2 }}>
+            <p style={{ fontSize: 13, color: feedback ? "var(--terra)" : "var(--ink-mid)", marginTop: 2 }}>
               {progress ?? feedback}
             </p>
           )}
