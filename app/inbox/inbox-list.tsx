@@ -142,10 +142,10 @@ function TrackCard({
             {track.name ?? track.spotify_track_id}
           </p>
           {track.artist_name && (
-            <p style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 2, margin: 0 }}>{track.artist_name}</p>
+            <p style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-mid)", marginTop: 2, margin: 0 }}>{track.artist_name}</p>
           )}
           {track.album_name && (
-            <p style={{ fontSize: 10, color: "var(--ink-dimmer)", marginTop: 1, margin: 0 }}>({track.album_name})</p>
+            <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 1, margin: 0 }}>({track.album_name})</p>
           )}
         </div>
         {/* Badge */}
@@ -178,13 +178,13 @@ function TrackCard({
           {track.genres.slice(0, 4).map((g) => {
             const pal = genrePalette(g);
             return (
-              <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "2px 8px", fontSize: 10, color: pal.color }}>
+              <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 500, color: pal.color }}>
                 {g}
               </span>
             );
           })}
           {track.enrichment_source && (
-            <span style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "var(--ink-dim)" }}>
+            <span style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 11, color: "var(--ink-mid)" }}>
               {track.enrichment_source}
             </span>
           )}
@@ -193,15 +193,15 @@ function TrackCard({
 
       {/* Raison LLM — texte complet, pas de truncate */}
       {track.classification_reason && (
-        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 11, color: "var(--ink-mid)", marginBottom: 10, lineHeight: 1.6 }}>
-          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-dim)", display: "block", marginBottom: 3 }}>Raison</span>
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink)", marginBottom: 10, lineHeight: 1.65 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-mid)", display: "block", marginBottom: 3 }}>Raison</span>
           {track.classification_reason}
         </div>
       )}
 
       {/* Suggestion encart */}
       {hasSuggestion && (
-        <div style={{ background: "var(--surface2)", border: "1px solid rgba(200,147,90,0.18)", borderRadius: 6, padding: "7px 12px", marginBottom: 10, fontSize: 12, color: "#c8935a" }}>
+        <div style={{ background: "var(--surface2)", border: "1px solid rgba(200,147,90,0.18)", borderRadius: 6, padding: "7px 12px", marginBottom: 10, fontSize: 13, fontWeight: 500, color: "#c8935a" }}>
           → {track.suggested_playlist}
         </div>
       )}
@@ -452,7 +452,7 @@ export default function InboxClient() {
           </select>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 200 }}>
-            <span style={{ fontSize: 11, color: "var(--ink-dim)", flexShrink: 0 }}>
+            <span style={{ fontSize: 12, color: "var(--ink-mid)", flexShrink: 0 }}>
               Max : {sliderValue < 1.0 ? `${Math.round(sliderValue * 100)}%` : "tous"}
             </span>
             <input
@@ -481,8 +481,8 @@ export default function InboxClient() {
         </div>
       ) : tracks.length === 0 ? (
         <div style={{ display: "flex", minHeight: 200, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, textAlign: "center" }}>
-          <p style={{ fontSize: 13, color: "var(--ink-mid)" }}>Inbox vide</p>
-          <p style={{ fontSize: 11, color: "var(--ink-dim)" }}>Tout est trié ✓</p>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>Inbox vide</p>
+          <p style={{ fontSize: 12, color: "var(--ink-mid)" }}>Tout est trié ✓</p>
         </div>
       ) : (
         <>

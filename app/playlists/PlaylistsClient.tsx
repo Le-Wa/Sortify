@@ -688,7 +688,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               )}
             </p>
 
-            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 6 }}>
               Sous-titre (court)
             </label>
             <input
@@ -699,7 +699,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               onChange={(e) => setPreviewShortDesc(e.target.value)}
             />
 
-            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 6 }}>
               Description vibe LLM — éditable
             </label>
             <textarea
@@ -711,12 +711,12 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               onChange={(e) => setPreviewHelp(e.target.value)}
             />
 
-            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 6 }}>
               Règles générées — lecture seule
             </label>
             <pre style={{
               background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8,
-              padding: "12px 14px", fontSize: 10, lineHeight: 1.7, color: "var(--ink-mid)",
+              padding: "12px 14px", fontSize: 12, lineHeight: 1.7, color: "var(--ink)",
               overflow: "auto", maxHeight: 200, marginBottom: 24,
             }}>
               {JSON.stringify(modal.preview.rules, null, 2)}
@@ -745,7 +745,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
             </h2>
             <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>{modal.playlistName}</p>
 
-            <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 6 }}>
               Sous-titre
             </label>
             <input
@@ -830,8 +830,8 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 style={{
                   flex: 1, padding: "7px 10px", borderRadius: 6, border: "none",
                   background: newMode === "link" ? "var(--surface)" : "transparent",
-                  color: newMode === "link" ? "var(--ink)" : "var(--ink-dim)",
-                  fontSize: 12, fontWeight: newMode === "link" ? 600 : 400,
+                  color: newMode === "link" ? "var(--ink)" : "var(--ink-mid)",
+                  fontSize: 13, fontWeight: newMode === "link" ? 600 : 400,
                   cursor: "pointer", transition: "all 0.15s",
                   boxShadow: newMode === "link" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
                 }}
@@ -843,8 +843,8 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                 style={{
                   flex: 1, padding: "7px 10px", borderRadius: 6, border: "none",
                   background: newMode === "create" ? "var(--surface)" : "transparent",
-                  color: newMode === "create" ? "var(--ink)" : "var(--ink-dim)",
-                  fontSize: 12, fontWeight: newMode === "create" ? 600 : 400,
+                  color: newMode === "create" ? "var(--ink)" : "var(--ink-mid)",
+                  fontSize: 13, fontWeight: newMode === "create" ? 600 : 400,
                   cursor: "pointer", transition: "all 0.15s",
                   boxShadow: newMode === "create" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
                 }}
@@ -858,7 +858,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               {/* ── Link mode: Spotify picker ── */}
               {newMode === "link" && (
                 <div>
-                  <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 6 }}>
+                  <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 6 }}>
                     Choisir depuis Spotify *
                   </label>
 
@@ -910,10 +910,10 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
                               transition: "background 0.1s",
                             }}
                           >
-                            <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: newSelectedId === p.id ? 600 : 400, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <span style={{ fontSize: 14, color: "var(--ink)", fontWeight: newSelectedId === p.id ? 600 : 500, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {p.name}
                               {p.already_linked && (
-                                <span style={{ fontSize: 10, color: "var(--ink-dim)", marginLeft: 7, fontWeight: 400 }}>déjà importée</span>
+                                <span style={{ fontSize: 11, color: "var(--ink-mid)", marginLeft: 7, fontWeight: 400 }}>déjà importée</span>
                               )}
                             </span>
                             <span style={{ fontSize: 11, color: "var(--ink-dim)", flexShrink: 0, marginLeft: 12 }}>
@@ -929,14 +929,14 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
               {/* ── Create mode: info note ── */}
               {newMode === "create" && (
-                <p style={{ fontSize: 11, color: "var(--ink-dim)", background: "var(--surface2)", borderRadius: 6, padding: "8px 10px", margin: 0 }}>
+                <p style={{ fontSize: 12, color: "var(--ink-mid)", background: "var(--surface2)", borderRadius: 6, padding: "8px 10px", margin: 0 }}>
                   Une nouvelle playlist privée sera créée dans votre Spotify.
                 </p>
               )}
 
               {/* Common fields */}
               <div>
-                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>
+                <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 5 }}>
                   {newMode === "link" ? "Nom Sortify *" : "Nom *"}
                 </label>
                 <input
@@ -951,7 +951,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               </div>
 
               <div>
-                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>Description</label>
+                <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 5 }}>Description</label>
                 <input
                   type="text" className="s-input" style={{ width: "100%" }}
                   value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
@@ -966,7 +966,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               </div>
 
               <div>
-                <label style={{ fontSize: 11, color: "var(--ink-dim)", display: "block", marginBottom: 5 }}>Décris la vibe</label>
+                <label style={{ fontSize: 13, color: "var(--ink-mid)", display: "block", marginBottom: 5 }}>Décris la vibe</label>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
                     type="text" className="s-input" style={{ flex: 1 }}
@@ -1208,8 +1208,8 @@ function PlaylistRow({
             </span>
             {!p.enabled && (
               <span style={{
-                fontSize: 9, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase",
-                color: "var(--ink-dim)", background: "var(--surface2)",
+                fontSize: 10, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase",
+                color: "var(--ink-mid)", background: "var(--surface2)",
                 border: "1px solid var(--border-strong)", borderRadius: 4, padding: "1px 5px",
               }}>
                 inactif
@@ -1217,12 +1217,12 @@ function PlaylistRow({
             )}
           </div>
           {p.description && (
-            <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <p style={{ fontSize: 12, color: "var(--ink-mid)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {p.description}
             </p>
           )}
           {learnedAt && (
-            <p style={{ fontSize: 10, color: swatch, opacity: 0.8, marginTop: 2 }}>Appris le {learnedAt}</p>
+            <p style={{ fontSize: 11, color: swatch, opacity: 0.85, marginTop: 2 }}>Appris le {learnedAt}</p>
           )}
         </div>
         <div className="s-pl-row-stats" style={{ flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
@@ -1234,7 +1234,7 @@ function PlaylistRow({
               </span>
             )}
           </div>
-          <span style={{ fontSize: 9, color: "var(--ink-dimmer)", textTransform: "uppercase", letterSpacing: "0.05em" }}>tracks</span>
+          <span style={{ fontSize: 10, color: "var(--ink-dim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>tracks</span>
         </div>
       </Link>
 

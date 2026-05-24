@@ -124,11 +124,11 @@ export default function ArchiveClient() {
               <div style={{ minWidth: 0 }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {track.artist_name && (
-                    <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>{track.artist_name} — </span>
+                    <span style={{ fontWeight: 400, color: "var(--ink-mid)" }}>{track.artist_name} — </span>
                   )}
                   {track.name ?? "Titre inconnu"}
                   {track.album_name && (
-                    <span style={{ fontWeight: 300, color: "var(--ink-dim)" }}> ({track.album_name})</span>
+                    <span style={{ fontWeight: 400, color: "var(--ink-dim)" }}> ({track.album_name})</span>
                   )}
                 </p>
                 <div style={{ marginTop: 4, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
@@ -140,7 +140,7 @@ export default function ArchiveClient() {
                       {g}
                     </span>
                   ))}
-                  <span style={{ fontSize: 10, color: "var(--ink-dim)" }}>{formatDate(track.spotify_added_at)}</span>
+                  <span style={{ fontSize: 11, color: "var(--ink-mid)" }}>{formatDate(track.spotify_added_at)}</span>
                 </div>
               </div>
               <button
