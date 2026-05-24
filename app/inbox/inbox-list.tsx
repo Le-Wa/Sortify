@@ -20,6 +20,14 @@ interface InboxTrack {
   deezer_id: string | null;
 }
 
+type ConfidenceFilter = "all" | "uncertain" | "very_uncertain";
+
+const CONFIDENCE_THRESHOLDS: Record<ConfidenceFilter, number> = {
+  all: 1.0,
+  uncertain: 0.55,
+  very_uncertain: 0.4,
+};
+
 interface InboxPlaylist {
   id: string;
   spotify_playlist_id: string;
@@ -94,31 +102,43 @@ function TrackCard({
   onArchive: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
   const hasSuggestion = !!track.llm_suggestion_id && !!track.suggested_playlist;
-  const accentColor = hasSuggestion ? "#c8935a" : "var(--ink-dimmer)";
   const borderColor = hasSuggestion ? "rgba(200,147,90,0.35)" : "rgba(255,255,255,0.07)";
 
-  const player = track.deezer_id ? (
+  const player = previewOpen ? (
     <iframe
-      title="deezer-widget"
-      src={`https://widget.deezer.com/widget/dark/track/${track.deezer_id}`}
+      title="spotify-embed"
+      src={`https://open.spotify.com/embed/track/${track.spotify_track_id}?utm_source=sortify`}
       width="100%"
       height="80"
       frameBorder="0"
-      allow="encrypted-media"
-      style={{ borderRadius: 8, display: "block" }}
+      loading="lazy"
+      allow="encrypted-media; clipboard-write"
+      style={{ borderRadius: 12, display: "block", colorScheme: "normal" }}
     />
   ) : (
-    <a
-      href={`https://open.spotify.com/track/${track.spotify_track_id}`}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      type="button"
+      onClick={() => setPreviewOpen(true)}
       className="s-btn"
-      style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        background: "var(--surface2)",
+        borderColor: "var(--border-strong)",
+        color: "var(--ink-mid)",
+        height: 36,
+        padding: "0 14px",
+      }}
     >
-      Ouvrir dans Spotify ↗
-    </a>
+      <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 11, height: 11 }}>
+        <path d="M3 2.5v11l10-5.5-10-5.5z" />
+      </svg>
+      Preview
+    </button>
   );
 
   return (
@@ -286,8 +306,8 @@ export default function InboxClient() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [filterPlaylistId, setFilterPlaylistId] = useState("");
-  const [sliderValue, setSliderValue] = useState(1.0);
-  const [maxConfidence, setMaxConfidence] = useState(1.0);
+  const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>("all");
+  const maxConfidence = CONFIDENCE_THRESHOLDS[confidenceFilter];
 
   const [playlists, setPlaylists] = useState<InboxPlaylist[]>([]);
 
@@ -298,6 +318,12 @@ export default function InboxClient() {
 
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchMessage, setBatchMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
+  }
 
   useEffect(() => {
     fetch("/api/playlists")
@@ -361,7 +387,7 @@ export default function InboxClient() {
       setCorrecting((prev) => { const n = new Set(prev); n.delete(trackId); return n; });
       exitTrack(trackId);
     } catch (err) {
-      alert(`Erreur : ${String(err)}`);
+      showToast(`Erreur : ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy((prev) => { const n = new Set(prev); n.delete(trackId); return n; });
     }
@@ -403,7 +429,7 @@ export default function InboxClient() {
       setCurrentPage(1);
       setHasMore(fresh.total > fresh.tracks.length);
     } catch (err) {
-      alert(`Erreur batch : ${String(err)}`);
+      showToast(`Erreur batch : ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBatchLoading(false);
     }
@@ -439,34 +465,35 @@ export default function InboxClient() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="s-filter-bar">
+          <div className="s-filter-chips">
+            {([
+              { key: "all", label: "Tous" },
+              { key: "uncertain", label: "Incertains (<55%)" },
+              { key: "very_uncertain", label: "Très incertains (<40%)" },
+            ] as { key: ConfidenceFilter; label: string }[]).map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                className={`s-chip${confidenceFilter === key ? " active" : ""}`}
+                onClick={() => setConfidenceFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="s-filter-sep" />
           <select
             value={filterPlaylistId}
             onChange={(e) => setFilterPlaylistId(e.target.value)}
-            className="s-input"
+            className="s-sort-select"
+            aria-label="Filtrer par playlist"
           >
             <option value="">Toutes les playlists</option>
             {playlists.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 200 }}>
-            <span style={{ fontSize: 12, color: "var(--ink-mid)", flexShrink: 0 }}>
-              Max : {sliderValue < 1.0 ? `${Math.round(sliderValue * 100)}%` : "tous"}
-            </span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={sliderValue}
-              onChange={(e) => setSliderValue(parseFloat(e.target.value))}
-              onMouseUp={(e) => setMaxConfidence(parseFloat((e.target as HTMLInputElement).value))}
-              onTouchEnd={(e) => setMaxConfidence(parseFloat((e.target as HTMLInputElement).value))}
-              style={{ flex: 1, accentColor: "var(--terra)" }}
-            />
-          </div>
         </div>
 
         {batchMessage && (
@@ -528,6 +555,8 @@ export default function InboxClient() {
           )}
         </>
       )}
+
+      {toast && <div className="s-toast">{toast}</div>}
     </main>
   );
 }
