@@ -7,42 +7,11 @@ import {
   getDashboardTracks,
   type DashboardTrackRow,
 } from "@/lib/supabase/queries";
-import type { PlaylistCentroid } from "@/lib/types";
 import Link from "next/link";
 import DashboardActions from "./DashboardActions";
 import DashboardInboxPreview from "./DashboardInboxPreview";
 
 const MS_30D = 30 * 24 * 60 * 60 * 1000;
-
-const COHERENCE_DIMS = [
-  "energy",
-  "danceability",
-  "valence",
-  "acousticness",
-  "instrumentalness",
-] as const;
-const MAX_DIST = Math.sqrt(COHERENCE_DIMS.length);
-
-function coherenceScore(
-  features: (Record<string, number> | null)[],
-  centroid: PlaylistCentroid
-): number {
-  const valid = features.filter((f): f is Record<string, number> => f !== null);
-  if (valid.length === 0) return 100;
-  const avgDist =
-    valid.reduce((sum, f) => {
-      let sq = 0;
-      for (const dim of COHERENCE_DIMS) sq += ((f[dim] ?? 0) - centroid[dim]) ** 2;
-      return sum + Math.sqrt(sq);
-    }, 0) / valid.length;
-  return Math.max(0, Math.round((1 - avgDist / MAX_DIST) * 100));
-}
-
-function scoreBadgeStyle(score: number): React.CSSProperties {
-  if (score > 80) return { background: "var(--sage-light)", color: "var(--sage)", border: "1px solid var(--sage-border)" };
-  if (score >= 60) return { background: "var(--amber-light)", color: "var(--amber)", border: "1px solid rgba(200,152,64,0.2)" };
-  return { background: "var(--terra-light)", color: "var(--terra)", border: "1px solid var(--terra-border)" };
-}
 
 function moodLabel(valence100: number): string {
   if (valence100 < 30) return "Mélancolique";
@@ -84,25 +53,14 @@ export default async function DashboardPage() {
       : null;
   const valence100 = avgValence !== null ? Math.round(avgValence * 100) : null;
 
-  const featuresByPlaylist = new Map<string, (Record<string, number> | null)[]>();
+  const trackCountByPlaylist = new Map<string, number>();
   for (const t of tracks) {
     if (!t.assigned_playlist) continue;
-    const arr = featuresByPlaylist.get(t.assigned_playlist) ?? [];
-    arr.push(t.audio_features as Record<string, number> | null);
-    featuresByPlaylist.set(t.assigned_playlist, arr);
+    trackCountByPlaylist.set(t.assigned_playlist, (trackCountByPlaylist.get(t.assigned_playlist) ?? 0) + 1);
   }
 
-  const health = playlists.map((pl) => {
-    const features = featuresByPlaylist.get(pl.id) ?? [];
-    return {
-      id: pl.id,
-      name: pl.name,
-      trackCount: features.length,
-      score: pl.centroid ? coherenceScore(features, pl.centroid) : null,
-    };
-  });
-
   const firstName = session.user?.name?.split(" ")[0] ?? "toi";
+  const swatchColors = ["#c89840", "#8878d0", "#6a9070", "#c87a52", "#a06848", "#508860"];
 
   return (
     <main className="s-page">
@@ -134,9 +92,8 @@ export default async function DashboardPage() {
           <div className="s-section-title">Playlists</div>
           <div className="s-pl-grid">
             {playlists.map((pl, i) => {
-              const swatchColors = ["#c89840", "#8878d0", "#6a9070", "#c87a52", "#a06848", "#508860"];
               const swatch = swatchColors[i % swatchColors.length];
-              const plHealth = health.find((h) => h.id === pl.id);
+              const trackCount = trackCountByPlaylist.get(pl.id) ?? 0;
               return (
                 <Link
                   key={pl.id}
@@ -144,57 +101,24 @@ export default async function DashboardPage() {
                   className="s-pl-card"
                   style={{ textDecoration: "none", display: "block" }}
                 >
-                  <div
-                    style={{
-                      height: 3,
-                      borderRadius: 2,
-                      background: swatch,
-                      marginBottom: 14,
-                      opacity: 0.85,
-                    }}
-                  />
+                  <div style={{ height: 3, borderRadius: 2, background: swatch, marginBottom: 14, opacity: 0.85 }} />
                   <div
                     className="font-fraunces"
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: "var(--ink)",
-                      marginBottom: 6,
-                      lineHeight: 1.2,
-                    }}
+                    style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", marginBottom: 6, lineHeight: 1.2 }}
                   >
                     {pl.name}
                   </div>
                   {pl.description && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--ink-dim)",
-                        marginBottom: 10,
-                        lineHeight: 1.4,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
+                    <div style={{
+                      fontSize: 11, color: "var(--ink-dim)", marginBottom: 10, lineHeight: 1.4,
+                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                    }}>
                       {pl.description}
                     </div>
                   )}
-                  <div
-                    className="font-fraunces"
-                    style={{ fontSize: 22, fontWeight: 600, color: swatch, lineHeight: 1 }}
-                  >
-                    {plHealth?.trackCount ?? 0}
-                    <span
-                      style={{
-                        fontFamily: "var(--font-geist-sans)",
-                        fontSize: 11,
-                        fontWeight: 400,
-                        color: "var(--ink-dim)",
-                        marginLeft: 5,
-                      }}
-                    >
+                  <div className="font-fraunces" style={{ fontSize: 22, fontWeight: 600, color: swatch, lineHeight: 1 }}>
+                    {trackCount}
+                    <span style={{ fontFamily: "var(--font-geist-sans)", fontSize: 11, fontWeight: 400, color: "var(--ink-dim)", marginLeft: 5 }}>
                       titres
                     </span>
                   </div>
@@ -205,83 +129,21 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* Playlist health */}
-      <section style={{ marginTop: 32 }}>
-        <div className="s-section-title">Santé des playlists</div>
-        {health.length === 0 ? (
-          <p style={{ color: "var(--ink-mid)", fontSize: 13 }}>Aucune playlist configurée</p>
-        ) : (
-          <div className="s-table-wrap"><table className="s-table" style={{ width: "100%" }}>
-            <thead>
-              <tr>
-                <th>Playlist</th>
-                <th style={{ textAlign: "right" }}>Tracks</th>
-                <th style={{ textAlign: "right" }}>Cohérence</th>
-              </tr>
-            </thead>
-            <tbody>
-              {health.map((pl) => (
-                <tr key={pl.id}>
-                  <td>
-                    <Link
-                      href={`/playlists/${pl.id}`}
-                      style={{ color: "var(--ink)", textDecoration: "none" }}
-                    >
-                      {pl.name}
-                    </Link>
-                  </td>
-                  <td style={{ textAlign: "right", color: "var(--ink-mid)" }}>
-                    {pl.trackCount}
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    {pl.score !== null ? (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          borderRadius: 20,
-                          padding: "2px 10px",
-                          fontSize: 11,
-                          fontWeight: 500,
-                          ...scoreBadgeStyle(pl.score),
-                        }}
-                      >
-                        {pl.score}
-                      </span>
-                    ) : (
-                      <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table></div>
-        )}
-      </section>
-
       {/* Emotional profile */}
       {valence100 !== null && (
         <section style={{ marginTop: 32 }}>
           <div className="s-section-title">Profil émotionnel · 30 jours</div>
-          <div
-            className="s-card"
-            style={{ padding: "20px 22px" }}
-          >
+          <div className="s-card" style={{ padding: "20px 22px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-              <span style={{ fontSize: 16, fontWeight: 500, color: "var(--ink)" }}>
-                {moodLabel(valence100)}
-              </span>
+              <span style={{ fontSize: 16, fontWeight: 500, color: "var(--ink)" }}>{moodLabel(valence100)}</span>
               <span style={{ fontSize: 13, color: "var(--ink-mid)" }}>{valence100} / 100</span>
             </div>
             <div style={{ height: 4, borderRadius: 4, background: "var(--surface3)", overflow: "hidden" }}>
-              <div
-                style={{
-                  height: "100%",
-                  borderRadius: 4,
-                  background: `linear-gradient(to right, var(--terra), var(--amber), var(--sage))`,
-                  width: `${valence100}%`,
-                  transition: "width 0.3s",
-                }}
-              />
+              <div style={{
+                height: "100%", borderRadius: 4,
+                background: `linear-gradient(to right, var(--terra), var(--amber), var(--sage))`,
+                width: `${valence100}%`, transition: "width 0.3s",
+              }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 10, color: "var(--ink-dim)" }}>
               <span>Mélancolique</span>

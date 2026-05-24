@@ -3,16 +3,46 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 
+// ── Palette genre (24 couleurs) ───────────────────────────────────────────────
+
 const GENRE_PALETTES = [
-  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
-  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
-  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
-  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
+  { bg: "rgba(212,90,80,0.13)",   color: "#d45a50",  border: "rgba(212,90,80,0.26)" },
+  { bg: "rgba(210,110,70,0.13)",  color: "#d26e46",  border: "rgba(210,110,70,0.26)" },
+  { bg: "rgba(204,128,85,0.13)",  color: "#cc8055",  border: "rgba(204,128,85,0.26)" },
+  { bg: "rgba(200,152,60,0.13)",  color: "#c8983c",  border: "rgba(200,152,60,0.26)" },
+  { bg: "rgba(192,170,56,0.13)",  color: "#c0aa38",  border: "rgba(192,170,56,0.26)" },
+  { bg: "rgba(140,180,70,0.13)",  color: "#8cb446",  border: "rgba(140,180,70,0.26)" },
+  { bg: "rgba(100,170,90,0.13)",  color: "#64aa5a",  border: "rgba(100,170,90,0.26)" },
+  { bg: "rgba(110,152,122,0.13)", color: "#6e987a",  border: "rgba(110,152,122,0.26)" },
+  { bg: "rgba(70,148,100,0.13)",  color: "#469464",  border: "rgba(70,148,100,0.26)" },
+  { bg: "rgba(60,148,140,0.13)",  color: "#3c948c",  border: "rgba(60,148,140,0.26)" },
+  { bg: "rgba(60,130,160,0.13)",  color: "#3c82a0",  border: "rgba(60,130,160,0.26)" },
+  { bg: "rgba(70,110,190,0.13)",  color: "#466ebe",  border: "rgba(70,110,190,0.26)" },
+  { bg: "rgba(90,100,210,0.13)",  color: "#5a64d2",  border: "rgba(90,100,210,0.26)" },
+  { bg: "rgba(120,90,210,0.13)",  color: "#785ad2",  border: "rgba(120,90,210,0.26)" },
+  { bg: "rgba(136,120,208,0.13)", color: "#8878d0",  border: "rgba(136,120,208,0.26)" },
+  { bg: "rgba(155,100,200,0.13)", color: "#9b64c8",  border: "rgba(155,100,200,0.26)" },
+  { bg: "rgba(170,90,180,0.13)",  color: "#aa5ab4",  border: "rgba(170,90,180,0.26)" },
+  { bg: "rgba(190,80,150,0.13)",  color: "#be5096",  border: "rgba(190,80,150,0.26)" },
+  { bg: "rgba(200,80,120,0.13)",  color: "#c85078",  border: "rgba(200,80,120,0.26)" },
+  { bg: "rgba(200,90,90,0.13)",   color: "#c85a5a",  border: "rgba(200,90,90,0.26)" },
+  { bg: "rgba(160,120,70,0.13)",  color: "#a07846",  border: "rgba(160,120,70,0.26)" },
+  { bg: "rgba(140,100,70,0.13)",  color: "#8c6446",  border: "rgba(140,100,70,0.26)" },
+  { bg: "rgba(120,110,80,0.13)",  color: "#786e50",  border: "rgba(120,110,80,0.26)" },
+  { bg: "rgba(130,120,110,0.13)", color: "#82786e",  border: "rgba(130,120,110,0.26)" },
 ];
+
 function genrePalette(genre: string) {
   let h = 0;
   for (const c of genre) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
   return GENRE_PALETTES[h % GENRE_PALETTES.length];
+}
+
+const SWATCH_COLORS = ["#c89840","#8878d0","#6a9070","#c87a52","#a06848","#508860","#7878b0","#c08060"];
+function playlistSwatch(id: string): string {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return SWATCH_COLORS[h % SWATCH_COLORS.length];
 }
 
 interface PlaylistInfo {
@@ -20,6 +50,7 @@ interface PlaylistInfo {
   spotify_playlist_id: string;
   name: string;
   description: string | null;
+  enabled?: boolean;
 }
 
 interface PlaylistTrack {
@@ -51,11 +82,7 @@ const PER_PAGE = 50;
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function levelLabel(level: number | null): string {
@@ -76,9 +103,20 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [syncing, setSyncing] = useState(false);
-
   const [filter, setFilter] = useState<FilterValue>("all");
   const [sort, setSort] = useState<SortValue>("default");
+  const [enabled, setEnabled] = useState<boolean>(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [bottomSheet, setBottomSheet] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
+  const [descText, setDescText] = useState("");
+  const [descLoading, setDescLoading] = useState(false);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +126,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       .then((data: ApiResponse) => {
         if (cancelled) return;
         setPlaylist(data.playlist);
+        setEnabled(data.playlist.enabled ?? true);
         setTracks(data.tracks);
         setTotal(data.total);
         setSynced(data.synced);
@@ -96,21 +135,15 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         setPage(1);
       })
       .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [playlistId]);
 
   async function loadMore() {
     setLoadingMore(true);
     const nextPage = page + 1;
     try {
-      const res = await fetch(
-        `/api/playlists/${playlistId}/tracks?page=${nextPage}&per_page=${PER_PAGE}`
-      );
+      const res = await fetch(`/api/playlists/${playlistId}/tracks?page=${nextPage}&per_page=${PER_PAGE}`);
       const data: ApiResponse = await res.json();
       setTracks((prev) => [...prev, ...data.tracks]);
       setPage(nextPage);
@@ -131,18 +164,88 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       setSynced((prev) => prev + data.synced);
       setNotSynced((prev) => Math.max(0, prev - data.synced));
       if (data.synced > 0) {
-        setTracks((prev) =>
-          prev.map((t) =>
-            t.pushed_to_spotify === null
-              ? { ...t, pushed_to_spotify: new Date().toISOString() }
-              : t
-          )
-        );
+        setTracks((prev) => prev.map((t) =>
+          t.pushed_to_spotify === null ? { ...t, pushed_to_spotify: new Date().toISOString() } : t
+        ));
       }
     } catch (err) {
-      alert(`Erreur sync : ${String(err)}`);
+      showToast(`Erreur sync : ${String(err)}`);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleLearn() {
+    setActionLoading("learn");
+    setBottomSheet(false);
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}/learn`, { method: "POST" });
+      const data = await res.json() as { error?: string };
+      if (!res.ok || data.error) throw new Error(data.error ?? "Erreur");
+      showToast("Analyse terminée");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Analyse échouée");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleToggle() {
+    setActionLoading("toggle");
+    setBottomSheet(false);
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !enabled }),
+      });
+      if (!res.ok) throw new Error();
+      setEnabled((v) => !v);
+      showToast(!enabled ? "Playlist activée" : "Playlist désactivée");
+    } catch {
+      showToast("Erreur");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleRecompute() {
+    setActionLoading("recompute");
+    setBottomSheet(false);
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}/recompute-centroid`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      showToast("Centroïde recalculé");
+    } catch {
+      showToast("Erreur recompute");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleDescSubmit() {
+    if (!descText.trim()) return;
+    setDescLoading(true);
+    try {
+      const res = await fetch("/api/playlists/from-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: descText.trim() }),
+      });
+      const data = await res.json() as { error?: string; llm_help_text?: string };
+      if (!res.ok || data.error) throw new Error(data.error ?? "Erreur");
+      await fetch(`/api/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ llm_help_text: data.llm_help_text, learned_at: new Date().toISOString() }),
+      });
+      setDescText("");
+      setDescOpen(false);
+      showToast("Vibe sauvegardée");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setDescLoading(false);
     }
   }
 
@@ -171,175 +274,145 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
     );
   }
 
+  const swatch = playlistSwatch(playlist.id);
+
   return (
     <main className="s-page">
-      {/* Breadcrumb */}
-      <Link
-        href="/playlists"
-        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--ink-dim)", textDecoration: "none", marginBottom: 20 }}
-      >
+      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: swatch, opacity: 0.7, textDecoration: "none", marginBottom: 20 }}>
         ← Playlists
       </Link>
 
-      {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div className="s-page-header">
           <div style={{ minWidth: 0 }}>
-            <h1
-              className="font-fraunces s-page-h1"
-              style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
-            >
-              {playlist.name}
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 2 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
+              <h1 className="font-fraunces s-page-h1" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: swatch, lineHeight: 1.1 }}>
+                {playlist.name}
+              </h1>
+            </div>
             {playlist.description && (
-              <p style={{ marginTop: 4, fontSize: 13, color: "var(--ink-dim)" }}>{playlist.description}</p>
+              <p style={{ marginTop: 4, fontSize: 13, color: "var(--ink-dim)", paddingLeft: 20 }}>{playlist.description}</p>
             )}
           </div>
-          {notSynced > 0 && (
-            <button
-              disabled={syncing}
-              onClick={handleSync}
-              className="s-btn s-btn-primary"
-              style={{ flexShrink: 0 }}
-            >
-              {syncing ? "…" : `Sync (${notSynced})`}
+          <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "flex-start" }}>
+            {notSynced > 0 && (
+              <button disabled={syncing} onClick={handleSync} className="s-btn s-btn-primary" style={{ flexShrink: 0 }}>
+                {syncing ? "…" : `Sync (${notSynced})`}
+              </button>
+            )}
+            <button className="s-btn" onClick={() => setBottomSheet(true)} disabled={!!actionLoading} aria-label="Actions" style={{ fontSize: 16, padding: "4px 10px" }}>
+              {actionLoading ? "…" : "⋯"}
             </button>
-          )}
+          </div>
         </div>
-        <div style={{ marginTop: 10, display: "flex", gap: 16, fontSize: 12, color: "var(--ink-dim)" }}>
+
+        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "var(--ink-dim)", alignItems: "center" }}>
           <span style={{ color: "var(--ink-mid)" }}>{total} tracks</span>
-          <span>{synced} synced</span>
-          {notSynced > 0 && (
-            <span style={{ color: "var(--terra)" }}>{notSynced} non synced</span>
+          <span>{synced} syncés</span>
+          {notSynced > 0 && <span style={{ color: "var(--terra)" }}>{notSynced} non syncés</span>}
+          {!enabled && (
+            <span style={{ color: "var(--ink-dimmer)", background: "var(--surface2)", border: "1px solid var(--border-strong)", borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
+              inactif
+            </span>
           )}
         </div>
       </div>
 
-      {/* Filter + sort bar */}
+      {descOpen && (
+        <div style={{ marginBottom: 20, background: "var(--surface)", border: "1px solid var(--border-strong)", borderRadius: 12, padding: "14px 16px" }}>
+          <p style={{ fontSize: 11, color: "var(--ink-dim)", marginBottom: 8 }}>Décris la vibe de cette playlist</p>
+          <textarea
+            autoFocus
+            className="s-input"
+            rows={3}
+            style={{ width: "100%", resize: "vertical", lineHeight: 1.6, marginBottom: 10 }}
+            placeholder="Ex : Rap français boom-bap des années 2000, pas de trap…"
+            value={descText}
+            onChange={(e) => setDescText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handleDescSubmit(); }}
+          />
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button className="s-btn" onClick={() => { setDescOpen(false); setDescText(""); }}>Annuler</button>
+            <button className="s-btn s-btn-primary" disabled={descLoading || !descText.trim()} onClick={() => void handleDescSubmit()}>
+              {descLoading ? "Génération…" : "Générer →"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="s-filter-bar">
         <div className="s-filter-chips">
-          <button
-            className={`s-chip${filter === "all" ? " active" : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            Tous ({total})
-          </button>
-          <button
-            className={`s-chip${filter === "synced" ? " active" : ""}`}
-            onClick={() => setFilter("synced")}
-          >
-            Syncés ({synced})
-          </button>
-          <button
-            className={`s-chip${filter === "not_synced" ? " active" : ""}`}
-            onClick={() => setFilter("not_synced")}
-          >
-            Non syncés ({notSynced})
-          </button>
+          {(["all", "synced", "not_synced"] as FilterValue[]).map((f) => (
+            <button key={f} className={`s-chip${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>
+              {f === "all" ? `Tous (${total})` : f === "synced" ? `Syncés (${synced})` : `Non syncés (${notSynced})`}
+            </button>
+          ))}
         </div>
         <div className="s-filter-sep" />
-        <select
-          className="s-sort-select"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortValue)}
-          aria-label="Trier par"
-        >
+        <select className="s-sort-select" value={sort} onChange={(e) => setSort(e.target.value as SortValue)} aria-label="Trier par">
           <option value="default">Ordre par défaut</option>
           <option value="name">Nom A→Z</option>
           <option value="confidence">Confiance ↓</option>
         </select>
       </div>
 
-      {/* Track list */}
       {displayedTracks.length === 0 ? (
         <div style={{ display: "flex", minHeight: 160, alignItems: "center", justifyContent: "center", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)", fontSize: 13, color: "var(--ink-mid)" }}>
           {filter !== "all" ? "Aucun track pour ce filtre" : "Aucun track dans cette playlist"}
         </div>
       ) : (
         <>
-          <div className="s-table-wrap"><table className="s-table" style={{ width: "100%" }}>
-            <thead>
-              <tr>
-                <th>Track</th>
-                <th>Genres</th>
-                <th style={{ textAlign: "right" }}>Conf.</th>
-                <th style={{ textAlign: "right" }}>Sync</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedTracks.map((track) => (
-                <tr key={track.id}>
-                  <td>
-                    <p style={{ fontWeight: 500, fontSize: 13 }}>
-                      {track.artist_name && (
-                        <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>
-                          {track.artist_name} —{" "}
-                        </span>
-                      )}
-                      {track.name ?? track.spotify_track_id}
-                    </p>
-                    <p style={{ marginTop: 2, fontSize: 10, color: "var(--ink-dim)" }}>
-                      {formatDate(track.spotify_added_at)}
-                      {track.classification_level !== null && (
-                        <span style={{ marginLeft: 6, color: "var(--ink-dimmer)" }}>
-                          {levelLabel(track.classification_level)}
-                        </span>
-                      )}
-                    </p>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {track.genres.slice(0, 2).map((g) => {
-                        const pal = genrePalette(g);
-                        return (
-                          <span
-                            key={g}
-                            style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "1px 7px", fontSize: 10, color: pal.color }}
-                          >
-                            {g}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    {track.confidence !== null ? (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          borderRadius: 20,
-                          padding: "2px 8px",
-                          fontSize: 10,
-                          fontWeight: 500,
+          <div className="s-table-wrap">
+            <table className="s-table" style={{ width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>Track</th>
+                  <th>Genres</th>
+                  <th style={{ textAlign: "right" }}>Conf.</th>
+                  <th style={{ textAlign: "right" }}>Sync</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayedTracks.map((track) => (
+                  <tr key={track.id}>
+                    <td>
+                      <p style={{ fontWeight: 500, fontSize: 13 }}>
+                        {track.artist_name && <span style={{ fontWeight: 300, color: "var(--ink-mid)" }}>{track.artist_name} — </span>}
+                        {track.name ?? track.spotify_track_id}
+                      </p>
+                      <p style={{ marginTop: 2, fontSize: 10, color: "var(--ink-dim)" }}>
+                        {formatDate(track.spotify_added_at)}
+                        {track.classification_level !== null && <span style={{ marginLeft: 6, color: "var(--ink-dimmer)" }}>{levelLabel(track.classification_level)}</span>}
+                      </p>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {track.genres.slice(0, 2).map((g) => {
+                          const pal = genrePalette(g);
+                          return <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "1px 7px", fontSize: 10, color: pal.color }}>{g}</span>;
+                        })}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {track.confidence !== null ? (
+                        <span style={{
+                          display: "inline-block", borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 500,
                           background: track.confidence >= 0.55 ? "var(--sage-light)" : track.confidence >= 0.4 ? "var(--amber-light)" : "var(--terra-light)",
                           color: track.confidence >= 0.55 ? "var(--sage)" : track.confidence >= 0.4 ? "var(--amber)" : "var(--terra)",
-                        }}
-                      >
-                        {Math.round(track.confidence * 100)}%
-                      </span>
-                    ) : (
-                      <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    {track.pushed_to_spotify ? (
-                      <span style={{ fontSize: 12, color: "var(--sage)" }}>✓</span>
-                    ) : (
-                      <span style={{ fontSize: 12, color: "var(--terra)" }}>○</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table></div>
-
+                        }}>{Math.round(track.confidence * 100)}%</span>
+                      ) : <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {track.pushed_to_spotify ? <span style={{ fontSize: 12, color: "var(--sage)" }}>✓</span> : <span style={{ fontSize: 12, color: "var(--terra)" }}>○</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {hasMore && filter === "all" && sort === "default" && (
-            <button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="s-btn"
-              style={{ width: "100%", marginTop: 16, padding: "10px 0", justifyContent: "center" }}
-            >
+            <button onClick={loadMore} disabled={loadingMore} className="s-btn" style={{ width: "100%", marginTop: 16, padding: "10px 0", justifyContent: "center" }}>
               {loadingMore ? "Chargement…" : "Charger plus"}
             </button>
           )}
@@ -350,6 +423,33 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
           )}
         </>
       )}
+
+      {bottomSheet && (
+        <>
+          <div className="s-bs-backdrop" onClick={() => setBottomSheet(false)} />
+          <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Actions — ${playlist.name}`}>
+            <div className="s-bs-handle" />
+            <p className="s-bs-title" style={{ color: swatch }}>{playlist.name}</p>
+            <button className="s-bs-item" disabled={actionLoading === "learn"} onClick={() => void handleLearn()}>
+              {actionLoading === "learn" ? "Analyse…" : "Analyser"}
+            </button>
+            <button className="s-bs-item" onClick={() => { setBottomSheet(false); setDescOpen(true); }}>
+              Décrire la vibe
+            </button>
+            <button className="s-bs-item" disabled={actionLoading === "toggle"} onClick={() => void handleToggle()}>
+              {enabled ? "Désactiver" : "Activer"}
+            </button>
+            <div className="s-bs-sep" />
+            <button className="s-bs-item" disabled={actionLoading === "recompute"} onClick={() => void handleRecompute()}>
+              {actionLoading === "recompute" ? "Calcul…" : "Recompute centroïde"}
+            </button>
+            <div className="s-bs-sep" style={{ marginTop: 4 }} />
+            <button className="s-bs-item s-bs-item-dim" onClick={() => setBottomSheet(false)}>Annuler</button>
+          </div>
+        </>
+      )}
+
+      {toast && <div className="s-toast">{toast}</div>}
     </main>
   );
 }
