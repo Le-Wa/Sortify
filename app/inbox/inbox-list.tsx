@@ -36,10 +36,14 @@ interface ApiResponse {
 const PER_PAGE = 20;
 
 const GENRE_PALETTES = [
-  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
-  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
-  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
-  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
+  { bg: "var(--sage-light)",            color: "var(--sage)",   border: "var(--sage-border)" },
+  { bg: "var(--amber-light)",           color: "var(--amber)",  border: "rgba(208,160,64,0.25)" },
+  { bg: "var(--terra-light)",           color: "var(--terra)",  border: "var(--terra-border)" },
+  { bg: "rgba(136,120,208,0.12)",       color: "#8878d0",       border: "rgba(136,120,208,0.22)" },
+  { bg: "rgba(80,148,108,0.13)",        color: "#50946c",       border: "rgba(80,148,108,0.22)" },
+  { bg: "rgba(192,112,80,0.12)",        color: "#c07050",       border: "rgba(192,112,80,0.22)" },
+  { bg: "rgba(120,120,180,0.12)",       color: "#7878b4",       border: "rgba(120,120,180,0.22)" },
+  { bg: "rgba(160,120,64,0.13)",        color: "#a07840",       border: "rgba(160,120,64,0.22)" },
 ];
 function genrePalette(genre: string) {
   let h = 0;

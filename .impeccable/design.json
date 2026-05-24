@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-21T00:00:00Z",
+  "title": "Design System: Sortify",
+  "extensions": {
+    "colorMeta": {
+      "vinyl-black": {
+        "role": "neutral",
+        "displayName": "Vinyl Black",
+        "canonical": "oklch(10.3% 0.003 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "inner-groove": {
+        "role": "neutral",
+        "displayName": "Inner Groove",
+        "canonical": "oklch(17% 0.004 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "carbon": {
+        "role": "neutral",
+        "displayName": "Carbon",
+        "canonical": "oklch(27% 0.005 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(38% 0.006 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "muted-text": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "canonical": "oklch(55% 0.007 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "secondary-text": {
+        "role": "neutral",
+        "displayName": "Secondary Text",
+        "canonical": "oklch(84% 0.005 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "body-text": {
+        "role": "neutral",
+        "displayName": "Body Text",
+        "canonical": "oklch(93% 0.004 286)",
+        "tonalRamp": ["#0a0a0a", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#e5e5e5"]
+      },
+      "connect-green": {
+        "role": "primary",
+        "displayName": "Connect Green",
+        "canonical": "oklch(65% 0.22 152)",
+        "tonalRamp": ["#031a07", "#073d10", "#096018", "#0d8420", "#13a82a", "#1db954", "#68d47e", "#bdeec6"]
+      },
+      "validate-emerald": {
+        "role": "secondary",
+        "displayName": "Validate Emerald",
+        "canonical": "oklch(42% 0.14 163)",
+        "tonalRamp": ["#022c1e", "#044a32", "#066843", "#098a5a", "#0ca873", "#047857", "#52dcaa", "#a8f0d2"]
+      },
+      "assign-blue": {
+        "role": "secondary",
+        "displayName": "Assign Blue",
+        "canonical": "oklch(50% 0.22 264)",
+        "tonalRamp": ["#061535", "#0a2462", "#0e3393", "#1347c4", "#1c57eb", "#5186f5", "#93b2f8", "#d4e2fc"]
+      },
+      "unsynced-amber": {
+        "role": "tertiary",
+        "displayName": "Unsynced Amber",
+        "canonical": "oklch(82% 0.15 68)",
+        "tonalRamp": ["#1c0a00", "#3d1c00", "#6d3300", "#9e4d00", "#c96300", "#f97316", "#fbb57a", "#fde8cc"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Big stat numbers in dashboard — inbox count, coverage %. Tabular feature always on." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles (h1). One per page." },
+      "title": { "displayName": "Title", "purpose": "Callout values and section-level emphasis. Used sparingly." },
+      "body": { "displayName": "Body", "purpose": "Track names, descriptions, classification reasons. Max 65-72ch." },
+      "label": { "displayName": "Label", "purpose": "Section category headers only (PLAYLIST HEALTH, PROFIL ÉMOTIONNEL). Non-interactive. Always muted-text." }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "transition-state",
+        "value": "150ms ease",
+        "purpose": "Default for color, opacity, and background transitions on interactive elements (nav links, ghost buttons)."
+      },
+      {
+        "name": "exit-card",
+        "value": "scale(0.95) opacity(0), 300ms ease",
+        "purpose": "Inbox card removal animation. Card scales down and fades out when validated, corrected, or archived."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px", "purpose": "Inbox filters go horizontal (flex-row); playlist grid becomes 2 columns." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Horizontal navigation strip. Default state muted, active and hover state is white.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-link\">Dashboard</a><a href=\"#\" class=\"ds-nav-link ds-nav-link--active\">Inbox</a><a href=\"#\" class=\"ds-nav-link\">Playlists</a><a href=\"#\" class=\"ds-nav-link\">Archive</a></nav>",
+      "css": ".ds-nav { background: #0a0a0a; border-bottom: 1px solid #262626; display: flex; align-items: center; gap: 24px; padding: 12px 16px; } .ds-nav-link { font-family: system-ui, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; color: #737373; text-decoration: none; transition: color 150ms; } .ds-nav-link:hover { color: #ededed; } .ds-nav-link--active { color: #ededed; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Primary content container. Bordered, no shadow, inner-groove surface.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-section-label\">Playlist Health</p><p class=\"ds-headline\">Ambient Dreams</p><p class=\"ds-body-muted\">42 tracks · synced</p></div>",
+      "css": ".ds-card { background: #171717; border: 1px solid #262626; border-radius: 12px; padding: 16px; } .ds-section-label { font-family: system-ui, Arial, sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #737373; margin: 0 0 12px; } .ds-headline { font-family: system-ui, Arial, sans-serif; font-size: 1.5rem; font-weight: 700; color: #ededed; margin: 0 0 4px; line-height: 1.25; } .ds-body-muted { font-family: system-ui, Arial, sans-serif; font-size: 0.875rem; color: #737373; margin: 0; line-height: 1.6; }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Non-interactive structural category header. Allcaps, muted, tracking-widest. Used above every major page section.",
+      "html": "<p class=\"ds-section-label\">Profil Émotionnel · 30 derniers jours</p>",
+      "css": ".ds-section-label { font-family: system-ui, Arial, sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #737373; margin: 0 0 12px; }"
+    },
+    {
+      "name": "Connect Button",
+      "kind": "button",
+      "refersTo": "button-connect",
+      "description": "Onboarding primary action only. Full-radius, Spotify green, black text. Never reused in the product after setup.",
+      "html": "<button class=\"ds-btn-connect\">Connecter</button>",
+      "css": ".ds-btn-connect { font-family: system-ui, Arial, sans-serif; font-size: 0.875rem; font-weight: 600; background: #1db954; color: #000000; border: none; border-radius: 9999px; padding: 10px 24px; cursor: pointer; transition: opacity 150ms; } .ds-btn-connect:hover { opacity: 0.9; } .ds-btn-connect:focus-visible { outline: 2px solid #1db954; outline-offset: 2px; } .ds-btn-connect:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Validate Button",
+      "kind": "button",
+      "refersTo": "button-validate",
+      "description": "Confirms a classification in the inbox. Emerald, large-rounded.",
+      "html": "<button class=\"ds-btn-validate\">✓ Valider</button>",
+      "css": ".ds-btn-validate { font-family: system-ui, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; background: #047857; color: #ededed; border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; transition: opacity 150ms; flex: 1; } .ds-btn-validate:hover { opacity: 0.8; } .ds-btn-validate:focus-visible { outline: 2px solid #047857; outline-offset: 2px; } .ds-btn-validate:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Default secondary action across the product. Transparent at rest, carbon fill on hover. Quiet confidence.",
+      "html": "<button class=\"ds-btn-ghost\">✎ Corriger</button>",
+      "css": ".ds-btn-ghost { font-family: system-ui, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; background: transparent; color: #737373; border: 1px solid #404040; border-radius: 8px; padding: 6px 12px; cursor: pointer; transition: background 150ms, color 150ms; } .ds-btn-ghost:hover { background: #262626; color: #ededed; } .ds-btn-ghost:focus-visible { outline: 2px solid #525252; outline-offset: 2px; } .ds-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Genre Chip",
+      "kind": "chip",
+      "refersTo": "genre-chip",
+      "description": "Inline genre and metadata tag. Carbon background for genre; bordered ghost variant for enrichment source.",
+      "html": "<div style=\"display:flex;gap:6px;flex-wrap:wrap\"><span class=\"ds-chip\">indie pop</span><span class=\"ds-chip\">dream wave</span><span class=\"ds-chip ds-chip--source\">lastfm</span></div>",
+      "css": ".ds-chip { font-family: system-ui, Arial, sans-serif; font-size: 0.75rem; background: #262626; color: #d4d4d4; border-radius: 6px; padding: 2px 8px; display: inline-block; } .ds-chip--source { background: transparent; border: 1px solid #404040; color: #737373; }"
+    },
+    {
+      "name": "Confidence Badge",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Semantic confidence indicator. Three tiers: high (≥55%), medium (40–54%), low (<40%). Full-radius pill.",
+      "html": "<div style=\"display:flex;gap:8px;align-items:center\"><span class=\"ds-badge ds-badge--high\">87%</span><span class=\"ds-badge ds-badge--mid\">46%</span><span class=\"ds-badge ds-badge--low\">28%</span></div>",
+      "css": ".ds-badge { font-family: system-ui, Arial, sans-serif; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; padding: 2px 10px; display: inline-block; } .ds-badge--high { background: #14532d; color: #86efac; } .ds-badge--mid { background: #713f12; color: #fde68a; } .ds-badge--low { background: #7f1d1d; color: #fca5a5; }"
+    },
+    {
+      "name": "Audio Feature Bar",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Compact horizontal bar showing a single audio metric (energy, danceability) in inbox track cards. Muted fill — data, not emphasis.",
+      "html": "<div style=\"display:flex;flex-direction:column;gap:6px\"><div class=\"ds-feature-bar\"><span class=\"ds-feature-label\">Énergie</span><div class=\"ds-feature-track\"><div class=\"ds-feature-fill\" style=\"width:73%\"></div></div><span class=\"ds-feature-value\">73</span></div><div class=\"ds-feature-bar\"><span class=\"ds-feature-label\">Danceabilité</span><div class=\"ds-feature-track\"><div class=\"ds-feature-fill\" style=\"width:58%\"></div></div><span class=\"ds-feature-value\">58</span></div></div>",
+      "css": ".ds-feature-bar { display: flex; align-items: center; gap: 8px; font-family: system-ui, Arial, sans-serif; font-size: 0.75rem; } .ds-feature-label { width: 80px; flex-shrink: 0; color: #737373; } .ds-feature-track { flex: 1; height: 6px; background: #262626; border-radius: 9999px; overflow: hidden; } .ds-feature-fill { height: 100%; background: #a3a3a3; border-radius: 9999px; } .ds-feature-value { width: 28px; text-align: right; color: #737373; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Curator",
+    "overview": "Sortify is a tool that understands your taste and keeps your library in order without asking for attention. The visual language reflects this: surfaces are dark and understated, like the inside of a record store at closing time. Every element earns its presence. Data occupies the foreground; the interface recedes.\n\nThe palette is tonal, not chromatic. Three dark surfaces layer from near-black through card through panel. Color enters as signal, never decoration: emerald confirms a validated classification, orange flags something unsynced, confidence badges use green/yellow/red to communicate certainty. The rare Spotify green appears once, at the moment of initial connection, then disappears from the product entirely.\n\nComponents are quiet at rest. Ghost buttons, muted text, hairline borders. On hover, they step forward exactly enough to acknowledge the interaction. Nothing bounces. Nothing announces itself.",
+    "keyCharacteristics": [
+      "Tonal dark palette, three levels deep, no shadows",
+      "Color as signal only — status accents are semantic, never aesthetic",
+      "Compact information density; no decorative whitespace",
+      "Quiet by default, responsive to interaction",
+      "Allcaps tracking-widest labels as the section voice"
+    ],
+    "rules": [
+      {
+        "name": "The One Green Rule",
+        "body": "Connect Green (#1db954) belongs to Spotify and to the onboarding handshake. It does not recur as a brand accent in the product. After setup, it vanishes. Its absence is intentional.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic-Only Rule",
+        "body": "Color communicates state, never personality. Emerald means confirmed. Orange means unsynced. Green/yellow/red mean confidence tier. Using any of these as hover tints or aesthetic accents breaks the signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Allcaps Label Rule",
+        "body": "The label style (0.75rem, uppercase, letter-spacing 0.1em, muted-text) is reserved for non-interactive structural category headers only. Never apply it to button labels, track titles, or body copy.",
+        "section": "typography"
+      },
+      {
+        "name": "The Pressed Vinyl Rule",
+        "body": "Depth through tone, never through shadows. Three surface steps: #0a0a0a (ground), #171717 (card), #262626 (panel/hover). A fourth level does not exist. Adding box-shadow to any element will look like a foreign import.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the three-level tonal stack for depth: #0a0a0a → #171717 → #262626.",
+      "Do apply the allcaps label style exclusively to non-interactive section category headers.",
+      "Do make empty states positive and direct. 'Inbox vide — tout est trié ✓' is the model.",
+      "Do keep page content at max-w-2xl (672px) or max-w-3xl (768px).",
+      "Do use full-radius shape for badges and the onboarding CTA; large-rounded (8px) for all other buttons.",
+      "Do keep semantic status colors semantic: emerald = confirmed, orange = attention, green/yellow/red = confidence tier.",
+      "Do use font-feature-settings: 'tnum' on all tabular numeric values."
+    ],
+    "donts": [
+      "Don't use Connect Green (#1db954) anywhere in the product after the onboarding step.",
+      "Don't add box-shadow to any element. Use tonal layering for depth.",
+      "Don't make the interface resemble Spotify's own UI.",
+      "Don't apply generic SaaS dashboard patterns: identical metric card grids, cold blue brand accents.",
+      "Don't use neon accents, heavy gradients, or purple/green-on-black.",
+      "Don't use border-left or border-right greater than 1px as a colored accent stripe.",
+      "Don't apply gradient text (background-clip: text).",
+      "Don't use status colors as hover tints, brand accents, or decorative flourishes.",
+      "Don't nest cards. Inner containers use a #262626 background panel, no border.",
+      "Don't add decorative whitespace to signal importance."
+    ]
+  }
+}
