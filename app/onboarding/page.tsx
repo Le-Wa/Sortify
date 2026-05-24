@@ -1,19 +1,17 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getUserSpotifyPlaylists } from "@/lib/spotify/fetchers";
+import { getUserOnboarding } from "@/lib/supabase/queries";
 import OnboardingClient from "./OnboardingClient";
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);
   if (!session?.userId) redirect("/login");
 
-  let playlists: Awaited<ReturnType<typeof getUserSpotifyPlaylists>> = [];
-  try {
-    playlists = await getUserSpotifyPlaylists(session.accessToken);
-  } catch {
-    // If Spotify call fails, render with empty list — user can retry
-  }
+  const dbUser = await getUserOnboarding(session.userId);
+  if (dbUser?.onboarding_completed) redirect("/dashboard");
 
-  return <OnboardingClient playlists={playlists} />;
+  const userName = session.user?.name ?? "toi";
+
+  return <OnboardingClient userName={userName} />;
 }

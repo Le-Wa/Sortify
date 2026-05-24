@@ -284,6 +284,27 @@ export async function getUserBySpotifyId(
   return data;
 }
 
+export async function getUserOnboarding(
+  spotifyId: string
+): Promise<{ id: string; onboarding_completed: boolean; cron_enabled: boolean } | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("users")
+    .select("id, onboarding_completed, cron_enabled")
+    .eq("spotify_id", spotifyId)
+    .single();
+  return data;
+}
+
+export async function updateOnboardingData(
+  userId: string,
+  data: { onboarding_completed?: boolean; import_since?: number | null; cron_enabled?: boolean }
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("users").update(data).eq("id", userId);
+  if (error) throw error;
+}
+
 export interface InboxTrackRow {
   id: string;
   spotify_track_id: string;
