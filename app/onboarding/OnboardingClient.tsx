@@ -61,22 +61,22 @@ function ProgressBar({ step }: { step: Step }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 4,
+                gap: 5,
               }}
             >
               <div
                 style={{
-                  width: 26,
-                  height: 26,
+                  width: 28,
+                  height: 28,
                   borderRadius: "50%",
                   background: done || active ? "var(--terra)" : "transparent",
                   border: done || active ? "1px solid var(--terra)" : "1px solid var(--border-strong)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 600,
-                  color: done || active ? "#fff" : "var(--ink-dim)",
+                  color: done || active ? "#fff" : "var(--ink-mid)",
                   transition: "all 0.2s",
                   flexShrink: 0,
                 }}
@@ -91,8 +91,8 @@ function ProgressBar({ step }: { step: Step }) {
               </div>
               <span
                 style={{
-                  fontSize: 9,
-                  color: active ? "var(--terra)" : "var(--ink-dimmer)",
+                  fontSize: 10,
+                  color: active ? "var(--terra)" : "var(--ink-dim)",
                   fontWeight: active ? 600 : 400,
                   letterSpacing: "0.02em",
                   whiteSpace: "nowrap",
@@ -107,7 +107,7 @@ function ProgressBar({ step }: { step: Step }) {
                   width: 28,
                   height: 1,
                   background: done ? "var(--terra)" : "var(--border-strong)",
-                  marginBottom: 14,
+                  marginBottom: 16,
                   transition: "background 0.2s",
                   flexShrink: 0,
                 }}
@@ -127,11 +127,12 @@ function BackButton({ onBack }: { onBack: () => void }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 5,
+        gap: 6,
         background: "none",
         border: "none",
-        color: "var(--ink-dim)",
-        fontSize: 12,
+        color: "var(--ink-mid)",
+        fontSize: 13,
+        fontWeight: 400,
         cursor: "pointer",
         padding: "0 0 20px",
         fontFamily: "inherit",
@@ -309,7 +310,7 @@ export default function OnboardingClient({ userName }: Props) {
                 style={{
                   fontStyle: "italic",
                   fontWeight: 600,
-                  fontSize: 26,
+                  fontSize: 28,
                   color: "var(--ink)",
                   letterSpacing: "-0.4px",
                   marginBottom: 10,
@@ -317,7 +318,7 @@ export default function OnboardingClient({ userName }: Props) {
               >
                 Bienvenue, {userName}
               </h1>
-              <p style={{ fontSize: 14, color: "var(--ink-mid)", lineHeight: 1.7 }}>
+              <p style={{ fontSize: 15, color: "var(--ink)", fontWeight: 400, lineHeight: 1.65 }}>
                 Ton compte Spotify est connecté. Configurons Sortify en quelques étapes.
               </p>
             </div>
@@ -336,7 +337,7 @@ export default function OnboardingClient({ userName }: Props) {
               <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0, color: "var(--sage)" }}>
                 <path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span style={{ fontSize: 13, color: "var(--sage)" }}>Spotify connecté</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "var(--sage)" }}>Spotify connecté</span>
             </div>
 
             <button
@@ -358,10 +359,10 @@ export default function OnboardingClient({ userName }: Props) {
               style={{ padding: "28px", display: "flex", flexDirection: "column", gap: 20 }}
             >
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.3px", marginBottom: 8 }}>
                   Scope d&apos;import
                 </h2>
-                <p style={{ fontSize: 13, color: "var(--ink-mid)", lineHeight: 1.65 }}>
+                <p style={{ fontSize: 14, color: "var(--ink)", fontWeight: 400, lineHeight: 1.65 }}>
                   Quelles liked songs importer pour le premier tri&nbsp;?
                 </p>
               </div>
@@ -374,7 +375,7 @@ export default function OnboardingClient({ userName }: Props) {
                       display: "flex",
                       alignItems: "center",
                       gap: 12,
-                      padding: "12px 14px",
+                      padding: "13px 14px",
                       borderRadius: 10,
                       border: `1px solid ${scope === value ? "var(--terra)" : "var(--border-strong)"}`,
                       background: scope === value ? "var(--terra-light)" : "var(--surface2)",
@@ -391,11 +392,11 @@ export default function OnboardingClient({ userName }: Props) {
                       style={{ accentColor: "var(--terra)", flexShrink: 0 }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 14, color: "var(--ink)", fontWeight: scope === value ? 500 : 400 }}>
+                      <span style={{ fontSize: 14, color: "var(--ink)", fontWeight: scope === value ? 600 : 500 }}>
                         {label}
                       </span>
                       {note && (
-                        <span style={{ fontSize: 11, color: "var(--terra)", marginLeft: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--terra)", marginLeft: 8 }}>
                           {note}
                         </span>
                       )}
@@ -424,10 +425,10 @@ export default function OnboardingClient({ userName }: Props) {
               style={{ padding: "28px", display: "flex", flexDirection: "column", gap: 20 }}
             >
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.3px", marginBottom: 8 }}>
                   Playlists cibles
                 </h2>
-                <p style={{ fontSize: 13, color: "var(--ink-mid)", lineHeight: 1.65 }}>
+                <p style={{ fontSize: 14, color: "var(--ink)", fontWeight: 400, lineHeight: 1.65 }}>
                   Choisis où Sortify triera tes liked songs. Minimum 1 requise.
                 </p>
               </div>
@@ -450,11 +451,11 @@ export default function OnboardingClient({ userName }: Props) {
                       <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, color: "var(--sage)", flexShrink: 0 }}>
                         <path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span style={{ fontSize: 13, color: "var(--ink)", flex: 1, minWidth: 0 }} className="truncate">
+                      <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", flex: 1, minWidth: 0 }} className="truncate">
                         {pl.name}
                       </span>
                       {pl.spotifyId && learning.has(pl.spotifyId) && (
-                        <span style={{ fontSize: 10, color: "var(--ink-dim)", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: 11, color: "var(--ink-mid)", whiteSpace: "nowrap" }}>
                           Apprentissage…
                         </span>
                       )}
@@ -476,12 +477,12 @@ export default function OnboardingClient({ userName }: Props) {
                 }}
               >
                 {playlistsLoading && (
-                  <div style={{ padding: "24px", textAlign: "center", color: "var(--ink-dim)", fontSize: 13 }}>
+                  <div style={{ padding: "24px", textAlign: "center", color: "var(--ink-mid)", fontSize: 14 }}>
                     Chargement…
                   </div>
                 )}
                 {!playlistsLoading && playlists?.length === 0 && (
-                  <div style={{ padding: "24px", textAlign: "center", color: "var(--ink-dim)", fontSize: 13 }}>
+                  <div style={{ padding: "24px", textAlign: "center", color: "var(--ink-mid)", fontSize: 14 }}>
                     Aucune playlist Spotify trouvée.
                   </div>
                 )}
@@ -496,24 +497,24 @@ export default function OnboardingClient({ userName }: Props) {
                           display: "flex",
                           alignItems: "center",
                           gap: 10,
-                          padding: "10px 14px",
+                          padding: "11px 14px",
                           borderBottom: "1px solid var(--border)",
                           opacity: linked_ ? 0.45 : 1,
                         }}
                       >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p
-                            style={{ fontSize: 13, color: "var(--ink)", fontWeight: 400 }}
+                            style={{ fontSize: 14, color: "var(--ink)", fontWeight: 500 }}
                             className="truncate"
                           >
                             {pl.name}
                           </p>
-                          <p style={{ fontSize: 11, color: "var(--ink-dim)" }}>
+                          <p style={{ fontSize: 12, color: "var(--ink-mid)", fontWeight: 400 }}>
                             {pl.tracks_total} titre{pl.tracks_total !== 1 ? "s" : ""}
                           </p>
                         </div>
                         {linked_ ? (
-                          <span style={{ fontSize: 11, color: "var(--ink-dim)", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ink-mid)", whiteSpace: "nowrap" }}>
                             Liée
                           </span>
                         ) : (
@@ -540,7 +541,7 @@ export default function OnboardingClient({ userName }: Props) {
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && createPlaylist()}
                     autoFocus
-                    style={{ flex: 1, fontSize: 13, padding: "9px 12px" }}
+                    style={{ flex: 1, fontSize: 14, padding: "9px 12px" }}
                   />
                   <button
                     className="s-btn s-btn-sm"
@@ -589,10 +590,10 @@ export default function OnboardingClient({ userName }: Props) {
               style={{ padding: "28px", display: "flex", flexDirection: "column", gap: 24 }}
             >
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.3px", marginBottom: 8 }}>
                   Tri hebdomadaire
                 </h2>
-                <p style={{ fontSize: 13, color: "var(--ink-mid)", lineHeight: 1.65 }}>
+                <p style={{ fontSize: 14, color: "var(--ink)", fontWeight: 400, lineHeight: 1.65 }}>
                   Sortify peut trier tes nouveaux likes automatiquement chaque lundi matin.
                 </p>
               </div>
@@ -609,8 +610,8 @@ export default function OnboardingClient({ userName }: Props) {
                 }}
               >
                 <div>
-                  <p style={{ fontSize: 14, color: "var(--ink)", fontWeight: 500 }}>Tri automatique</p>
-                  <p style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 2 }}>Chaque lundi matin</p>
+                  <p style={{ fontSize: 15, color: "var(--ink)", fontWeight: 600 }}>Tri automatique</p>
+                  <p style={{ fontSize: 13, color: "var(--ink-mid)", fontWeight: 400, marginTop: 3 }}>Chaque lundi matin</p>
                 </div>
                 <button
                   onClick={() => setCron((v) => !v)}
@@ -654,9 +655,9 @@ export default function OnboardingClient({ userName }: Props) {
                   justifyContent: "space-between",
                 }}
               >
-                <span style={{ fontSize: 13, color: "var(--ink-mid)" }}>
-                  Scope sélectionné :{" "}
-                  <span style={{ color: "var(--ink)", fontWeight: 500 }}>
+                <span style={{ fontSize: 14, color: "var(--ink-mid)", fontWeight: 400 }}>
+                  Scope :{" "}
+                  <span style={{ color: "var(--ink)", fontWeight: 600 }}>
                     {SCOPE_LABELS[scope]}
                   </span>
                 </span>
@@ -666,7 +667,8 @@ export default function OnboardingClient({ userName }: Props) {
                     background: "none",
                     border: "none",
                     color: "var(--terra)",
-                    fontSize: 12,
+                    fontSize: 13,
+                    fontWeight: 500,
                     cursor: "pointer",
                     fontFamily: "inherit",
                     padding: 0,
@@ -714,10 +716,10 @@ export default function OnboardingClient({ userName }: Props) {
                     <path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.3px", marginBottom: 8 }}>
                   Tout est prêt
                 </h2>
-                <p style={{ fontSize: 13, color: "var(--ink-mid)", lineHeight: 1.65 }}>
+                <p style={{ fontSize: 14, color: "var(--ink)", fontWeight: 400, lineHeight: 1.65 }}>
                   Sortify est configuré. Lance le premier tri pour remplir tes playlists.
                 </p>
               </div>
@@ -726,8 +728,8 @@ export default function OnboardingClient({ userName }: Props) {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 8,
-                  padding: "14px 16px",
+                  gap: 10,
+                  padding: "16px",
                   borderRadius: 10,
                   background: "var(--surface2)",
                   border: "1px solid var(--border)",
@@ -760,8 +762,9 @@ export default function OnboardingClient({ userName }: Props) {
                     width: "100%",
                     background: "none",
                     border: "none",
-                    color: "var(--ink-dim)",
-                    fontSize: 12,
+                    color: "var(--ink-mid)",
+                    fontSize: 13,
+                    fontWeight: 400,
                     cursor: "pointer",
                     fontFamily: "inherit",
                     padding: "6px 0",
@@ -781,8 +784,8 @@ export default function OnboardingClient({ userName }: Props) {
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-      <span style={{ fontSize: 12, color: "var(--ink-dim)" }}>{label}</span>
-      <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500 }}>{value}</span>
+      <span style={{ fontSize: 13, color: "var(--ink-mid)", fontWeight: 400 }}>{label}</span>
+      <span style={{ fontSize: 14, color: "var(--ink)", fontWeight: 600 }}>{value}</span>
     </div>
   );
 }
