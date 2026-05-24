@@ -40,7 +40,7 @@ export default function RootLayout({
       <body className="flex min-h-screen">
         <Providers>
           <Sidebar />
-          <div className="flex-1 relative z-10 min-h-screen">
+          <div className="flex-1 min-w-0 relative z-10 min-h-screen overflow-x-hidden">
             {children}
           </div>
           <MobileNav />
