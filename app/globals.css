@@ -592,6 +592,42 @@ body::after {
 .s-drag-handle:hover { color: var(--ink-dim); }
 .s-drag-handle:active { cursor: grabbing; }
 
+/* ── FAB "+ Nouvelle" — mobile only ────────────────────────────────────────── */
+
+.s-fab {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .s-new-btn-hide-mobile { display: none !important; }
+
+  .s-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+    z-index: 50;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--terra);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(180,90,50,0.45);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .s-fab:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(180,90,50,0.35);
+  }
+}
+
 /* ── Modal ─────────────────────────────────────────────────────────────────── */
 
 .s-modal-overlay {

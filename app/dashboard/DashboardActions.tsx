@@ -103,16 +103,11 @@ export default function DashboardActions({ initialCounts }: { initialCounts?: In
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div className="s-stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                height: 72,
-                borderRadius: 14,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                animation: "pulse 1.5s ease-in-out infinite",
-              }}
-            />
+            <div key={i} style={{ padding: "12px 14px", borderRadius: 14, background: "var(--surface)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 5 }}>
+              <div style={{ height: 8, width: "48%", borderRadius: 4, background: "var(--surface3)", animation: "pulse 1.5s ease-in-out infinite" }} />
+              <div style={{ height: 18, width: "65%", borderRadius: 4, background: "var(--surface3)", animation: "pulse 1.5s ease-in-out infinite" }} />
+              <div style={{ height: 8, width: "36%", borderRadius: 4, background: "var(--surface3)", animation: "pulse 1.5s ease-in-out infinite" }} />
+            </div>
           ))}
         </div>
       </div>

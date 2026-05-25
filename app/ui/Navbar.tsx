@@ -198,6 +198,12 @@ export default function Sidebar() {
           <div style={{ fontSize: 10, color: "var(--ink-dim)", marginTop: 3 }}>
             Prochain run : {nextMonday()}
           </div>
+          <Link
+            href="/settings"
+            style={{ display: "inline-block", marginTop: 8, fontSize: 11, color: "var(--ink-dim)", textDecoration: "none" }}
+          >
+            Modifier →
+          </Link>
         </div>
       </div>
 

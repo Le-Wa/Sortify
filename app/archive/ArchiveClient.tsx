@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 
 interface ArchivedTrack {
   id: string;
@@ -11,6 +12,9 @@ interface ArchivedTrack {
   spotify_added_at: string | null;
   is_archived: boolean;
 }
+
+type AgeFilter = "all" | "recent";
+const MS_30D = 30 * 24 * 60 * 60 * 1000;
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
@@ -27,6 +31,13 @@ export default function ArchiveClient() {
   const [loading, setLoading] = useState(true);
   const [exiting, setExiting] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<Set<string>>(new Set());
+  const [ageFilter, setAgeFilter] = useState<AgeFilter>("all");
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
+  }
 
   useEffect(() => {
     fetch("/api/archive")
@@ -63,7 +74,7 @@ export default function ArchiveClient() {
       if (!res.ok) throw new Error(await res.text());
       exitTrack(id);
     } catch (err) {
-      alert(`Erreur : ${String(err)}`);
+      showToast(`Erreur : ${String(err)}`);
     } finally {
       setBusy((prev) => {
         const n = new Set(prev);
@@ -72,6 +83,19 @@ export default function ArchiveClient() {
       });
     }
   }
+
+  const displayedTracks = useMemo(() => {
+    if (ageFilter === "recent") {
+      const now = Date.now();
+      return tracks.filter((t) => t.spotify_added_at && now - new Date(t.spotify_added_at).getTime() < MS_30D);
+    }
+    return tracks;
+  }, [tracks, ageFilter]);
+
+  const recentCount = useMemo(() => {
+    const now = Date.now();
+    return tracks.filter((t) => t.spotify_added_at && now - new Date(t.spotify_added_at).getTime() < MS_30D).length;
+  }, [tracks]);
 
   return (
     <main className="s-page">
@@ -94,17 +118,38 @@ export default function ArchiveClient() {
         </h1>
       </div>
 
+      {!loading && total > 0 && (
+        <div className="s-filter-bar" style={{ marginBottom: 16 }}>
+          <div className="s-filter-chips">
+            <button className={`s-chip${ageFilter === "all" ? " active" : ""}`} onClick={() => setAgeFilter("all")}>
+              Tous ({total})
+            </button>
+            <button className={`s-chip${ageFilter === "recent" ? " active" : ""}`} onClick={() => setAgeFilter("recent")}>
+              Récents &lt;30j ({recentCount})
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-dim)", fontSize: 13 }}>
           Chargement…
         </div>
-      ) : tracks.length === 0 ? (
-        <div style={{ display: "flex", minHeight: 200, alignItems: "center", justifyContent: "center", color: "var(--ink-mid)", fontSize: 13 }}>
-          Aucun track archivé
+      ) : total === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "56px 0", textAlign: "center" }}>
+          <p style={{ fontSize: 14, color: "var(--ink-mid)", margin: 0 }}>Aucun track archivé</p>
+          <p style={{ fontSize: 12, color: "var(--ink-dim)", margin: 0 }}>Les tracks que tu archives depuis l'inbox apparaîtront ici.</p>
+          <Link href="/inbox" className="s-btn" style={{ textDecoration: "none", marginTop: 4 }}>
+            Aller à l'inbox
+          </Link>
+        </div>
+      ) : displayedTracks.length === 0 ? (
+        <div style={{ display: "flex", minHeight: 160, alignItems: "center", justifyContent: "center", color: "var(--ink-mid)", fontSize: 13 }}>
+          Aucun track récent (&lt;30 jours)
         </div>
       ) : (
         <ul style={{ display: "flex", flexDirection: "column", gap: 6, listStyle: "none", padding: 0, margin: 0 }}>
-          {tracks.map((track) => (
+          {displayedTracks.map((track) => (
             <li
               key={track.id}
               style={{
@@ -155,6 +200,8 @@ export default function ArchiveClient() {
           ))}
         </ul>
       )}
+
+      {toast && <div className="s-toast">{toast}</div>}
     </main>
   );
 }

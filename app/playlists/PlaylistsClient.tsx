@@ -99,12 +99,15 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
   // Bottom sheet
   const [bottomSheet, setBottomSheet] = useState<string | null>(null);
+  const [bsAdvanced, setBsAdvanced] = useState(false);
 
   // Pointer type — coarse = touch device, disable drag-and-drop
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
   useEffect(() => {
     setIsCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
   }, []);
+
+  useEffect(() => { setBsAdvanced(false); }, [bottomSheet]);
 
   // Sync all loading
   const [syncingAll, setSyncingAll] = useState(false);
@@ -556,7 +559,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               </button>
             )}
             <button
-              className="s-btn s-btn-primary"
+              className="s-btn s-btn-primary s-new-btn-hide-mobile"
               onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
             >
               + Nouvelle
@@ -566,8 +569,14 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
         {/* Active playlists */}
         {active.length === 0 ? (
-          <div style={{ textAlign: "center", color: "var(--ink-mid)", fontSize: 13, padding: "48px 0" }}>
-            Aucune playlist active
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "56px 0", textAlign: "center" }}>
+            <p style={{ fontSize: 14, color: "var(--ink-mid)", margin: 0 }}>Aucune playlist active</p>
+            <button
+              className="s-btn s-btn-primary"
+              onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
+            >
+              Lier ta première playlist Spotify
+            </button>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1085,15 +1094,26 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
               </>
             )}
 
-            {/* Recompute — active playlists */}
+            {/* Avancé — recompute */}
             {bsPlaylist.enabled && (
-              <button
-                className="s-bs-item"
-                disabled={cardLoading[bsPlaylist.id] === "recompute"}
-                onClick={() => void recompute(bsPlaylist.id)}
-              >
-                {cardLoading[bsPlaylist.id] === "recompute" ? "Calcul…" : "Recompute centroïde"}
-              </button>
+              <>
+                <button
+                  className="s-bs-item"
+                  style={{ color: "var(--ink-dim)", fontSize: 12 }}
+                  onClick={() => setBsAdvanced((v) => !v)}
+                >
+                  Avancé {bsAdvanced ? "▲" : "▼"}
+                </button>
+                {bsAdvanced && (
+                  <button
+                    className="s-bs-item"
+                    disabled={cardLoading[bsPlaylist.id] === "recompute"}
+                    onClick={() => void recompute(bsPlaylist.id)}
+                  >
+                    {cardLoading[bsPlaylist.id] === "recompute" ? "Calcul…" : "Recompute centroïde"}
+                  </button>
+                )}
+              </>
             )}
 
             {/* Supprimer — toutes les playlists */}
@@ -1116,6 +1136,15 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
           </div>
         </>
       )}
+
+      {/* FAB "+ Nouvelle" — mobile only */}
+      <button
+        className="s-fab"
+        aria-label="Nouvelle playlist"
+        onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
+      >
+        +
+      </button>
 
       {/* Toast */}
       {toast && <div className="s-toast">{toast}</div>}
@@ -1260,7 +1289,7 @@ function PlaylistRow({
             disabled={!!load}
             style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.10)", color: "var(--ink-dim)" }}
           >
-            Décrire
+            Décrire la vibe
           </button>
         )}
 
@@ -1314,15 +1343,6 @@ function PlaylistRow({
               borderRadius: 10, boxShadow: "var(--shadow-md)", zIndex: 200,
               minWidth: 176, overflow: "hidden",
             }}>
-              {onRecompute && p.enabled && (
-                <button
-                  style={ddItem}
-                  disabled={load === "recompute"}
-                  onClick={() => { setDropdownOpen(false); onRecompute(); }}
-                >
-                  {load === "recompute" ? "Calcul…" : "Recompute centroïde"}
-                </button>
-              )}
               <div style={{ height: 1, background: "var(--border)" }} />
               <button
                 style={{ ...ddItem, color: "#b85c48" }}
