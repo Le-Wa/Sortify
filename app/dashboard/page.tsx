@@ -5,6 +5,7 @@ import {
   getUserBySpotifyId,
   getUserPlaylists,
   getDashboardTracks,
+  getDashboardCounts,
   type DashboardTrackRow,
 } from "@/lib/supabase/queries";
 import Link from "next/link";
@@ -13,10 +14,12 @@ import DashboardInboxPreview from "./DashboardInboxPreview";
 
 const MS_30D = 30 * 24 * 60 * 60 * 1000;
 
-function moodLabel(valence100: number): string {
-  if (valence100 < 30) return "Mélancolique";
-  if (valence100 <= 65) return "Neutre";
-  return "Positif";
+function nextMonday(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const daysUntilMonday = ((8 - day) % 7) || 7;
+  d.setDate(d.getDate() + daysUntilMonday);
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 }
 
 function greeting(): string {
@@ -27,6 +30,18 @@ function greeting(): string {
   return "Bonsoir";
 }
 
+function moodPhrase(valence100: number): string {
+  if (valence100 < 30) return "Tes 30 derniers jours penchent vers la mélancolie.";
+  if (valence100 <= 65) return "Ton mood est resté équilibré ces 30 derniers jours.";
+  return "Tes 30 derniers jours étaient lumineux.";
+}
+
+function moodLabel(valence100: number): string {
+  if (valence100 < 30) return "Mélancolique";
+  if (valence100 <= 65) return "Neutre";
+  return "Positif";
+}
+
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.userId) redirect("/login");
@@ -34,9 +49,10 @@ export default async function DashboardPage() {
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) redirect("/login");
 
-  const [playlists, tracks] = await Promise.all([
+  const [playlists, tracks, counts] = await Promise.all([
     getUserPlaylists(dbUser.id),
     getDashboardTracks(dbUser.id),
+    getDashboardCounts(dbUser.id),
   ]);
 
   const now = Date.now();
@@ -62,26 +78,65 @@ export default async function DashboardPage() {
   const firstName = session.user?.name?.split(" ")[0] ?? "toi";
   const swatchColors = ["#c89840", "#8878d0", "#6a9070", "#c87a52", "#a06848", "#508860"];
 
+  const needsReview = counts.needs_review;
+  const isNew = counts.imported === 0;
+
   return (
     <main className="s-page">
-      {/* Header */}
+      {/* Header narratif */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 16, fontWeight: 300, color: "var(--ink-mid)", marginBottom: 8, letterSpacing: "0.01em" }}>
+        <div style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-dim)", marginBottom: 8, letterSpacing: "0.02em" }}>
           {greeting()},{" "}
-          <span style={{ color: "var(--terra)", fontWeight: 400 }}>{firstName}</span>
+          <span style={{ color: "var(--terra)", fontWeight: 500 }}>{firstName}</span>
         </div>
+
         <h1
           className="font-fraunces s-page-h1"
-          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.15, marginBottom: 12 }}
         >
-          Tout va{" "}
-          <em style={{ fontStyle: "italic", color: "var(--terra)" }}>bien</em>{" "}
-          tourner.
+          {isNew ? (
+            <>Bienvenue. Lie ta{" "}
+              <em style={{ fontStyle: "italic", color: "var(--terra)" }}>première</em>{" "}
+              playlist.
+            </>
+          ) : needsReview > 0 ? (
+            <>Tu as{" "}
+              <span style={{ color: "var(--terra)" }}>{needsReview}</span>{" "}
+              titre{needsReview > 1 ? "s" : ""} qui t'attendent.
+            </>
+          ) : (
+            <>Tout est{" "}
+              <em style={{ fontStyle: "italic", color: "var(--sage)" }}>trié</em>.{" "}
+              Profite.
+            </>
+          )}
         </h1>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <p style={{ fontSize: 12, color: "var(--ink-dim)", margin: 0 }}>
+            Prochain tri auto · {nextMonday()} · 08h00
+          </p>
+          {needsReview > 0 && (
+            <Link
+              href="/inbox"
+              className="s-btn s-btn-primary"
+              style={{ textDecoration: "none", fontSize: 13 }}
+            >
+              Trier →
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Stats + actions */}
-      <DashboardActions />
+      <DashboardActions
+        initialCounts={{
+          needs_review: counts.needs_review,
+          imported: counts.imported,
+          in_playlists: counts.in_playlists,
+          last_sync_at: counts.last_sync_at,
+        }}
+      />
 
       {/* Inbox preview */}
       <DashboardInboxPreview />
@@ -134,9 +189,12 @@ export default async function DashboardPage() {
         <section style={{ marginTop: 32 }}>
           <div className="s-section-title">Profil émotionnel · 30 jours</div>
           <div className="s-card" style={{ padding: "20px 22px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-              <span style={{ fontSize: 16, fontWeight: 500, color: "var(--ink)" }}>{moodLabel(valence100)}</span>
-              <span style={{ fontSize: 13, color: "var(--ink-mid)" }}>{valence100} / 100</span>
+            <p style={{ fontSize: 13, color: "var(--ink-mid)", marginBottom: 14, margin: "0 0 14px" }}>
+              {moodPhrase(valence100)}
+            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{moodLabel(valence100)}</span>
+              <span style={{ fontSize: 12, color: "var(--ink-mid)" }}>{valence100} / 100</span>
             </div>
             <div style={{ height: 4, borderRadius: 4, background: "var(--surface3)", overflow: "hidden" }}>
               <div style={{

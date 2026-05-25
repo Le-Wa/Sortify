@@ -10,6 +10,13 @@ interface Stats {
   last_sync_at: string | null;
 }
 
+interface InitialCounts {
+  needs_review: number;
+  imported: number;
+  in_playlists: number;
+  last_sync_at: string | null;
+}
+
 function relativeTime(iso: string | null): string {
   if (!iso) return "jamais";
   const diff = Date.now() - new Date(iso).getTime();
@@ -20,6 +27,23 @@ function relativeTime(iso: string | null): string {
   if (hrs < 24) return `il y a ${hrs}h`;
   const days = Math.floor(hrs / 24);
   return `il y a ${days} jour${days > 1 ? "s" : ""}`;
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+function autoRatePhrase(imported: number, needsReview: number): string {
+  if (imported === 0) return "";
+  const auto = imported - needsReview;
+  const g = gcd(auto, imported);
+  const num = auto / g;
+  const den = imported / g;
+  if (den <= 10) {
+    const verb = num > 1 ? "sont rangés" : "est rangé";
+    return `${num} titre${num > 1 ? "s" : ""} sur ${den} ${verb} sans que tu y touches.`;
+  }
+  return `${Math.round((auto / imported) * 100)}% de tes titres sont rangés automatiquement.`;
 }
 
 function StatCard({
@@ -34,30 +58,34 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <div className="s-stat-card">
-      <p style={{ fontSize: 12, fontWeight: 500, color: "var(--ink-mid)", marginBottom: 6 }}>{label}</p>
+    <div className="s-stat-card" style={{ padding: "12px 14px" }}>
+      <p style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-mid)", marginBottom: 4 }}>{label}</p>
       <p
         className="font-fraunces"
         style={{
-          fontSize: 34,
+          fontSize: 26,
           fontWeight: 600,
           color: accent ? "var(--terra)" : "var(--ink)",
-          letterSpacing: "-1px",
+          letterSpacing: "-0.5px",
           lineHeight: 1,
         }}
       >
         {value === null ? <span style={{ color: "var(--ink-dimmer)" }}>—</span> : value}
       </p>
       {sub && (
-        <p style={{ fontSize: 12, color: "var(--ink-mid)", marginTop: 4 }}>{sub}</p>
+        <p style={{ fontSize: 11, color: "var(--ink-mid)", marginTop: 3 }}>{sub}</p>
       )}
     </div>
   );
 }
 
-export default function DashboardActions() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function DashboardActions({ initialCounts }: { initialCounts?: InitialCounts }) {
+  const [stats, setStats] = useState<Stats | null>(
+    initialCounts
+      ? { ...initialCounts, spotify_total: null }
+      : null
+  );
+  const [loading, setLoading] = useState(!initialCounts);
 
   const loadStats = useCallback(async () => {
     try {
@@ -72,26 +100,30 @@ export default function DashboardActions() {
 
   if (loading) {
     return (
-      <div className="s-stats-grid">
-        {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            style={{
-              height: 88,
-              borderRadius: 14,
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              animation: "pulse 1.5s ease-in-out infinite",
-            }}
-          />
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="s-stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                height: 72,
+                borderRadius: 14,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
+  const autoPhrase = stats ? autoRatePhrase(stats.imported, stats.needs_review) : "";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div className="s-stats-grid">
+      <div className="s-stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
         <StatCard label="Inbox" value={stats?.needs_review ?? 0} sub="à valider" accent />
         <StatCard label="Classifiés" value={stats?.in_playlists ?? 0} sub="au total" />
         <StatCard
@@ -99,19 +131,18 @@ export default function DashboardActions() {
           value={stats?.imported ?? 0}
           sub={stats?.spotify_total ? `/ ${stats.spotify_total}` : undefined}
         />
-        <StatCard
-          label="Taux auto"
-          value={
-            stats && stats.imported > 0
-              ? `${Math.round(((stats.imported - stats.needs_review) / stats.imported) * 100)}%`
-              : null
-          }
-          sub="sans review"
-        />
       </div>
-      <p style={{ fontSize: 12, color: "var(--ink-mid)", textAlign: "right" }}>
-        Dernière sync : {relativeTime(stats?.last_sync_at ?? null)}
-      </p>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        {autoPhrase ? (
+          <p style={{ fontSize: 12, color: "var(--ink-mid)", margin: 0 }}>
+            {autoPhrase}
+          </p>
+        ) : <span />}
+        <p style={{ fontSize: 12, color: "var(--ink-mid)", margin: 0, flexShrink: 0 }}>
+          Dernière sync : {relativeTime(stats?.last_sync_at ?? null)}
+        </p>
+      </div>
     </div>
   );
 }

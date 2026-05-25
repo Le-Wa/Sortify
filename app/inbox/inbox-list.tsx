@@ -121,6 +121,7 @@ function TrackCard({
 
   return (
     <li
+      className="s-track-card"
       style={{
         background: "var(--surface)",
         borderRadius: 14,
@@ -172,7 +173,7 @@ function TrackCard({
 
       {/* Genres */}
       {track.genres.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
+        <div className="s-track-card-genres" style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
           {track.genres.slice(0, 4).map((g) => {
             const pal = genrePalette(g);
             return (
@@ -191,7 +192,7 @@ function TrackCard({
 
       {/* Raison LLM — texte complet, pas de truncate */}
       {track.classification_reason && (
-        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink)", marginBottom: 10, lineHeight: 1.65 }}>
+        <div className="s-track-card-reason" style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink)", marginBottom: 10, lineHeight: 1.65 }}>
           <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-mid)", display: "block", marginBottom: 3 }}>Raison</span>
           {track.classification_reason}
         </div>
@@ -199,14 +200,14 @@ function TrackCard({
 
       {/* Suggestion encart */}
       {hasSuggestion && (
-        <div style={{ background: "var(--surface2)", border: "1px solid rgba(200,147,90,0.18)", borderRadius: 6, padding: "7px 12px", marginBottom: 10, fontSize: 13, fontWeight: 500, color: "#c8935a" }}>
+        <div className="s-track-card-suggest" style={{ background: "var(--surface2)", border: "1px solid rgba(200,147,90,0.18)", borderRadius: 6, padding: "7px 12px", marginBottom: 10, fontSize: 13, fontWeight: 500, color: "#c8935a" }}>
           → {track.suggested_playlist}
         </div>
       )}
 
-      {/* Body — deux colonnes sur desktop */}
+      {/* Body — deux colonnes sur desktop, en premier sur mobile */}
       {!isCorrectingThis ? (
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div className="s-track-card-body" style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           {/* Player — left column */}
           <div style={{ flex: 1, minWidth: 0 }}>{player}</div>
 

@@ -467,6 +467,16 @@ body::after {
   .s-sort-select {
     width: 100%;
   }
+
+  /* Inbox track card — player remonte juste après le header sur mobile */
+  .s-track-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .s-track-card-body    { order: 1; }
+  .s-track-card-genres  { order: 2; }
+  .s-track-card-reason  { order: 3; }
+  .s-track-card-suggest { order: 4; }
 }
 
 @media (min-width: 540px) and (max-width: 767px) {
