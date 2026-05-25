@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type ImportScope = "all" | "12" | "6" | "3";
 
 interface SpotifyPl {
@@ -37,7 +38,7 @@ const SCOPE_LABELS: Record<ImportScope, string> = {
   "3": "3 derniers mois",
 };
 
-const STEP_LABELS = ["Connexion", "Import", "Playlists", "Schedule", "Prêt"];
+const STEP_LABELS = ["Connexion", "Import", "Playlists", "Schedule", "Prêt", "Tri"];
 
 function ProgressBar({ step }: { step: Step }) {
   return (
@@ -101,7 +102,7 @@ function ProgressBar({ step }: { step: Step }) {
                 {label}
               </span>
             </div>
-            {i < 4 && (
+            {i < STEP_LABELS.length - 1 && (
               <div
                 style={{
                   width: 28,
@@ -161,6 +162,17 @@ export default function OnboardingClient({ userName }: Props) {
   const [creating, setCreating] = useState(false);
   const [finishing, setFinishing] = useState(false);
 
+  // Demo step state
+  const [demoResults, setDemoResults] = useState<Array<{ name: string; artist: string; playlist_name: string }>>([]);
+  const [demoTotal, setDemoTotal] = useState(0);
+  const [demoRemaining, setDemoRemaining] = useState<number | null>(null);
+  const [demoDone, setDemoDone] = useState(false);
+  const [demoElapsed, setDemoElapsed] = useState(0);
+  const [demoWaiting, setDemoWaiting] = useState(false);
+  const demoActiveRef = useRef(false);
+  const demoStartRef = useRef(0);
+  const demoClassifiedRef = useRef(0);
+
   const fetchPlaylists = useCallback(async () => {
     setPlaylistsLoading(true);
     try {
@@ -179,6 +191,65 @@ export default function OnboardingClient({ userName }: Props) {
       fetchPlaylists();
     }
   }, [step, playlists, fetchPlaylists]);
+
+  // Demo polling — runs when step reaches 6
+  useEffect(() => {
+    if (step !== 6 || demoActiveRef.current) return;
+    demoActiveRef.current = true;
+    demoStartRef.current = Date.now();
+
+    let cancelled = false;
+
+    async function poll() {
+      if (cancelled) return;
+      try {
+        const res = await fetch("/api/classify/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ skipLlm: true }),
+        });
+        if (!res.ok) { setTimeout(poll, 3000); return; }
+        const data = await res.json() as {
+          classified: number;
+          needs_review: number;
+          batch_size: number;
+          remaining: number;
+          total: number;
+          results?: Array<{ name: string; artist: string; playlist_name: string }>;
+        };
+        if (cancelled) return;
+
+        demoClassifiedRef.current += data.classified + data.needs_review;
+
+        if (data.total > 0) {
+          setDemoTotal((prev) => (prev === 0 ? data.total : prev));
+          setDemoWaiting(false);
+        }
+        if (data.results && data.results.length > 0) {
+          setDemoResults((prev) => [...prev, ...data.results!]);
+        }
+        setDemoRemaining(data.remaining);
+
+        if (data.remaining === 0) {
+          if (data.batch_size === 0 && demoClassifiedRef.current === 0) {
+            // Import still in progress
+            setDemoWaiting(true);
+            setTimeout(poll, 2000);
+          } else {
+            setDemoElapsed(Math.round((Date.now() - demoStartRef.current) / 1000));
+            setDemoDone(true);
+          }
+        } else {
+          setTimeout(poll, 400);
+        }
+      } catch {
+        if (!cancelled) setTimeout(poll, 3000);
+      }
+    }
+
+    void poll();
+    return () => { cancelled = true; };
+  }, [step]);
 
   async function linkPlaylist(pl: SpotifyPl) {
     if (linking.has(pl.id) || isLinked(pl.id)) return;
@@ -237,6 +308,28 @@ export default function OnboardingClient({ userName }: Props) {
     }
   }
 
+  async function startDemo() {
+    if (finishing) return;
+    setFinishing(true);
+    await fetch("/api/users/onboarding", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        completed: true,
+        import_since: scope === "all" ? null : parseInt(scope),
+        cron_enabled: cron,
+      }),
+    });
+    const months = scope === "all" ? null : parseInt(scope);
+    fetch("/api/tracks/import-all", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(months ? { months } : {}),
+    });
+    setFinishing(false);
+    setStep(6);
+  }
+
   async function finish(launch: boolean) {
     if (finishing) return;
     setFinishing(true);
@@ -263,7 +356,7 @@ export default function OnboardingClient({ userName }: Props) {
     router.replace("/dashboard");
   }
 
-  const next = () => setStep((s) => Math.min(s + 1, 5) as Step);
+  const next = () => setStep((s) => Math.min(s + 1, 6) as Step);
   const back = () => setStep((s) => Math.max(s - 1, 1) as Step);
 
   return (
@@ -720,7 +813,7 @@ export default function OnboardingClient({ userName }: Props) {
                   Tout est prêt
                 </h2>
                 <p style={{ fontSize: 14, color: "var(--ink)", fontWeight: 400, lineHeight: 1.65 }}>
-                  Sortify est configuré. Lance le premier tri pour remplir tes playlists.
+                  Sortify est configuré. Lance le premier tri pour voir l&apos;IA en action.
                 </p>
               </div>
 
@@ -746,14 +839,14 @@ export default function OnboardingClient({ userName }: Props) {
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <button
                   className="s-btn s-btn-primary"
-                  onClick={() => finish(true)}
+                  onClick={() => void startDemo()}
                   disabled={finishing}
                   style={{ alignSelf: "stretch", justifyContent: "center", padding: "13px 0", fontSize: 14, fontWeight: 500 }}
                 >
-                  {finishing ? "Lancement…" : "Lancer le premier tri"}
+                  {finishing ? "Lancement…" : "Voir la démo →"}
                 </button>
                 <button
-                  onClick={() => finish(false)}
+                  onClick={() => void finish(false)}
                   disabled={finishing}
                   style={{
                     display: "flex",
@@ -776,6 +869,165 @@ export default function OnboardingClient({ userName }: Props) {
             </div>
           </div>
         )}
+
+        {/* ── Step 6: Live classification demo ── */}
+        {step === 6 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div
+              className="s-card"
+              style={{ padding: "28px", display: "flex", flexDirection: "column", gap: 20 }}
+            >
+              {/* Header */}
+              {!demoDone ? (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <div style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: demoWaiting ? "var(--ink-dim)" : "var(--terra)",
+                      flexShrink: 0,
+                    }} />
+                    <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.3px" }}>
+                      {demoWaiting ? "Import en cours…" : "Tri en cours…"}
+                    </h2>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--ink-dim)", fontWeight: 400 }}>
+                    {demoWaiting
+                      ? "Tes liked songs sont en cours d'import. La classification démarrera automatiquement."
+                      : `${demoResults.length} titre${demoResults.length !== 1 ? "s" : ""} traité${demoResults.length !== 1 ? "s" : ""}`}
+                  </p>
+                  {!demoWaiting && demoTotal > 0 && (
+                    <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: "var(--border)", overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%",
+                        background: "var(--terra)",
+                        borderRadius: 2,
+                        width: `${Math.min(100, demoRemaining !== null ? ((demoTotal - demoRemaining) / demoTotal) * 100 : 0)}%`,
+                        transition: "width 0.4s ease",
+                      }} />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    background: "var(--terra-light)",
+                    border: "1px solid var(--terra-border)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 16,
+                  }}>
+                    <svg viewBox="0 0 16 16" fill="none" style={{ width: 16, height: 16, color: "var(--terra)" }}>
+                      <path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.3px", marginBottom: 6 }}>
+                    {demoResults.length} titre{demoResults.length !== 1 ? "s" : ""} classé{demoResults.length !== 1 ? "s" : ""} en {demoElapsed}s.
+                  </h2>
+                  <p style={{ fontSize: 14, color: "var(--ink-dim)", fontWeight: 400 }}>
+                    Bienvenue dans Sortify.
+                  </p>
+                </div>
+              )}
+
+              {/* Live results list */}
+              {demoResults.length > 0 && (
+                <div style={{
+                  maxHeight: 240,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface2)",
+                }}>
+                  {demoResults.map((r, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 12px",
+                        borderBottom: i < demoResults.length - 1 ? "1px solid var(--border)" : "none",
+                        animation: "s-fade-in 0.2s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: 11, color: "var(--ink-dim)", flexShrink: 0 }}>↪</span>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: "var(--ink)",
+                          fontWeight: 500,
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {r.name}{r.artist ? ` · ${r.artist}` : ""}
+                      </span>
+                      <span style={{
+                        fontSize: 11,
+                        color: "var(--terra)",
+                        fontWeight: 500,
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                        maxWidth: 110,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}>
+                        → {r.playlist_name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* CTA */}
+              {demoDone ? (
+                <Link
+                  href="/dashboard"
+                  className="s-btn s-btn-primary"
+                  style={{
+                    alignSelf: "stretch",
+                    justifyContent: "center",
+                    padding: "13px 0",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    textDecoration: "none",
+                    textAlign: "center",
+                  }}
+                >
+                  Voir mes playlists →
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--ink-mid)",
+                    fontSize: 13,
+                    fontWeight: 400,
+                    textDecoration: "none",
+                    padding: "4px 0",
+                  }}
+                >
+                  Passer →
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

@@ -43,6 +43,7 @@ export async function POST(req: Request): Promise<Response> {
   let classified = 0;
   let needsReview = 0;
   const errors: string[] = [];
+  const batchResults: Array<{ name: string; artist: string; playlist_name: string }> = [];
 
   for (const row of tracks) {
     const track: ClassifierTrack = {
@@ -98,6 +99,17 @@ export async function POST(req: Request): Promise<Response> {
         }
       }
 
+      const assignedPlaylist = result.playlistId
+        ? playlists.find((p) => p.id === result.playlistId)
+        : null;
+      batchResults.push({
+        name: (row.name ?? row.spotify_track_id) as string,
+        artist: Array.isArray(row.artists) && (row.artists as string[]).length > 0
+          ? (row.artists as string[])[0]
+          : "",
+        playlist_name: assignedPlaylist?.name ?? (result.needsReview ? "Inbox" : ""),
+      });
+
       if (result.needsReview) needsReview++;
       else classified++;
     } catch (e) {
@@ -111,6 +123,7 @@ export async function POST(req: Request): Promise<Response> {
     batch_size: tracks.length,
     remaining: Math.max(0, remaining - tracks.length),
     total: remaining,
+    results: batchResults,
     errors,
   });
 }
