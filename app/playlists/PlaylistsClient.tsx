@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import type { PlaylistRules } from "@/lib/types";
 
@@ -113,7 +113,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
   const [syncingAll, setSyncingAll] = useState(false);
 
   // Toast
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<ReactNode>(null);
 
   // Modal
   const [modal, setModal] = useState<ModalState>(null);
@@ -149,9 +149,9 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
 
-  function showToast(msg: string) {
+  function showToast(msg: ReactNode, duration = 3000) {
     setToast(msg);
-    setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
+    setTimeout(() => setToast(null), duration);
   }
 
   function setLoad(id: string, state: string | null) {
@@ -369,6 +369,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
     if (syncingAll) return;
     setSyncingAll(true);
     const toSync = active.filter((p) => p.not_synced > 0);
+    const results: Array<{ name: string; synced: number; swatch: string }> = [];
     try {
       await Promise.all(
         toSync.map(async (p) => {
@@ -377,6 +378,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
             if (!res.ok) return;
             const data = (await res.json()) as { synced: number };
             if (data.synced > 0) {
+              results.push({ name: p.name, synced: data.synced, swatch: playlistSwatch(p.id, p.color) });
               setActive((prev) =>
                 prev.map((ap) =>
                   ap.id === p.id
@@ -390,7 +392,23 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
           }
         })
       );
-      showToast("Sync terminé");
+      if (results.length === 0) {
+        showToast("Tout déjà synchronisé");
+      } else {
+        showToast(
+          <span style={{ display: "flex", flexWrap: "wrap", gap: "0 8px", alignItems: "center" }}>
+            {results.map((r, i) => (
+              <span key={r.name} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                {i > 0 && <span style={{ opacity: 0.45 }}>·</span>}
+                <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: r.swatch, flexShrink: 0 }} />
+                <strong style={{ fontWeight: 600 }}>{r.synced}</strong>
+                <span style={{ opacity: 0.75 }}>→ {r.name}</span>
+              </span>
+            ))}
+          </span>,
+          4000
+        );
+      }
     } finally {
       setSyncingAll(false);
     }

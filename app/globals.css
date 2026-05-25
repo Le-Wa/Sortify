@@ -7,8 +7,14 @@
   --surface3: #2c2820;
   --ink: #f4ead8;
   --ink-mid: #b0a28a;
-  --ink-dim: #7a6a58;
+  --ink-dim: #9a8a72;
   --ink-dimmer: #4e4036;
+  /* Typographic scale */
+  --t-display: 36px;
+  --t-title: 22px;
+  --t-body: 14px;
+  --t-meta: 12px;
+  --t-micro: 11px;
   --terra: #c87a52;
   --terra-light: rgba(200, 122, 82, 0.12);
   --terra-border: rgba(200, 122, 82, 0.2);
@@ -35,11 +41,17 @@
   50% { opacity: 0.4; }
 }
 
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  80%  { opacity: 0.9; }
+  100% { transform: translateY(260px) rotate(420deg) scale(0.5); opacity: 0; }
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  font-weight: 300;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -85,7 +97,7 @@ body::after {
   color: var(--ink-mid);
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
-  font-weight: 300;
+  font-weight: 400;
   box-shadow: none;
 }
 .s-nav-item:hover {
@@ -143,9 +155,9 @@ body::after {
 
 /* Buttons */
 .s-btn {
-  font-size: 12px;
-  font-weight: 400;
-  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
   border-radius: 8px;
   border: 1px solid var(--border-strong);
   cursor: pointer;
@@ -167,8 +179,9 @@ body::after {
   cursor: not-allowed;
 }
 .s-btn-sm {
-  font-size: 11px;
-  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
 }
 .s-btn-primary {
   background: var(--terra-light);

@@ -1,6 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// ── Confetti ──────────────────────────────────────────────────────────────────
+
+const CONFETTI_PARTICLES = [
+  { left: 12, top: 18, size: 8,  color: "var(--terra)",  delay: 0,   dur: 1200 },
+  { left: 25, top: 8,  size: 5,  color: "var(--sage)",   delay: 60,  dur: 1100 },
+  { left: 38, top: 14, size: 9,  color: "var(--amber)",  delay: 120, dur: 1300 },
+  { left: 52, top: 6,  size: 6,  color: "var(--terra)",  delay: 30,  dur: 1150 },
+  { left: 65, top: 20, size: 7,  color: "var(--sage)",   delay: 90,  dur: 1200 },
+  { left: 78, top: 10, size: 5,  color: "var(--amber)",  delay: 150, dur: 1100 },
+  { left: 88, top: 16, size: 8,  color: "var(--terra)",  delay: 20,  dur: 1250 },
+  { left: 18, top: 5,  size: 6,  color: "var(--amber)",  delay: 80,  dur: 1200 },
+  { left: 45, top: 22, size: 7,  color: "var(--sage)",   delay: 40,  dur: 1150 },
+  { left: 58, top: 12, size: 5,  color: "var(--terra)",  delay: 110, dur: 1300 },
+  { left: 72, top: 4,  size: 9,  color: "var(--amber)",  delay: 70,  dur: 1100 },
+  { left: 32, top: 25, size: 6,  color: "var(--sage)",   delay: 140, dur: 1200 },
+];
+
+function Confetti() {
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9998 }}>
+      {CONFETTI_PARTICLES.map((p, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            top: `${p.top}%`,
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.size,
+            borderRadius: i % 3 === 0 ? "50%" : 2,
+            background: p.color,
+            animation: `confetti-fall ${p.dur}ms ${p.delay}ms ease-out forwards`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 interface InboxTrack {
   id: string;
@@ -129,9 +168,9 @@ function TrackCard({
         borderLeft: `4px solid ${borderColor}`,
         padding: "14px 18px 14px 16px",
         boxShadow: "var(--shadow)",
-        transition: "opacity 0.3s, transform 0.3s",
+        transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
         opacity: isExiting ? 0 : 1,
-        transform: isExiting ? "scale(0.97)" : "scale(1)",
+        transform: isExiting ? "translateX(48px) scale(0.96)" : "none",
       }}
     >
       {/* Header — titre + badge top-right */}
@@ -298,11 +337,23 @@ export default function InboxClient() {
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchMessage, setBatchMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [confetti, setConfetti] = useState(false);
+  const prevTotalRef = useRef<number | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
   }
+
+  // Confetti quand l'inbox se vide
+  useEffect(() => {
+    if (loading) return;
+    if (prevTotalRef.current !== null && prevTotalRef.current > 0 && total === 0) {
+      setConfetti(true);
+      setTimeout(() => setConfetti(false), 1600);
+    }
+    prevTotalRef.current = total;
+  }, [total, loading]);
 
   useEffect(() => {
     fetch("/api/playlists")
@@ -536,6 +587,7 @@ export default function InboxClient() {
       )}
 
       {toast && <div className="s-toast">{toast}</div>}
+      {confetti && <Confetti />}
     </main>
   );
 }
