@@ -92,7 +92,7 @@ export default async function DashboardPage() {
 
         <h1
           className="font-fraunces s-page-h1"
-          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.15, marginBottom: 12 }}
+          style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.6px", color: "var(--ink)", lineHeight: 1.15, marginBottom: 12 }}
         >
           {isNew ? (
             <>Bienvenue. Lie ta{" "}

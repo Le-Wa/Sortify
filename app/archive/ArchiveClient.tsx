@@ -103,7 +103,7 @@ export default function ArchiveClient() {
         <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Archive</div>
         <h1
           className="font-fraunces"
-          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+          style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.6px", color: "var(--ink)", lineHeight: 1.1 }}
         >
           {loading ? (
             <span style={{ color: "var(--ink-dimmer)" }}>…</span>

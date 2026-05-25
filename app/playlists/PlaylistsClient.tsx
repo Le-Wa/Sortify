@@ -559,7 +559,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
         <div className="s-page-header" style={{ marginBottom: 28 }}>
           <div>
             <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Bibliothèque</div>
-            <h1 className="font-fraunces s-page-h1" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
+            <h1 className="font-fraunces s-page-h1" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.6px", color: "var(--ink)", lineHeight: 1.1 }}>
               {active.length}{" "}
               <em style={{ fontStyle: "italic", color: "var(--terra)" }}>
                 playlist{active.length !== 1 ? "s" : ""}
@@ -666,7 +666,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       {modal?.type === "from-desc" && (
         <div className="s-modal-overlay" onClick={closeModal}>
           <div className="s-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>
+            <h2 className="font-fraunces" style={{ fontSize: 20, fontWeight: 700, marginBottom: 4, color: "var(--ink)", letterSpacing: "-0.3px" }}>
               Décrire la vibe
             </h2>
             <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>{modal.playlistName}</p>
@@ -704,7 +704,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       {modal?.type === "preview" && (
         <div className="s-modal-overlay" onClick={closeModal}>
           <div className="s-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>
+            <h2 className="font-fraunces" style={{ fontSize: 20, fontWeight: 700, marginBottom: 4, color: "var(--ink)", letterSpacing: "-0.3px" }}>
               Aperçu des règles
             </h2>
             <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>
@@ -767,7 +767,7 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       {modal?.type === "edit" && (
         <div className="s-modal-overlay" onClick={closeModal}>
           <div className="s-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-fraunces" style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>
+            <h2 className="font-fraunces" style={{ fontSize: 20, fontWeight: 700, marginBottom: 4, color: "var(--ink)", letterSpacing: "-0.3px" }}>
               Modifier
             </h2>
             <p style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 20 }}>{modal.playlistName}</p>
@@ -1250,7 +1250,7 @@ function PlaylistRow({
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: swatch, flexShrink: 0 }} />
         <div className="s-pl-row-info">
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span className="font-fraunces" style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+            <span className="font-fraunces" style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>
               {p.name}
             </span>
             {!p.enabled && (

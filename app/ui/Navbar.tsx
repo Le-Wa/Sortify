@@ -135,7 +135,7 @@ export default function Sidebar() {
       <div style={{ marginBottom: 36, padding: "0 8px" }}>
         <div
           className="font-fraunces"
-          style={{ fontStyle: "italic", fontSize: 28, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.5px" }}
+          style={{ fontStyle: "italic", fontSize: 28, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.6px" }}
         >
           Sortify<span style={{ color: "var(--terra)" }}>.</span>
         </div>

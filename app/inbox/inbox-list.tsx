@@ -472,7 +472,7 @@ export default function InboxClient() {
         <div className="s-inbox-page-header">
           <div>
             <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Inbox</div>
-            <h1 className="font-fraunces" style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1 }}>
+            <h1 className="font-fraunces" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.6px", color: "var(--ink)", lineHeight: 1 }}>
               {loading ? (
                 <span style={{ color: "var(--ink-dimmer)" }}>—</span>
               ) : (

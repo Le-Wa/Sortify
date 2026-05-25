@@ -48,6 +48,12 @@ interface PlaylistInfo {
   enabled?: boolean;
 }
 
+interface PlaylistSummary {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
 interface PlaylistTrack {
   id: string;
   spotify_track_id: string;
@@ -59,6 +65,7 @@ interface PlaylistTrack {
   classification_level: number | null;
   confidence: number | null;
   pushed_to_spotify: string | null;
+  is_primary: boolean;
 }
 
 interface ApiResponse {
@@ -105,6 +112,12 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
   const [toast, setToast] = useState<string | null>(null);
   const [bottomSheet, setBottomSheet] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Track inline expand
+  const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
+  const [showMoveFor, setShowMoveFor] = useState<string | null>(null);
+  const [allPlaylists, setAllPlaylists] = useState<PlaylistSummary[] | null>(null);
+  const [trackActionLoading, setTrackActionLoading] = useState<string | null>(null);
 
   // Inline description editing
   const [editingDesc, setEditingDesc] = useState(false);
@@ -237,6 +250,86 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
     }
   }
 
+  function toggleExpand(trackId: string) {
+    if (expandedTrackId === trackId) {
+      setExpandedTrackId(null);
+      setShowMoveFor(null);
+    } else {
+      setExpandedTrackId(trackId);
+      setShowMoveFor(null);
+    }
+  }
+
+  async function openMoveFor(trackId: string) {
+    setShowMoveFor(trackId);
+    if (!allPlaylists) {
+      const res = await fetch("/api/playlists");
+      const data = (await res.json()) as PlaylistSummary[];
+      setAllPlaylists(data);
+    }
+  }
+
+  async function handleMoveTrack(trackId: string, targetPlaylistId: string) {
+    setTrackActionLoading(trackId);
+    try {
+      const res = await fetch(`/api/tracks/${trackId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "move", playlist_id: targetPlaylistId }),
+      });
+      if (!res.ok) throw new Error();
+      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+      setTotal((prev) => prev - 1);
+      setExpandedTrackId(null);
+      setShowMoveFor(null);
+      showToast("Track déplacé");
+    } catch {
+      showToast("Erreur déplacement");
+    } finally {
+      setTrackActionLoading(null);
+    }
+  }
+
+  async function handleRemoveFromPlaylist(trackId: string) {
+    setTrackActionLoading(trackId);
+    try {
+      const res = await fetch(`/api/tracks/${trackId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remove-from-playlist", playlist_id: playlistId }),
+      });
+      if (!res.ok) throw new Error();
+      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+      setTotal((prev) => prev - 1);
+      setExpandedTrackId(null);
+      showToast("Track retiré");
+    } catch {
+      showToast("Erreur");
+    } finally {
+      setTrackActionLoading(null);
+    }
+  }
+
+  async function handleArchiveTrack(trackId: string) {
+    setTrackActionLoading(trackId);
+    try {
+      const res = await fetch("/api/tracks/archive", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackId }),
+      });
+      if (!res.ok) throw new Error();
+      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+      setTotal((prev) => prev - 1);
+      setExpandedTrackId(null);
+      showToast("Track archivé");
+    } catch {
+      showToast("Erreur archivage");
+    } finally {
+      setTrackActionLoading(null);
+    }
+  }
+
   async function handleDescSubmit() {
     if (!descText.trim()) return;
     setDescLoading(true);
@@ -333,7 +426,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
           <h1
             className="font-fraunces"
-            style={{ fontSize: 40, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1, margin: 0 }}
+            style={{ fontSize: 42, fontWeight: 700, letterSpacing: "-0.7px", color: "var(--ink)", lineHeight: 1.08, margin: 0 }}
           >
             {playlist.name}
           </h1>
@@ -444,46 +537,128 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       ) : (
         <>
           <div className="s-track-list">
-            {displayedTracks.map((track, i) => (
-              <div key={track.id} className="s-track-row">
-                <span className="s-track-index">{i + 1}</span>
+            {displayedTracks.map((track, i) => {
+              const isExpanded = expandedTrackId === track.id;
+              const isMoveOpen = showMoveFor === track.id;
+              const isActing = trackActionLoading === track.id;
+              return (
+                <div key={track.id} className={`s-track-item${isExpanded ? " s-track-item--open" : ""}`}>
+                  <div
+                    className="s-track-row"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => toggleExpand(track.id)}
+                    role="button"
+                    aria-expanded={isExpanded}
+                  >
+                    <span className="s-track-index">{i + 1}</span>
 
-                <div className="s-track-info">
-                  <p style={{ fontWeight: 500, fontSize: 14, color: "var(--ink)" }}>
-                    {track.name ?? track.spotify_track_id}
-                  </p>
-                  <p style={{ fontSize: 12, color: "var(--ink-mid)", marginTop: 1 }}>
-                    {track.artist_name ?? "—"}
-                  </p>
+                    <div className="s-track-info">
+                      <p style={{ fontWeight: 500, fontSize: 14, color: "var(--ink)" }}>
+                        {track.name ?? track.spotify_track_id}
+                      </p>
+                      <p style={{ fontSize: 12, color: "var(--ink-mid)", marginTop: 1 }}>
+                        {track.artist_name ?? "—"}
+                      </p>
+                    </div>
+
+                    <div className="s-track-genres">
+                      {track.genres.slice(0, 2).map((g) => {
+                        const pal = genrePalette(g);
+                        return (
+                          <span key={g} style={{
+                            background: pal.bg, border: `1px solid ${pal.border}`,
+                            borderRadius: 6, padding: "1px 7px", fontSize: 11, fontWeight: 500, color: pal.color,
+                            whiteSpace: "nowrap",
+                          }}>
+                            {g}
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    <div className="s-track-conf" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {track.confidence !== null
+                        ? <ConfBar value={track.confidence} />
+                        : <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>
+                      }
+                    </div>
+
+                    <span className="s-track-sync" style={{ color: track.pushed_to_spotify ? "var(--sage)" : "var(--ink-dimmer)" }}>
+                      {track.pushed_to_spotify ? "✓" : "○"}
+                    </span>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="s-track-actions" onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <a
+                          href={`https://open.spotify.com/track/${track.spotify_track_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="s-btn s-btn-sm"
+                        >
+                          ▶ Spotify
+                        </a>
+                        {track.is_primary && (
+                          <button
+                            className="s-btn s-btn-sm"
+                            disabled={isActing}
+                            onClick={() => isMoveOpen ? setShowMoveFor(null) : void openMoveFor(track.id)}
+                          >
+                            → Déplacer {isMoveOpen ? "▲" : "▾"}
+                          </button>
+                        )}
+                        <button
+                          className="s-btn s-btn-sm"
+                          disabled={isActing}
+                          onClick={() => void handleRemoveFromPlaylist(track.id)}
+                          style={{ color: "var(--ink-dim)" }}
+                        >
+                          {isActing ? "…" : "Retirer"}
+                        </button>
+                        <button
+                          className="s-btn s-btn-sm"
+                          disabled={isActing}
+                          onClick={() => void handleArchiveTrack(track.id)}
+                          style={{ color: "var(--terra)", opacity: 0.7 }}
+                        >
+                          {isActing ? "…" : "Archiver"}
+                        </button>
+                      </div>
+
+                      {isMoveOpen && (
+                        <div className="s-track-move-picker">
+                          {allPlaylists === null ? (
+                            <span style={{ fontSize: 12, color: "var(--ink-dim)" }}>Chargement…</span>
+                          ) : (
+                            allPlaylists
+                              .filter((p) => p.id !== playlistId)
+                              .map((p) => {
+                                const chipColor = playlistSwatch(p.id, p.color);
+                                return (
+                                  <button
+                                    key={p.id}
+                                    className="s-track-move-chip"
+                                    disabled={isActing}
+                                    onClick={() => void handleMoveTrack(track.id, p.id)}
+                                    style={{
+                                      borderColor: chipColor,
+                                      color: chipColor,
+                                      backgroundColor: `${chipColor}18`,
+                                    }}
+                                  >
+                                    {p.name}
+                                  </button>
+                                );
+                              })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                <div className="s-track-genres">
-                  {track.genres.slice(0, 2).map((g) => {
-                    const pal = genrePalette(g);
-                    return (
-                      <span key={g} style={{
-                        background: pal.bg, border: `1px solid ${pal.border}`,
-                        borderRadius: 6, padding: "1px 7px", fontSize: 11, fontWeight: 500, color: pal.color,
-                        whiteSpace: "nowrap",
-                      }}>
-                        {g}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                <div className="s-track-conf" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {track.confidence !== null
-                    ? <ConfBar value={track.confidence} />
-                    : <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>
-                  }
-                </div>
-
-                <span className="s-track-sync" style={{ color: track.pushed_to_spotify ? "var(--sage)" : "var(--ink-dimmer)" }}>
-                  {track.pushed_to_spotify ? "✓" : "○"}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {hasMore && filter === "all" && sort === "default" && (
