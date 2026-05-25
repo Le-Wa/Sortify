@@ -414,11 +414,11 @@ export async function getPlaylistsStats(
 export async function getPlaylistDetail(
   playlistId: string,
   userId: string
-): Promise<{ id: string; spotify_playlist_id: string; name: string; description: string | null; color: string | null } | null> {
+): Promise<{ id: string; spotify_playlist_id: string; name: string; description: string | null; color: string | null; enabled: boolean } | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("playlists")
-    .select("id, spotify_playlist_id, name, description, color")
+    .select("id, spotify_playlist_id, name, description, color, enabled")
     .eq("id", playlistId)
     .eq("user_id", userId)
     .single();

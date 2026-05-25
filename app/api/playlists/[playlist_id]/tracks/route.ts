@@ -33,6 +33,10 @@ export async function GET(
   const total = allTracks.length;
   const synced = allTracks.filter((t) => t.pushed_to_spotify !== null).length;
   const not_synced = total - synced;
+  const MS_7D = 7 * 24 * 60 * 60 * 1000;
+  const new_this_week = allTracks.filter(
+    (t) => t.spotify_added_at && Date.now() - new Date(t.spotify_added_at).getTime() < MS_7D
+  ).length;
 
   const pageRows = allTracks.slice((page - 1) * perPage, page * perPage);
   const logMap = await getLatestLogByTrackIds(pageRows.map((t) => t.id));
@@ -57,11 +61,13 @@ export async function GET(
       name: playlist.name,
       description: playlist.description,
       color: playlist.color,
+      enabled: playlist.enabled,
     },
     tracks,
     total,
     synced,
     not_synced,
+    new_this_week,
     per_page: perPage,
   });
 }

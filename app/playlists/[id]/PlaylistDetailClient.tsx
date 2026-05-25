@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { playlistSwatch } from "@/lib/playlist-swatch";
 
@@ -67,6 +67,7 @@ interface ApiResponse {
   total: number;
   synced: number;
   not_synced: number;
+  new_this_week: number;
   per_page: number;
 }
 
@@ -75,16 +76,14 @@ type SortValue = "default" | "name" | "confidence";
 
 const PER_PAGE = 50;
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function levelLabel(level: number | null): string {
-  if (level === 1) return "L1";
-  if (level === 2) return "L2";
-  if (level === 3) return "LLM";
-  return "—";
+function ConfBar({ value }: { value: number }) {
+  const pct = Math.round(value * 100);
+  const color = value >= 0.55 ? "var(--sage)" : value >= 0.4 ? "var(--amber)" : "var(--terra)";
+  return (
+    <div title={`${pct}%`} style={{ width: 32, height: 4, borderRadius: 2, background: "var(--surface3)", overflow: "hidden" }}>
+      <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 2 }} />
+    </div>
+  );
 }
 
 export default function PlaylistDetailClient({ playlistId }: { playlistId: string }) {
@@ -93,6 +92,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
   const [total, setTotal] = useState(0);
   const [synced, setSynced] = useState(0);
   const [notSynced, setNotSynced] = useState(0);
+  const [newThisWeek, setNewThisWeek] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -104,6 +104,14 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [bottomSheet, setBottomSheet] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Inline description editing
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState("");
+  const descInputRef = useRef<HTMLInputElement>(null);
+
+  // "Décrire la vibe" LLM flow
   const [descOpen, setDescOpen] = useState(false);
   const [descText, setDescText] = useState("");
   const [descLoading, setDescLoading] = useState(false);
@@ -126,6 +134,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         setTotal(data.total);
         setSynced(data.synced);
         setNotSynced(data.not_synced);
+        setNewThisWeek(data.new_this_week ?? 0);
         setHasMore(data.total > data.tracks.length);
         setPage(1);
       })
@@ -163,6 +172,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
           t.pushed_to_spotify === null ? { ...t, pushed_to_spotify: new Date().toISOString() } : t
         ));
       }
+      showToast(`${data.synced} titres syncés`);
     } catch (err) {
       showToast(`Erreur sync : ${String(err)}`);
     } finally {
@@ -253,6 +263,29 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
     }
   }
 
+  function startEditDesc() {
+    setDescValue(playlist?.description ?? "");
+    setEditingDesc(true);
+    setTimeout(() => descInputRef.current?.focus(), 0);
+  }
+
+  async function saveDesc() {
+    setEditingDesc(false);
+    if (!playlist) return;
+    const trimmed = descValue.trim();
+    if (trimmed === (playlist.description ?? "")) return;
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: trimmed || null }),
+      });
+      if (res.ok) setPlaylist((p) => p ? { ...p, description: trimmed || null } : p);
+    } catch {
+      // silently ignore
+    }
+  }
+
   const displayedTracks = useMemo(() => {
     let arr = tracks;
     if (filter === "synced") arr = arr.filter((t) => t.pushed_to_spotify !== null);
@@ -282,24 +315,29 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
 
   return (
     <main className="s-page">
-      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--ink-mid)", textDecoration: "none", marginBottom: 20 }}>
-        ← Playlists
-      </Link>
+      {/* Hero — gradient swatch full-width */}
+      <div
+        className="s-detail-hero"
+        style={{ background: `linear-gradient(180deg, ${swatch}22 0%, transparent 100%)` }}
+      >
+        <Link
+          href="/playlists"
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--ink-dim)", textDecoration: "none", marginBottom: 20 }}
+        >
+          ← Playlists
+        </Link>
 
-      <div style={{ marginBottom: 24 }}>
-        {/* Barre couleur accent */}
-        <div style={{ height: 3, width: 48, borderRadius: 2, background: swatch, marginBottom: 14 }} />
+        {/* Barre swatch */}
+        <div style={{ height: 3, width: 40, borderRadius: 2, background: swatch, marginBottom: 14, opacity: 0.9 }} />
 
-        <div className="s-page-header">
-          <div style={{ minWidth: 0 }}>
-            <h1 className="font-fraunces s-page-h1" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}>
-              {playlist.name}
-            </h1>
-            {playlist.description && (
-              <p style={{ marginTop: 4, fontSize: 14, color: "var(--ink-mid)", paddingLeft: 20 }}>{playlist.description}</p>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+          <h1
+            className="font-fraunces"
+            style={{ fontSize: 40, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1, margin: 0 }}
+          >
+            {playlist.name}
+          </h1>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0, paddingTop: 6 }}>
             {notSynced > 0 && (
               <button disabled={syncing} onClick={handleSync} className="s-btn s-btn-primary" style={{ flexShrink: 0 }}>
                 {syncing ? "…" : `Sync (${notSynced})`}
@@ -311,10 +349,45 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
           </div>
         </div>
 
-        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 12, fontSize: 13, color: "var(--ink-mid)", alignItems: "center" }}>
-          <span style={{ color: "var(--ink)", fontWeight: 500 }}>{total} tracks</span>
-          <span>{synced} syncés</span>
-          {notSynced > 0 && <span style={{ color: "var(--terra)" }}>{notSynced} non syncés</span>}
+        {/* Description inline editable */}
+        {editingDesc ? (
+          <input
+            ref={descInputRef}
+            value={descValue}
+            onChange={(e) => setDescValue(e.target.value)}
+            onBlur={() => void saveDesc()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void saveDesc();
+              if (e.key === "Escape") setEditingDesc(false);
+            }}
+            className="s-input"
+            placeholder="Décris cette playlist…"
+            style={{ width: "100%", fontSize: 14, marginBottom: 12, marginTop: 2 }}
+          />
+        ) : (
+          <p
+            onClick={startEditDesc}
+            title="Cliquer pour modifier"
+            style={{
+              fontSize: 14, color: playlist.description ? "var(--ink-mid)" : "var(--ink-dimmer)",
+              cursor: "text", margin: "4px 0 12px", lineHeight: 1.5,
+              padding: "4px 8px", borderRadius: 6, marginLeft: -8,
+              transition: "background 0.12s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface2)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
+            {playlist.description ?? "Ajouter une description…"}
+          </p>
+        )}
+
+        {/* Stats vivantes */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, fontSize: 13, color: "var(--ink-mid)", alignItems: "center" }}>
+          <span style={{ color: "var(--ink)", fontWeight: 500 }}>{total} titres</span>
+          {newThisWeek > 0 && (
+            <span style={{ color: swatch, fontWeight: 500 }}>{newThisWeek} nouveau{newThisWeek > 1 ? "x" : ""} cette semaine</span>
+          )}
+          {notSynced > 0 && <span style={{ color: "var(--terra)" }}>{notSynced} en attente de sync</span>}
           {!enabled && (
             <span style={{ color: "var(--ink-dimmer)", background: "var(--surface2)", border: "1px solid var(--border-strong)", borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
               inactif
@@ -323,6 +396,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         </div>
       </div>
 
+      {/* "Décrire la vibe" panel */}
       {descOpen && (
         <div style={{ marginBottom: 20, background: "var(--surface)", border: "1px solid var(--border-strong)", borderRadius: 12, padding: "14px 16px" }}>
           <p style={{ fontSize: 13, color: "var(--ink-mid)", marginBottom: 8 }}>Décris la vibe de cette playlist</p>
@@ -345,6 +419,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         </div>
       )}
 
+      {/* Filtres */}
       <div className="s-filter-bar">
         <div className="s-filter-chips">
           {(["all", "synced", "not_synced"] as FilterValue[]).map((f) => (
@@ -361,60 +436,56 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         </select>
       </div>
 
+      {/* Track list */}
       {displayedTracks.length === 0 ? (
         <div style={{ display: "flex", minHeight: 160, alignItems: "center", justifyContent: "center", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)", fontSize: 13, color: "var(--ink-mid)" }}>
           {filter !== "all" ? "Aucun track pour ce filtre" : "Aucun track dans cette playlist"}
         </div>
       ) : (
         <>
-          <div className="s-table-wrap">
-            <table className="s-table" style={{ width: "100%" }}>
-              <thead>
-                <tr>
-                  <th>Track</th>
-                  <th>Genres</th>
-                  <th style={{ textAlign: "right" }}>Conf.</th>
-                  <th style={{ textAlign: "right" }}>Sync</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedTracks.map((track) => (
-                  <tr key={track.id}>
-                    <td>
-                      <p style={{ fontWeight: 500, fontSize: 14 }}>
-                        {track.artist_name && <span style={{ fontWeight: 400, color: "var(--ink-mid)" }}>{track.artist_name} — </span>}
-                        {track.name ?? track.spotify_track_id}
-                      </p>
-                      <p style={{ marginTop: 2, fontSize: 11, color: "var(--ink-mid)" }}>
-                        {formatDate(track.spotify_added_at)}
-                        {track.classification_level !== null && <span style={{ marginLeft: 6, color: "var(--ink-dim)" }}>{levelLabel(track.classification_level)}</span>}
-                      </p>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                        {track.genres.slice(0, 2).map((g) => {
-                          const pal = genrePalette(g);
-                          return <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "1px 7px", fontSize: 11, fontWeight: 500, color: pal.color }}>{g}</span>;
-                        })}
-                      </div>
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {track.confidence !== null ? (
-                        <span style={{
-                          display: "inline-block", borderRadius: 20, padding: "2px 8px", fontSize: 11, fontWeight: 500,
-                          background: track.confidence >= 0.55 ? "var(--sage-light)" : track.confidence >= 0.4 ? "var(--amber-light)" : "var(--terra-light)",
-                          color: track.confidence >= 0.55 ? "var(--sage)" : track.confidence >= 0.4 ? "var(--amber)" : "var(--terra)",
-                        }}>{Math.round(track.confidence * 100)}%</span>
-                      ) : <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {track.pushed_to_spotify ? <span style={{ fontSize: 12, color: "var(--sage)" }}>✓</span> : <span style={{ fontSize: 12, color: "var(--terra)" }}>○</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="s-track-list">
+            {displayedTracks.map((track, i) => (
+              <div key={track.id} className="s-track-row">
+                <span className="s-track-index">{i + 1}</span>
+
+                <div className="s-track-info">
+                  <p style={{ fontWeight: 500, fontSize: 14, color: "var(--ink)" }}>
+                    {track.name ?? track.spotify_track_id}
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--ink-mid)", marginTop: 1 }}>
+                    {track.artist_name ?? "—"}
+                  </p>
+                </div>
+
+                <div className="s-track-genres">
+                  {track.genres.slice(0, 2).map((g) => {
+                    const pal = genrePalette(g);
+                    return (
+                      <span key={g} style={{
+                        background: pal.bg, border: `1px solid ${pal.border}`,
+                        borderRadius: 6, padding: "1px 7px", fontSize: 11, fontWeight: 500, color: pal.color,
+                        whiteSpace: "nowrap",
+                      }}>
+                        {g}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="s-track-conf" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {track.confidence !== null
+                    ? <ConfBar value={track.confidence} />
+                    : <span style={{ color: "var(--ink-dimmer)", fontSize: 11 }}>—</span>
+                  }
+                </div>
+
+                <span className="s-track-sync" style={{ color: track.pushed_to_spotify ? "var(--sage)" : "var(--ink-dimmer)" }}>
+                  {track.pushed_to_spotify ? "✓" : "○"}
+                </span>
+              </div>
+            ))}
           </div>
+
           {hasMore && filter === "all" && sort === "default" && (
             <button onClick={loadMore} disabled={loadingMore} className="s-btn" style={{ width: "100%", marginTop: 16, padding: "10px 0", justifyContent: "center" }}>
               {loadingMore ? "Chargement…" : "Charger plus"}
@@ -428,6 +499,7 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
         </>
       )}
 
+      {/* Bottom sheet */}
       {bottomSheet && (
         <>
           <div className="s-bs-backdrop" onClick={() => setBottomSheet(false)} />
@@ -444,9 +516,18 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
               {enabled ? "Désactiver" : "Activer"}
             </button>
             <div className="s-bs-sep" />
-            <button className="s-bs-item" disabled={actionLoading === "recompute"} onClick={() => void handleRecompute()}>
-              {actionLoading === "recompute" ? "Calcul…" : "Recompute centroïde"}
+            <button
+              className="s-bs-item"
+              style={{ color: "var(--ink-dim)", fontSize: 12 }}
+              onClick={() => setShowAdvanced((v) => !v)}
+            >
+              Avancé {showAdvanced ? "▲" : "▼"}
             </button>
+            {showAdvanced && (
+              <button className="s-bs-item" disabled={actionLoading === "recompute"} onClick={() => void handleRecompute()}>
+                {actionLoading === "recompute" ? "Calcul…" : "Recompute centroïde"}
+              </button>
+            )}
             <div className="s-bs-sep" style={{ marginTop: 4 }} />
             <button className="s-bs-item s-bs-item-dim" onClick={() => setBottomSheet(false)}>Annuler</button>
           </div>
