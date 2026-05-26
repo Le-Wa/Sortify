@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { refreshAccessToken } from "@/lib/spotify/token";
@@ -19,12 +20,13 @@ export async function POST(req: Request): Promise<Response> {
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
 
-  const body = (await req.json()) as { min_confidence?: number };
-  const minConfidence = body.min_confidence ?? 0.55;
+  const Body = z.object({ min_confidence: z.number().optional() });
+  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  const minConfidence = parsed.success ? (parsed.data.min_confidence ?? 0.55) : 0.55;
 
   const rows = await getInboxTracksNeedsReview(dbUser.id);
   const trackIds = rows.map((r) => r.id);
-  const logMap = await getLatestLogByTrackIds(trackIds);
+  const logMap = await getLatestLogByTrackIds(trackIds, dbUser.id);
 
   const eligible = rows.filter((row) => {
     const confidence = logMap[row.id]?.confidence ?? null;

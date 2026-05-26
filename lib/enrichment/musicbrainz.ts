@@ -6,7 +6,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 let mbQueue = Promise.resolve();
 function mbFetch(url: string): Promise<Response> {
   const result = mbQueue.then(() =>
-    fetch(url, { headers: { "User-Agent": UA } })
+    fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(5000) })
   );
   mbQueue = result.then(() => sleep(1000)).catch(() => sleep(1000));
   return result;

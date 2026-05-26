@@ -25,7 +25,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const rows = await getInboxTracksNeedsReview(dbUser.id, playlistId);
   const trackIds = rows.map((r) => r.id);
-  const logMap = await getLatestLogByTrackIds(trackIds);
+  const logMap = await getLatestLogByTrackIds(trackIds, dbUser.id);
 
   type EnrichedRow = (typeof rows)[number] & {
     confidence: number | null;

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { refreshAccessToken } from "@/lib/spotify/token";
@@ -26,12 +27,13 @@ export async function PATCH(
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
 
   const { track_id } = await params;
-  const body = (await req.json()) as { action?: string; playlist_ids?: string[] };
-  const { action } = body;
-
-  if (!action || !["validate", "correct", "archive"].includes(action)) {
-    return Response.json({ error: "Invalid action" }, { status: 400 });
-  }
+  const Body = z.object({
+    action: z.enum(["validate", "correct", "archive"]),
+    playlist_ids: z.array(z.string()).optional(),
+  });
+  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return Response.json({ error: "Invalid action" }, { status: 400 });
+  const { action, playlist_ids } = parsed.data;
 
   const track = await getTrackForConfirmation(track_id, dbUser.id);
   if (!track) return Response.json({ error: "Track not found" }, { status: 404 });
@@ -50,10 +52,10 @@ export async function PATCH(
     }
     targetPlaylistIds = [track.llm_suggestion];
   } else {
-    if (!body.playlist_ids?.length) {
+    if (!playlist_ids?.length) {
       return Response.json({ error: "playlist_ids is required for correct action" }, { status: 400 });
     }
-    targetPlaylistIds = body.playlist_ids;
+    targetPlaylistIds = playlist_ids;
   }
 
   await updateTrackInboxCorrect(track_id, dbUser.id, targetPlaylistIds);
@@ -74,7 +76,7 @@ export async function PATCH(
     await setPushedToSpotify(track_id, dbUser.id);
   }
 
-  const logMap = await getLatestLogByTrackIds([track_id]);
+  const logMap = await getLatestLogByTrackIds([track_id], dbUser.id);
   const latestLog = logMap[track_id];
 
   await insertInboxLog({

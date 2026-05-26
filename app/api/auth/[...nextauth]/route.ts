@@ -2,6 +2,7 @@ import "@/lib/types";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { createClient } from "@/lib/supabase/client";
+import { refreshSpotifyToken } from "@/lib/spotify/token";
 
 const SCOPES = [
   "user-library-read",
@@ -53,29 +54,11 @@ export const authOptions: NextAuthOptions = {
 
       // Access token expired — refresh it
       try {
-        const res = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Basic ${Buffer.from(
-              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-            ).toString("base64")}`,
-          },
-          body: new URLSearchParams({
-            grant_type: "refresh_token",
-            refresh_token: token.refreshToken ?? "",
-          }),
-        });
-
-        const refreshed = await res.json();
-        if (!res.ok) throw refreshed;
-
-        const newExpiresAt = Math.floor(Date.now() / 1000) + refreshed.expires_in;
-        const newRefreshToken: string = refreshed.refresh_token ?? token.refreshToken;
+        const refreshed = await refreshSpotifyToken(token.refreshToken ?? "");
 
         token.accessToken = refreshed.access_token;
-        token.refreshToken = newRefreshToken;
-        token.expiresAt = newExpiresAt;
+        token.refreshToken = refreshed.refresh_token;
+        token.expiresAt = refreshed.expires_at;
         delete token.error;
 
         const supabase = createClient();
@@ -83,8 +66,8 @@ export const authOptions: NextAuthOptions = {
           .from("users")
           .update({
             access_token: refreshed.access_token,
-            refresh_token: newRefreshToken,
-            expires_at: newExpiresAt,
+            refresh_token: refreshed.refresh_token,
+            expires_at: refreshed.expires_at,
           })
           .eq("spotify_id", token.spotifyId);
 

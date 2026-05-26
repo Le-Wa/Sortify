@@ -137,21 +137,11 @@ export async function removeFromExtraPlaylists(
   userId: string
 ): Promise<void> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("tracks")
-    .select("id, extra_playlists")
-    .eq("user_id", userId)
-    .contains("extra_playlists", [playlistId]);
+  const { error } = await supabase.rpc("remove_playlist_from_extras", {
+    p_playlist_id: playlistId,
+    p_user_id: userId,
+  });
   if (error) throw error;
-
-  for (const track of data ?? []) {
-    const newExtras = (track.extra_playlists as string[]).filter((id) => id !== playlistId);
-    await supabase
-      .from("tracks")
-      .update({ extra_playlists: newExtras })
-      .eq("id", track.id as string)
-      .eq("user_id", userId);
-  }
 }
 
 export async function reorderPlaylists(
@@ -354,24 +344,6 @@ export async function getInboxTracks(
   return (data ?? []) as unknown as InboxTrackRow[];
 }
 
-/** Returns the most-recent confidence score per track id. */
-export async function getLatestConfidenceByTrackIds(
-  trackIds: string[]
-): Promise<Record<string, number>> {
-  if (trackIds.length === 0) return {};
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("classification_log")
-    .select("track_id, confidence, created_at")
-    .in("track_id", trackIds)
-    .order("created_at", { ascending: false });
-
-  const map: Record<string, number> = {};
-  for (const row of data ?? []) {
-    if (!(row.track_id in map)) map[row.track_id] = row.confidence as number;
-  }
-  return map;
-}
 
 // ── Playlists — stats & detail ────────────────────────────────────────────────
 
@@ -581,7 +553,8 @@ export async function getInboxTracksNeedsReview(
 }
 
 export async function getLatestLogByTrackIds(
-  trackIds: string[]
+  trackIds: string[],
+  userId: string
 ): Promise<Record<string, { confidence: number; reason: string | null }>> {
   if (trackIds.length === 0) return {};
   const supabase = createClient();
@@ -589,6 +562,7 @@ export async function getLatestLogByTrackIds(
     .from("classification_log")
     .select("track_id, confidence, reason, created_at")
     .in("track_id", trackIds)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   const map: Record<string, { confidence: number; reason: string | null }> = {};

@@ -1,11 +1,17 @@
-import { createClient as _createClient } from "@supabase/supabase-js";
+import { createClient as _createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createBrowserClient as _createBrowserClient } from "@supabase/ssr";
 
-export function createClient() {
-  return _createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+let _server: SupabaseClient | null = null;
+
+export function createClient(): SupabaseClient {
+  if (!_server) {
+    _server = _createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+  }
+  return _server;
 }
 
 export function createBrowserClient() {

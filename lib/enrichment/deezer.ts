@@ -9,7 +9,7 @@ type DeezerTrack = {
 export async function getDeezerTrackId(isrc: string | null | undefined): Promise<string | null> {
   if (!isrc) return null;
   try {
-    const res = await fetch(`${BASE}/track/isrc:${isrc}`);
+    const res = await fetch(`${BASE}/track/isrc:${isrc}`, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const track = (await res.json()) as DeezerTrack;
     if (track.error || !track.id) return null;
@@ -36,7 +36,7 @@ export async function getDeezerGenres(isrc: string | undefined): Promise<string[
     if (track.error || !track.album?.id) return [];
 
     // Step 2: fetch album → genres
-    const albumRes = await fetch(`${BASE}/album/${track.album.id}`);
+    const albumRes = await fetch(`${BASE}/album/${track.album.id}`, { signal: AbortSignal.timeout(5000) });
     if (!albumRes.ok) return [];
 
     const album = (await albumRes.json()) as DeezerAlbum;

@@ -1,12 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropic } from "@/lib/anthropic";
 import {
   getUserBySpotifyId,
   getPlaylistDetail,
   getPlaylistTracksForLearn,
 } from "@/lib/supabase/queries";
 import type { PlaylistCentroid, PlaylistRules } from "@/lib/types";
+import { isValidRules } from "@/lib/classifier/rules";
 
 const MODEL = "claude-sonnet-4-6";
 const MIN_TRACKS = 5;
@@ -19,7 +20,12 @@ const STAT_DIMS = ["energy", "danceability", "valence", "acousticness", "tempo"]
 
 function sampleRandomly<T>(arr: T[], n: number): T[] {
   if (arr.length <= n) return arr;
-  return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
 }
 
 function computeCentroid(features: Record<string, number>[]): PlaylistCentroid | null {
@@ -39,19 +45,6 @@ function computeCentroid(features: Record<string, number>[]): PlaylistCentroid |
   };
 }
 
-function isValidRules(r: unknown): r is PlaylistRules {
-  if (typeof r !== "object" || r === null) return false;
-  const obj = r as Record<string, unknown>;
-  const g = obj.genres as Record<string, unknown> | undefined;
-  const hc = obj.hard_constraints as Record<string, unknown> | undefined;
-  return (
-    Array.isArray(g?.include) &&
-    Array.isArray(g?.exclude) &&
-    typeof hc?.require_genre_signal === "boolean" &&
-    typeof obj.audio_features === "object" &&
-    obj.audio_features !== null
-  );
-}
 
 export async function POST(
   _req: Request,
@@ -116,7 +109,7 @@ export async function POST(
     const centroid = computeCentroid(featuresWithData);
 
     // ── 7. LLM ──────────────────────────────────────────────────────────────────
-    const anthropic = new Anthropic();
+    const anthropic = getAnthropic();
 
     const userMessage = [
       `Playlist : "${playlist.name}" — ${sample.length} tracks analysés sur ${allTracks.length} au total.`,
