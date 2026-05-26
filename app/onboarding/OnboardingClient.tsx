@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ProgressBar from "./ProgressBar";
+import BackButton from "./BackButton";
+import SummaryRow from "./SummaryRow";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type ImportScope = "all" | "12" | "6" | "3";
@@ -37,115 +40,6 @@ const SCOPE_LABELS: Record<ImportScope, string> = {
   "6": "6 derniers mois",
   "3": "3 derniers mois",
 };
-
-const STEP_LABELS = ["Connexion", "Import", "Playlists", "Schedule", "Prêt", "Tri"];
-
-function ProgressBar({ step }: { step: Step }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 36,
-        gap: 0,
-      }}
-    >
-      {STEP_LABELS.map((label, i) => {
-        const s = (i + 1) as Step;
-        const done = s < step;
-        const active = s === step;
-        return (
-          <div key={s} style={{ display: "flex", alignItems: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 5,
-              }}
-            >
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: done || active ? "var(--terra)" : "transparent",
-                  border: done || active ? "1px solid var(--terra)" : "1px solid var(--border-strong)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: done || active ? "#fff" : "var(--ink-mid)",
-                  transition: "all 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                {done ? (
-                  <svg viewBox="0 0 10 10" fill="none" style={{ width: 10, height: 10 }}>
-                    <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                ) : (
-                  s
-                )}
-              </div>
-              <span
-                style={{
-                  fontSize: 10,
-                  color: active ? "var(--terra)" : "var(--ink-dim)",
-                  fontWeight: active ? 600 : 400,
-                  letterSpacing: "0.02em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {label}
-              </span>
-            </div>
-            {i < STEP_LABELS.length - 1 && (
-              <div
-                style={{
-                  width: 28,
-                  height: 1,
-                  background: done ? "var(--terra)" : "var(--border-strong)",
-                  marginBottom: 16,
-                  transition: "background 0.2s",
-                  flexShrink: 0,
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function BackButton({ onBack }: { onBack: () => void }) {
-  return (
-    <button
-      onClick={onBack}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        background: "none",
-        border: "none",
-        color: "var(--ink-mid)",
-        fontSize: 13,
-        fontWeight: 400,
-        cursor: "pointer",
-        padding: "0 0 20px",
-        fontFamily: "inherit",
-      }}
-    >
-      <svg viewBox="0 0 10 10" fill="none" style={{ width: 10, height: 10 }}>
-        <path d="M6 2L3 5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      Retour
-    </button>
-  );
-}
 
 export default function OnboardingClient({ userName }: Props) {
   const router = useRouter();
@@ -1029,15 +923,6 @@ export default function OnboardingClient({ userName }: Props) {
         )}
 
       </div>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-      <span style={{ fontSize: 13, color: "var(--ink-mid)", fontWeight: 400 }}>{label}</span>
-      <span style={{ fontSize: 14, color: "var(--ink)", fontWeight: 600 }}>{value}</span>
     </div>
   );
 }
