@@ -19,7 +19,12 @@ const STAT_DIMS = ["energy", "danceability", "valence", "acousticness", "tempo"]
 
 function sampleRandomly<T>(arr: T[], n: number): T[] {
   if (arr.length <= n) return arr;
-  return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
 }
 
 function computeCentroid(features: Record<string, number>[]): PlaylistCentroid | null {
