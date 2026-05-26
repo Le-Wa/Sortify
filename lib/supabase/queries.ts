@@ -137,21 +137,11 @@ export async function removeFromExtraPlaylists(
   userId: string
 ): Promise<void> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("tracks")
-    .select("id, extra_playlists")
-    .eq("user_id", userId)
-    .contains("extra_playlists", [playlistId]);
+  const { error } = await supabase.rpc("remove_playlist_from_extras", {
+    p_playlist_id: playlistId,
+    p_user_id: userId,
+  });
   if (error) throw error;
-
-  for (const track of data ?? []) {
-    const newExtras = (track.extra_playlists as string[]).filter((id) => id !== playlistId);
-    await supabase
-      .from("tracks")
-      .update({ extra_playlists: newExtras })
-      .eq("id", track.id as string)
-      .eq("user_id", userId);
-  }
 }
 
 export async function reorderPlaylists(
