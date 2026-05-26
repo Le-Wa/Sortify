@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { z } from "zod";
 import { getAnthropic } from "@/lib/anthropic";
 import type Anthropic from "@anthropic-ai/sdk";
 import type { PlaylistRules } from "@/lib/types";
@@ -47,12 +48,10 @@ export async function POST(req: Request): Promise<Response> {
   const session = await getServerSession(authOptions);
   if (!session?.userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as { description?: unknown };
-  if (typeof body.description !== "string" || body.description.trim().length === 0) {
-    return Response.json({ error: "Missing description" }, { status: 400 });
-  }
-
-  const description = body.description.trim();
+  const DescBody = z.object({ description: z.string().trim().min(1) });
+  const bodyParsed = DescBody.safeParse(await req.json().catch(() => ({})));
+  if (!bodyParsed.success) return Response.json({ error: "Missing description" }, { status: 400 });
+  const { description } = bodyParsed.data;
 
   const message = await getAnthropic().messages.create({
     model: MODEL,

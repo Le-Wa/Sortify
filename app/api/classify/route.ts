@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { addTrackToPlaylist } from "@/lib/spotify/fetchers";
@@ -16,16 +17,14 @@ export async function PATCH(req: Request): Promise<Response> {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as {
-    trackId?: string;
-    playlistId?: string;
-    correctedTo?: string;
-  };
-  const { trackId, playlistId, correctedTo } = body;
-
-  if (!trackId || !playlistId) {
-    return Response.json({ error: "Missing trackId or playlistId" }, { status: 400 });
-  }
+  const Body = z.object({
+    trackId: z.string(),
+    playlistId: z.string(),
+    correctedTo: z.string().optional(),
+  });
+  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return Response.json({ error: "Missing trackId or playlistId" }, { status: 400 });
+  const { trackId, playlistId, correctedTo } = parsed.data;
 
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });

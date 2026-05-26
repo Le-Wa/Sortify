@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getUserBySpotifyId, upsertLikedTracks, updateLastSyncAt } from "@/lib/supabase/queries";
@@ -13,12 +14,14 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { months = 0, cursor = null } = (await req.json()) as {
-    months?: number;
-    cursor?: string | null;
-  };
+  const ImportBody = z.object({
+    months: z.number().optional(),
+    cursor: z.string().nullable().optional(),
+  });
+  const parsed = ImportBody.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return Response.json({ error: parsed.error.message }, { status: 400 });
+  const { months = 0, cursor = null } = parsed.data;
 
-  // Guard cursor against SSRF — must be a Spotify /me/tracks pagination URL
   if (cursor !== null && !cursor.startsWith(ME_TRACKS)) {
     return Response.json({ error: "Invalid cursor" }, { status: 400 });
   }

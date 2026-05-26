@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { classify } from "@/lib/classifier/engine";
@@ -23,8 +24,9 @@ export async function POST(req: Request): Promise<Response> {
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => ({})) as { skipLlm?: boolean };
-  const skipLlm = body.skipLlm === true;
+  const RunBody = z.object({ skipLlm: z.boolean().optional() });
+  const parsed = RunBody.safeParse(await req.json().catch(() => ({})));
+  const skipLlm = parsed.success ? (parsed.data.skipLlm ?? false) : false;
 
   const batchSize = skipLlm ? BATCH_SIZE_FAST : BATCH_SIZE_LLM;
 

@@ -9,10 +9,13 @@ export const PlaylistRulesSchema = z.object({
     exclude: z.array(z.string()),
   }),
   audio_features: z
-    .record(
-      z.enum(["energy", "danceability", "valence", "tempo", "acousticness"]),
-      FeatureRange
-    )
+    .object({
+      energy: FeatureRange.optional(),
+      danceability: FeatureRange.optional(),
+      valence: FeatureRange.optional(),
+      tempo: FeatureRange.optional(),
+      acousticness: FeatureRange.optional(),
+    })
     .default({}),
   hard_constraints: z.object({
     max_age_days: z.number().nullable(),

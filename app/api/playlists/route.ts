@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { refreshAccessToken } from "@/lib/spotify/token";
@@ -7,6 +8,7 @@ import {
   getUserPlaylists,
   insertPlaylist,
 } from "@/lib/supabase/queries";
+import { PlaylistRulesSchema } from "@/lib/classifier/rules";
 import type { PlaylistRules } from "@/lib/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -40,18 +42,16 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as {
-    spotifyPlaylistId?: string;
-    name?: string;
-    description?: string;
-    rules?: PlaylistRules;
-  };
-  const { name, description, rules } = body;
-  let { spotifyPlaylistId } = body;
-
-  if (!name) {
-    return Response.json({ error: "Missing name" }, { status: 400 });
-  }
+  const PostBody = z.object({
+    spotifyPlaylistId: z.string().optional(),
+    name: z.string().min(1),
+    description: z.string().optional(),
+    rules: PlaylistRulesSchema.optional(),
+  });
+  const parsed = PostBody.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return Response.json({ error: "Missing name" }, { status: 400 });
+  const { name, description, rules } = parsed.data;
+  let { spotifyPlaylistId } = parsed.data;
 
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
