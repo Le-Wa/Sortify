@@ -19,7 +19,7 @@ export async function getTrackTags(artist: string, title: string): Promise<strin
 
   try {
     const url = `${BASE}/?method=track.getTopTags&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(title)}&api_key=${key}&format=json`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return [];
 
     const data = (await res.json()) as LastFmTagsResponse;
@@ -37,7 +37,7 @@ export async function getArtistTags(artist: string): Promise<string[]> {
 
   try {
     const url = `${BASE}/?method=artist.getTopTags&artist=${encodeURIComponent(artist)}&api_key=${key}&format=json`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return [];
 
     const data = (await res.json()) as LastFmTagsResponse;

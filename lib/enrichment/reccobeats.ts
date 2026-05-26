@@ -20,7 +20,7 @@ export async function getAudioFeatures(isrc: string | undefined): Promise<AudioF
   if (!isrc) return null;
 
   try {
-    const res = await fetch(`${BASE}/audio-features?ids=${encodeURIComponent(isrc)}`);
+    const res = await fetch(`${BASE}/audio-features?ids=${encodeURIComponent(isrc)}`, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
 
     const data = (await res.json()) as { content?: ReccoFeature[] };
