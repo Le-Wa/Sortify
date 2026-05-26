@@ -10,7 +10,7 @@ import {
   upsertTrack,
   insertClassificationLog,
 } from "@/lib/supabase/queries";
-import { addTrackToPlaylist } from "@/lib/spotify/fetchers";
+import { addTracksToPlaylist } from "@/lib/spotify/fetchers";
 import { refreshAccessToken } from "@/lib/spotify/token";
 import type { AudioFeatures, ClassifierTrack } from "@/lib/types";
 
@@ -46,6 +46,7 @@ export async function POST(req: Request): Promise<Response> {
   let needsReview = 0;
   const errors: string[] = [];
   const batchResults: Array<{ name: string; artist: string; playlist_name: string }> = [];
+  const tracksByPlaylist = new Map<string, string[]>();
 
   for (const row of tracks) {
     const track: ClassifierTrack = {
@@ -94,10 +95,9 @@ export async function POST(req: Request): Promise<Response> {
       if (result.playlistId) {
         const allIds = [result.playlistId, ...result.extraPlaylistIds];
         for (const pid of allIds) {
-          const playlist = playlists.find((p) => p.id === pid);
-          if (playlist) {
-            await addTrackToPlaylist(token, playlist.spotify_playlist_id, row.spotify_track_id);
-          }
+          const ids = tracksByPlaylist.get(pid) ?? [];
+          ids.push(row.spotify_track_id);
+          tracksByPlaylist.set(pid, ids);
         }
       }
 
@@ -116,6 +116,13 @@ export async function POST(req: Request): Promise<Response> {
       else classified++;
     } catch (e) {
       errors.push(`${row.spotify_track_id}: ${String(e)}`);
+    }
+  }
+
+  for (const [playlistId, trackIds] of tracksByPlaylist) {
+    const playlist = playlists.find((p) => p.id === playlistId);
+    if (playlist) {
+      await addTracksToPlaylist(token, playlist.spotify_playlist_id, trackIds);
     }
   }
 
