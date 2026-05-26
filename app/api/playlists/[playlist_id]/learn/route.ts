@@ -7,6 +7,7 @@ import {
   getPlaylistTracksForLearn,
 } from "@/lib/supabase/queries";
 import type { PlaylistCentroid, PlaylistRules } from "@/lib/types";
+import { isValidRules } from "@/lib/classifier/rules";
 
 const MODEL = "claude-sonnet-4-6";
 const MIN_TRACKS = 5;
@@ -44,19 +45,6 @@ function computeCentroid(features: Record<string, number>[]): PlaylistCentroid |
   };
 }
 
-function isValidRules(r: unknown): r is PlaylistRules {
-  if (typeof r !== "object" || r === null) return false;
-  const obj = r as Record<string, unknown>;
-  const g = obj.genres as Record<string, unknown> | undefined;
-  const hc = obj.hard_constraints as Record<string, unknown> | undefined;
-  return (
-    Array.isArray(g?.include) &&
-    Array.isArray(g?.exclude) &&
-    typeof hc?.require_genre_signal === "boolean" &&
-    typeof obj.audio_features === "object" &&
-    obj.audio_features !== null
-  );
-}
 
 export async function POST(
   _req: Request,

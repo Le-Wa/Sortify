@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getAnthropic } from "@/lib/anthropic";
 import type Anthropic from "@anthropic-ai/sdk";
 import type { PlaylistRules } from "@/lib/types";
+import { isValidRules } from "@/lib/classifier/rules";
 
 const MODEL = "claude-sonnet-4-6";
 
@@ -41,19 +42,6 @@ const SYSTEM: Anthropic.Messages.TextBlockParam[] = [
   { type: "text", text: SYSTEM_TEXT },
 ];
 
-function isValidRules(r: unknown): r is PlaylistRules {
-  if (typeof r !== "object" || r === null) return false;
-  const obj = r as Record<string, unknown>;
-  const g = obj.genres as Record<string, unknown> | undefined;
-  const hc = obj.hard_constraints as Record<string, unknown> | undefined;
-  return (
-    Array.isArray(g?.include) &&
-    Array.isArray(g?.exclude) &&
-    typeof hc?.require_genre_signal === "boolean" &&
-    typeof obj.audio_features === "object" &&
-    obj.audio_features !== null
-  );
-}
 
 export async function POST(req: Request): Promise<Response> {
   const session = await getServerSession(authOptions);
