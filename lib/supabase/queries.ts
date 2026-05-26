@@ -344,24 +344,6 @@ export async function getInboxTracks(
   return (data ?? []) as unknown as InboxTrackRow[];
 }
 
-/** Returns the most-recent confidence score per track id. */
-export async function getLatestConfidenceByTrackIds(
-  trackIds: string[]
-): Promise<Record<string, number>> {
-  if (trackIds.length === 0) return {};
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("classification_log")
-    .select("track_id, confidence, created_at")
-    .in("track_id", trackIds)
-    .order("created_at", { ascending: false });
-
-  const map: Record<string, number> = {};
-  for (const row of data ?? []) {
-    if (!(row.track_id in map)) map[row.track_id] = row.confidence as number;
-  }
-  return map;
-}
 
 // ── Playlists — stats & detail ────────────────────────────────────────────────
 
@@ -571,7 +553,8 @@ export async function getInboxTracksNeedsReview(
 }
 
 export async function getLatestLogByTrackIds(
-  trackIds: string[]
+  trackIds: string[],
+  userId: string
 ): Promise<Record<string, { confidence: number; reason: string | null }>> {
   if (trackIds.length === 0) return {};
   const supabase = createClient();
@@ -579,6 +562,7 @@ export async function getLatestLogByTrackIds(
     .from("classification_log")
     .select("track_id, confidence, reason, created_at")
     .in("track_id", trackIds)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   const map: Record<string, { confidence: number; reason: string | null }> = {};

@@ -39,7 +39,7 @@ export async function GET(
   ).length;
 
   const pageRows = allTracks.slice((page - 1) * perPage, page * perPage);
-  const logMap = await getLatestLogByTrackIds(pageRows.map((t) => t.id));
+  const logMap = await getLatestLogByTrackIds(pageRows.map((t) => t.id), dbUser.id);
 
   const tracks = pageRows.map((row) => ({
     id: row.id,

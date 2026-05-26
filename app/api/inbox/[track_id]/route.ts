@@ -76,7 +76,7 @@ export async function PATCH(
     await setPushedToSpotify(track_id, dbUser.id);
   }
 
-  const logMap = await getLatestLogByTrackIds([track_id]);
+  const logMap = await getLatestLogByTrackIds([track_id], dbUser.id);
   const latestLog = logMap[track_id];
 
   await insertInboxLog({

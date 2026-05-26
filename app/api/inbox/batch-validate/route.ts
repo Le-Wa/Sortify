@@ -26,7 +26,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const rows = await getInboxTracksNeedsReview(dbUser.id);
   const trackIds = rows.map((r) => r.id);
-  const logMap = await getLatestLogByTrackIds(trackIds);
+  const logMap = await getLatestLogByTrackIds(trackIds, dbUser.id);
 
   const eligible = rows.filter((row) => {
     const confidence = logMap[row.id]?.confidence ?? null;
