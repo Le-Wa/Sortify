@@ -436,6 +436,8 @@ export interface PlaylistTrackRow {
   genres: string[] | null;
   classification_level: number | null;
   pushed_to_spotify: string | null;
+  assigned_playlist: string | null;
+  extra_playlists: string[];
 }
 
 export async function getPlaylistTracksAssigned(
@@ -446,7 +448,7 @@ export async function getPlaylistTracksAssigned(
   const { data, error } = await supabase
     .from("tracks")
     .select(
-      "id, spotify_track_id, name, artist_name, artists, album_name, spotify_added_at, genres, classification_level, pushed_to_spotify"
+      "id, spotify_track_id, name, artist_name, artists, album_name, spotify_added_at, genres, classification_level, pushed_to_spotify, assigned_playlist, extra_playlists"
     )
     .eq("user_id", userId)
     .eq("is_archived", false)
@@ -628,6 +630,77 @@ export async function updateTrackInboxArchive(
   const { error } = await supabase
     .from("tracks")
     .update({ is_archived: true, needs_review: false })
+    .eq("id", trackId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function addTrackToExtraPlaylist(
+  trackId: string,
+  userId: string,
+  playlistId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { data, error: fetchError } = await supabase
+    .from("tracks")
+    .select("extra_playlists")
+    .eq("id", trackId)
+    .eq("user_id", userId)
+    .single();
+  if (fetchError || !data) throw fetchError ?? new Error("Track not found");
+  const extras = ((data as { extra_playlists: string[] }).extra_playlists ?? []);
+  if (extras.includes(playlistId)) return;
+  const { error } = await supabase
+    .from("tracks")
+    .update({ extra_playlists: [...extras, playlistId] })
+    .eq("id", trackId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function removeTrackFromPlaylist(
+  trackId: string,
+  userId: string,
+  playlistId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { data, error: fetchError } = await supabase
+    .from("tracks")
+    .select("assigned_playlist, extra_playlists")
+    .eq("id", trackId)
+    .eq("user_id", userId)
+    .single();
+  if (fetchError || !data) throw fetchError ?? new Error("Track not found");
+
+  if ((data as { assigned_playlist: string | null }).assigned_playlist === playlistId) {
+    const { error } = await supabase
+      .from("tracks")
+      .update({ assigned_playlist: null, pushed_to_spotify: null, needs_review: true })
+      .eq("id", trackId)
+      .eq("user_id", userId);
+    if (error) throw error;
+  } else {
+    const newExtras = ((data as { extra_playlists: string[] }).extra_playlists ?? []).filter(
+      (id) => id !== playlistId
+    );
+    const { error } = await supabase
+      .from("tracks")
+      .update({ extra_playlists: newExtras, pushed_to_spotify: null })
+      .eq("id", trackId)
+      .eq("user_id", userId);
+    if (error) throw error;
+  }
+}
+
+export async function moveTrackToPlaylist(
+  trackId: string,
+  userId: string,
+  playlistId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("tracks")
+    .update({ assigned_playlist: playlistId, pushed_to_spotify: null })
     .eq("id", trackId)
     .eq("user_id", userId);
   if (error) throw error;

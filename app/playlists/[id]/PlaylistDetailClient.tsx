@@ -66,6 +66,7 @@ interface PlaylistTrack {
   confidence: number | null;
   pushed_to_spotify: string | null;
   is_primary: boolean;
+  extra_playlists: string[];
 }
 
 interface ApiResponse {
@@ -269,22 +270,27 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
     }
   }
 
-  async function handleMoveTrack(trackId: string, targetPlaylistId: string) {
+  async function handleToggleExtraPlaylist(trackId: string, targetId: string, isActive: boolean) {
     setTrackActionLoading(trackId);
     try {
+      const action = isActive ? "remove-from-playlist" : "add-extra";
       const res = await fetch(`/api/tracks/${trackId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "move", playlist_id: targetPlaylistId }),
+        body: JSON.stringify({ action, playlist_id: targetId }),
       });
       if (!res.ok) throw new Error();
-      setTracks((prev) => prev.filter((t) => t.id !== trackId));
-      setTotal((prev) => prev - 1);
-      setExpandedTrackId(null);
-      setShowMoveFor(null);
-      showToast("Track déplacé");
+      setTracks((prev) => prev.map((t) => {
+        if (t.id !== trackId) return t;
+        const prev_extras = t.extra_playlists ?? [];
+        const newExtras = isActive
+          ? prev_extras.filter((id) => id !== targetId)
+          : [...prev_extras, targetId];
+        return { ...t, extra_playlists: newExtras };
+      }));
+      showToast(isActive ? "Retiré" : "Ajouté");
     } catch {
-      showToast("Erreur déplacement");
+      showToast("Erreur");
     } finally {
       setTrackActionLoading(null);
     }
@@ -599,15 +605,13 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
                         >
                           ▶ Spotify
                         </a>
-                        {track.is_primary && (
-                          <button
-                            className="s-btn s-btn-sm"
-                            disabled={isActing}
-                            onClick={() => isMoveOpen ? setShowMoveFor(null) : void openMoveFor(track.id)}
-                          >
-                            → Déplacer {isMoveOpen ? "▲" : "▾"}
-                          </button>
-                        )}
+                        <button
+                          className="s-btn s-btn-sm"
+                          disabled={isActing}
+                          onClick={() => isMoveOpen ? setShowMoveFor(null) : void openMoveFor(track.id)}
+                        >
+                          Playlists {isMoveOpen ? "▲" : "▾"}
+                        </button>
                         <button
                           className="s-btn s-btn-sm"
                           disabled={isActing}
@@ -631,26 +635,28 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
                           {allPlaylists === null ? (
                             <span style={{ fontSize: 12, color: "var(--ink-dim)" }}>Chargement…</span>
                           ) : (
-                            allPlaylists
-                              .filter((p) => p.id !== playlistId)
-                              .map((p) => {
-                                const chipColor = playlistSwatch(p.id, p.color);
-                                return (
-                                  <button
-                                    key={p.id}
-                                    className="s-track-move-chip"
-                                    disabled={isActing}
-                                    onClick={() => void handleMoveTrack(track.id, p.id)}
-                                    style={{
-                                      borderColor: chipColor,
-                                      color: chipColor,
-                                      backgroundColor: `${chipColor}18`,
-                                    }}
-                                  >
-                                    {p.name}
-                                  </button>
-                                );
-                              })
+                            allPlaylists.map((p) => {
+                              const isCurrent = p.id === playlistId;
+                              const extras = track.extra_playlists ?? [];
+                              const isActive = isCurrent || extras.includes(p.id);
+                              const chipColor = playlistSwatch(p.id, p.color);
+                              return (
+                                <button
+                                  key={p.id}
+                                  className="s-track-move-chip"
+                                  disabled={isActing || isCurrent}
+                                  onClick={() => !isCurrent && void handleToggleExtraPlaylist(track.id, p.id, extras.includes(p.id))}
+                                  style={{
+                                    borderColor: chipColor,
+                                    color: isActive ? "#fff" : chipColor,
+                                    backgroundColor: isActive ? chipColor : `${chipColor}18`,
+                                    opacity: isCurrent ? 0.6 : 1,
+                                  }}
+                                >
+                                  {p.name}
+                                </button>
+                              );
+                            })
                           )}
                         </div>
                       )}

@@ -52,6 +52,8 @@ export async function GET(
     classification_level: row.classification_level,
     confidence: logMap[row.id]?.confidence ?? null,
     pushed_to_spotify: row.pushed_to_spotify,
+    is_primary: row.assigned_playlist === playlist_id,
+    extra_playlists: row.extra_playlists ?? [],
   }));
 
   return Response.json({
