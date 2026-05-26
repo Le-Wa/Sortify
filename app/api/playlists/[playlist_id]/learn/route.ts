@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropic } from "@/lib/anthropic";
 import {
   getUserBySpotifyId,
   getPlaylistDetail,
@@ -116,7 +116,7 @@ export async function POST(
     const centroid = computeCentroid(featuresWithData);
 
     // ── 7. LLM ──────────────────────────────────────────────────────────────────
-    const anthropic = new Anthropic();
+    const anthropic = getAnthropic();
 
     const userMessage = [
       `Playlist : "${playlist.name}" — ${sample.length} tracks analysés sur ${allTracks.length} au total.`,

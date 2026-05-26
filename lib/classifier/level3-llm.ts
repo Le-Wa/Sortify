@@ -1,4 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropic } from "@/lib/anthropic";
+import type Anthropic from "@anthropic-ai/sdk";
 import type { AudioFeatures } from "@/lib/enrichment/reccobeats";
 import type { ClassifierTrack, PlaylistCentroid, PlaylistForClassifier } from "@/lib/types";
 
@@ -70,13 +71,19 @@ async function callBatch(
   const playlistContext = buildPlaylistContext(playlists);
   const playlistList = playlists.map((p) => ({ id: p.id, name: p.name }));
 
-  const system = [
-    `You are classifying tracks for a personal music library organized around the following playlists: ${playlistNames}. Vibe and feel matter more than strict genre labels. A track can fit multiple playlists.`,
-    playlistContext,
-    `Respond only with the requested JSON object, nothing else. Each "reason" field must be in French, one sentence.`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const system: Anthropic.Messages.TextBlockParam[] = [
+    {
+      type: "text",
+      text: [
+        `You are classifying tracks for a personal music library organized around the following playlists: ${playlistNames}. Vibe and feel matter more than strict genre labels. A track can fit multiple playlists.`,
+        playlistContext,
+        `Respond only with the requested JSON object, nothing else. Each "reason" field must be in French, one sentence.`,
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      cache_control: { type: "ephemeral" },
+    },
+  ];
 
   const tracksPayload = inputs.map((input, i) => ({
     index: i,
@@ -98,7 +105,7 @@ Each playlist gets its own confidence score. Use an empty playlists array if non
 
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 300 * inputs.length,
+    max_tokens: Math.min(4096, 200 * inputs.length),
     system,
     messages: [{ role: "user", content: userMessage }],
   });
@@ -136,7 +143,7 @@ export async function matchLevel3Batch(
 ): Promise<(Level3Result | null)[]> {
   if (inputs.length === 0) return [];
 
-  const anthropic = new Anthropic();
+  const anthropic = getAnthropic();
   const results: (Level3Result | null)[] = new Array(inputs.length).fill(null);
 
   const chunks: { start: number; batch: Level3BatchInput[] }[] = [];

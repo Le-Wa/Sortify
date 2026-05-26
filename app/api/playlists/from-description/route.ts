@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropic } from "@/lib/anthropic";
+import type Anthropic from "@anthropic-ai/sdk";
 import type { PlaylistRules } from "@/lib/types";
 
 const MODEL = "claude-sonnet-4-6";
 
-const SYSTEM = `Tu es un système de configuration de classificateur musical.
+const SYSTEM_TEXT = `Tu es un système de configuration de classificateur musical.
 À partir d'une description textuelle, tu génères des règles JSON pour un classifier de playlists musicales.
 
 Si la description est trop vague pour générer des règles utiles (pas de genres, d'artistes, ni d'ambiance musicale identifiable), réponds UNIQUEMENT avec :
@@ -36,6 +37,10 @@ Contraintes :
 - require_genre_signal : true si les genres sont indispensables pour identifier cette playlist
 - llm_help_text : 1-2 phrases décrivant la vibe, utilisées pour l'arbitrage LLM`;
 
+const SYSTEM: Anthropic.Messages.TextBlockParam[] = [
+  { type: "text", text: SYSTEM_TEXT },
+];
+
 function isValidRules(r: unknown): r is PlaylistRules {
   if (typeof r !== "object" || r === null) return false;
   const obj = r as Record<string, unknown>;
@@ -60,9 +65,8 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const description = body.description.trim();
-  const anthropic = new Anthropic();
 
-  const message = await anthropic.messages.create({
+  const message = await getAnthropic().messages.create({
     model: MODEL,
     max_tokens: 1024,
     system: SYSTEM,
