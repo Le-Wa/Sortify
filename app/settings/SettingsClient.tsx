@@ -105,7 +105,29 @@ export default function SettingsClient({ cronEnabled: initialCron, importSince }
           if (data.enriched === 0) break;
           setProgress(`Enrichissement… ${enriched} tracks`);
         }
-        flash(`${total} importés · ${enriched} enrichis`);
+
+        setProgress(`Enrichissement terminé. Classification…`);
+        let classified = 0;
+        let classifyRemaining = Infinity;
+        while (classifyRemaining > 0) {
+          const res = await fetch("/api/classify/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+          const data = (await res.json()) as {
+            classified: number;
+            needs_review: number;
+            batch_size: number;
+            remaining: number;
+          };
+          classified += data.classified + data.needs_review;
+          classifyRemaining = data.remaining;
+          if (data.batch_size === 0) break;
+          setProgress(`Classification… ${classified} tracks`);
+        }
+
+        flash(`${total} importés · ${enriched} enrichis · ${classified} classifiés`);
       } else {
         flash("Aucun nouveau track");
       }

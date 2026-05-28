@@ -219,7 +219,7 @@ function TrackCard({
               background: "var(--surface3)", border: "1px solid var(--border)",
               padding: "3px 9px", borderRadius: 20, letterSpacing: "0.02em",
             }}>
-              Aucun signal
+              {conf !== null ? `Aucun signal · ${conf}%` : "Aucun signal"}
             </span>
           )}
         </div>
