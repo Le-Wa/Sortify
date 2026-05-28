@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
 
@@ -56,6 +56,7 @@ interface InboxTrack {
   suggested_playlist_spotify_id: string | null;
   confidence: number | null;
   classification_reason: string | null;
+  is_unclassified: boolean;
   deezer_id: string | null;
 }
 
@@ -118,6 +119,7 @@ function FeatureBar({ label, value }: { label: string; value: number }) {
 function TrackCard({
   track,
   playlists,
+  playlistsLoading,
   isExiting,
   isBusy,
   isCorrectingThis,
@@ -129,6 +131,7 @@ function TrackCard({
 }: {
   track: InboxTrack;
   playlists: InboxPlaylist[];
+  playlistsLoading: boolean;
   isExiting: boolean;
   isBusy: boolean;
   isCorrectingThis: boolean;
@@ -143,7 +146,11 @@ function TrackCard({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
   const hasSuggestion = !!track.llm_suggestion_id && !!track.suggested_playlist;
-  const borderColor = hasSuggestion ? "rgba(200,147,90,0.35)" : "rgba(255,255,255,0.07)";
+  const borderColor = track.is_unclassified
+    ? "rgba(136,120,208,0.35)"
+    : hasSuggestion
+    ? "rgba(200,147,90,0.35)"
+    : "rgba(255,255,255,0.07)";
 
   const player = (
     <iframe
@@ -188,7 +195,15 @@ function TrackCard({
         </div>
         {/* Badge */}
         <div style={{ flexShrink: 0 }}>
-          {hasSuggestion ? (
+          {track.is_unclassified ? (
+            <span style={{
+              fontSize: 10, fontWeight: 500, color: "#8878d0",
+              background: "rgba(136,120,208,0.12)", border: "1px solid rgba(136,120,208,0.28)",
+              padding: "3px 9px", borderRadius: 20, letterSpacing: "0.02em",
+            }}>
+              À classer
+            </span>
+          ) : hasSuggestion ? (
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 5,
               fontSize: 11, fontWeight: 500, color: "#c8935a",
@@ -283,8 +298,12 @@ function TrackCard({
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: "8px 12px" }}>
-            {playlists.map((p) => (
+          <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: "8px 12px", minHeight: 40 }}>
+            {playlistsLoading ? (
+              <p style={{ fontSize: 12, color: "var(--ink-dim)", margin: "6px 0" }}>Chargement des playlists…</p>
+            ) : playlists.length === 0 ? (
+              <p style={{ fontSize: 12, color: "var(--ink-dim)", margin: "6px 0" }}>Aucune playlist configurée</p>
+            ) : playlists.map((p) => (
               <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer", fontSize: 13 }}>
                 <input
                   type="checkbox"
@@ -328,6 +347,7 @@ export default function InboxClient() {
   const maxConfidence = CONFIDENCE_THRESHOLDS[confidenceFilter];
 
   const [playlists, setPlaylists] = useState<InboxPlaylist[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(true);
 
   const [correcting, setCorrecting] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<Set<string>>(new Set());
@@ -355,12 +375,21 @@ export default function InboxClient() {
     prevTotalRef.current = total;
   }, [total, loading]);
 
-  useEffect(() => {
+  const fetchPlaylists = useCallback(() => {
+    setPlaylistsLoading(true);
     fetch("/api/playlists")
-      .then((r) => r.json())
-      .then((data: InboxPlaylist[]) => setPlaylists(data))
-      .catch(() => {});
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((data: InboxPlaylist[]) => {
+        if (Array.isArray(data)) setPlaylists(data);
+      })
+      .catch(() => {})
+      .finally(() => setPlaylistsLoading(false));
   }, []);
+
+  useEffect(() => { fetchPlaylists(); }, [fetchPlaylists]);
 
   useEffect(() => {
     let cancelled = false;
@@ -549,6 +578,7 @@ export default function InboxClient() {
                 key={track.id}
                 track={track}
                 playlists={playlists}
+                playlistsLoading={playlistsLoading}
                 isExiting={exiting.has(track.id)}
                 isBusy={busy.has(track.id)}
                 isCorrectingThis={correcting.has(track.id)}

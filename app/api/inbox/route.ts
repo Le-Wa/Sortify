@@ -70,6 +70,7 @@ export async function GET(req: Request): Promise<Response> {
     suggested_playlist_spotify_id: row.suggestion_playlist?.spotify_playlist_id ?? null,
     confidence: row.confidence,
     classification_reason: row.classification_reason,
+    is_unclassified: row.classified_at === null,
     deezer_id: deezerIds[i],
   }));
 
