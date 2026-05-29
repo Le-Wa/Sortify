@@ -172,9 +172,14 @@ export default function MobileNav() {
             </Link>
 
             {isAdmin && (
-              <Link href="/admin/logs" onClick={() => setProfileOpen(false)} className="s-bs-item" style={{ textDecoration: "none", color: "var(--ink-dim)" }}>
-                Logs admin
-              </Link>
+              <>
+                <Link href="/admin/logs" onClick={() => setProfileOpen(false)} className="s-bs-item" style={{ textDecoration: "none", color: "var(--ink-dim)" }}>
+                  Logs admin
+                </Link>
+                <Link href="/admin/benchmark" onClick={() => setProfileOpen(false)} className="s-bs-item" style={{ textDecoration: "none", color: "var(--ink-dim)" }}>
+                  Benchmark A/B
+                </Link>
+              </>
             )}
 
             <div className="s-bs-sep" />
