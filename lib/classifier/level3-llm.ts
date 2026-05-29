@@ -62,7 +62,9 @@ function buildTrackSummary(input: Level3BatchInput) {
   };
 }
 
-async function callBatch(
+const RETRY_DELAY_MS = 1000;
+
+async function callBatchOnce(
   inputs: Level3BatchInput[],
   playlists: PlaylistForClassifier[],
   anthropic: Anthropic
@@ -105,7 +107,7 @@ Each playlist gets its own confidence score. Use an empty playlists array if non
 
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: Math.min(4096, 200 * inputs.length),
+    max_tokens: Math.min(8192, Math.max(512, 500 * inputs.length)),
     system,
     messages: [{ role: "user", content: userMessage }],
   });
@@ -118,7 +120,7 @@ Each playlist gets its own confidence score. Use an empty playlists array if non
   };
 
   if (!Array.isArray(parsed.results) || parsed.results.length !== inputs.length) {
-    throw new Error(`Expected ${inputs.length} results, got ${parsed.results?.length}`);
+    throw new StructuralError(`Expected ${inputs.length} results, got ${parsed.results?.length}`);
   }
 
   const validIds = new Set(playlists.map((p) => p.id));
@@ -135,6 +137,23 @@ Each playlist gets its own confidence score. Use an empty playlists array if non
       rawResponse: text,
     };
   });
+}
+
+class StructuralError extends Error {}
+
+async function callBatch(
+  inputs: Level3BatchInput[],
+  playlists: PlaylistForClassifier[],
+  anthropic: Anthropic
+): Promise<(Level3Result | null)[]> {
+  try {
+    return await callBatchOnce(inputs, playlists, anthropic);
+  } catch (err) {
+    if (err instanceof StructuralError) throw err;
+    console.warn("[L3] transient error, retrying once:", err);
+    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    return callBatchOnce(inputs, playlists, anthropic);
+  }
 }
 
 export async function matchLevel3Batch(

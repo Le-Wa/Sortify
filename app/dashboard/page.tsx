@@ -102,7 +102,7 @@ export default async function DashboardPage() {
           ) : needsReview > 0 ? (
             <>Tu as{" "}
               <span style={{ color: "var(--terra)" }}>{needsReview}</span>{" "}
-              titre{needsReview > 1 ? "s" : ""} qui t'attendent.
+              titre{needsReview > 1 ? "s" : ""} qui t'attend{needsReview > 1 ? "ent" : ""}.
             </>
           ) : (
             <>Tout est{" "}

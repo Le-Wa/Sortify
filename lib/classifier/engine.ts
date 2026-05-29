@@ -79,7 +79,6 @@ export async function classify(
         playlistsDetail: [],
         confidence: l2.confidence,
         level: 2,
-        reason: llmError ? `L3 error: ${llmError}` : undefined,
         needsReview: false,
       };
     }
@@ -90,11 +89,10 @@ export async function classify(
   return {
     playlistId: assigned ? l1!.playlistId : null,
     extraPlaylistIds: [],
-    llmSuggestion: null,
+    llmSuggestion: !assigned && l1 && l1.confidence >= MIN_SUGGESTION_CONFIDENCE ? l1.playlistId : null,
     playlistsDetail: [],
     confidence: l1?.confidence ?? 0,
     level: 1,
-    reason: llmError ? `L3 error: ${llmError}` : undefined,
     needsReview: !assigned,
   };
 }
@@ -165,7 +163,7 @@ function applyL3Result(
   return {
     playlistId: isAssigned ? l1!.playlistId : null,
     extraPlaylistIds: [],
-    llmSuggestion: null,
+    llmSuggestion: !isAssigned && l1 && l1.confidence >= MIN_SUGGESTION_CONFIDENCE ? l1.playlistId : null,
     playlistsDetail: [],
     confidence: l1?.confidence ?? 0,
     level: 1,

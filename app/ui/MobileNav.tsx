@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { signOut, useSession } from "next-auth/react";
 
 const ADMIN_EMAIL = "guts93@gmail.com";
@@ -54,7 +54,7 @@ export default function MobileNav() {
   const userImage = session?.user?.image;
   const userName = session?.user?.name?.split(" ")[0] ?? "Profil";
 
-  useEffect(() => {
+  const fetchCount = useCallback(() => {
     fetch("/api/dashboard/stats")
       .then((r) => r.json())
       .then((data: { needs_review?: number }) => {
@@ -62,6 +62,12 @@ export default function MobileNav() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchCount();
+    window.addEventListener("sortify:inbox-changed", fetchCount);
+    return () => window.removeEventListener("sortify:inbox-changed", fetchCount);
+  }, [fetchCount]);
 
   if (pathname === "/login" || pathname === "/") return null;
 

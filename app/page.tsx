@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getUserOnboarding } from "@/lib/supabase/queries";
+import SpotifySignInButton from "@/app/ui/SpotifySignInButton";
 
 const ACCENT = "#c6925a";
 const SPOTIFY_GREEN = "#1DB954";
@@ -138,8 +139,7 @@ export default async function RootPage() {
             Sortify<span style={{ color: ACCENT }}>.</span>
           </div>
 
-          <a
-            href={SIGNIN_URL}
+          <SpotifySignInButton
             className="lp-nav-btn"
             style={{
               display: "inline-flex",
@@ -151,13 +151,13 @@ export default async function RootPage() {
               fontSize: 13,
               fontWeight: 500,
               color: "var(--ink)",
-              textDecoration: "none",
               whiteSpace: "nowrap",
+              background: "none",
             }}
           >
             <SpotifyIcon size={15} />
             <span>Connecter Spotify</span>
-          </a>
+          </SpotifySignInButton>
         </header>
 
         <main style={{ flex: 1 }}>
@@ -225,8 +225,7 @@ export default async function RootPage() {
             </h1>
 
 
-            <a
-              href={SIGNIN_URL}
+            <SpotifySignInButton
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -237,13 +236,12 @@ export default async function RootPage() {
                 fontSize: 15,
                 fontWeight: 600,
                 color: "#000",
-                textDecoration: "none",
                 marginBottom: 14,
               }}
             >
               <SpotifyIcon />
               Commencer gratuitement
-            </a>
+            </SpotifySignInButton>
 
             <p style={{ fontSize: 11, color: "var(--ink-dim)", letterSpacing: "0.02em" }}>
               Gratuit · Aucune carte requise · Fonctionne avec ton compte existant
@@ -516,8 +514,7 @@ export default async function RootPage() {
               >
                 Connexion en 30 secondes, premier tri en quelques minutes.
               </p>
-              <a
-                href={SIGNIN_URL}
+              <SpotifySignInButton
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -528,13 +525,12 @@ export default async function RootPage() {
                   fontSize: 16,
                   fontWeight: 700,
                   color: "#000",
-                  textDecoration: "none",
                   letterSpacing: "-0.01em",
                 }}
               >
                 <SpotifyIcon size={20} />
                 Commencer gratuitement
-              </a>
+              </SpotifySignInButton>
             </div>
           </section>
         </main>

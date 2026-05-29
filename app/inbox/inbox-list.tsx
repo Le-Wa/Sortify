@@ -245,7 +245,7 @@ function TrackCard({
       )}
 
       {/* Raison LLM — texte complet, pas de truncate */}
-      {track.classification_reason && (
+      {track.classification_reason && !track.classification_reason.startsWith("L3 error:") && (
         <div className="s-track-card-reason" style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink)", marginBottom: 10, lineHeight: 1.65 }}>
           <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-mid)", display: "block", marginBottom: 3 }}>Raison</span>
           {track.classification_reason}
@@ -283,7 +283,7 @@ function TrackCard({
               className="s-btn"
               style={{ minHeight: 36, width: "100%", justifyContent: "center" }}
             >
-              Changer
+              Assigner
             </button>
             <button
               disabled={isBusy}
@@ -419,12 +419,17 @@ export default function InboxClient() {
     return p;
   }
 
+  function notifyInboxChanged() {
+    window.dispatchEvent(new Event("sortify:inbox-changed"));
+  }
+
   function exitTrack(id: string) {
     setExiting((prev) => new Set([...prev, id]));
     setTimeout(() => {
       setTracks((prev) => prev.filter((t) => t.id !== id));
-      setTotal((prev) => prev - 1);
+      setTotal((prev) => { const next = prev - 1; return next; });
       setExiting((prev) => { const n = new Set(prev); n.delete(id); return n; });
+      notifyInboxChanged();
     }, 300);
   }
 
@@ -487,6 +492,7 @@ export default function InboxClient() {
       setTotal(fresh.total);
       setCurrentPage(1);
       setHasMore(fresh.total > fresh.tracks.length);
+      notifyInboxChanged();
     } catch (err) {
       showToast(`Erreur batch : ${err instanceof Error ? err.message : String(err)}`);
     } finally {
