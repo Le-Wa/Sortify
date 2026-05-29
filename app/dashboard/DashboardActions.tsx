@@ -86,6 +86,9 @@ export default function DashboardActions({ initialCounts }: { initialCounts?: In
       : null
   );
   const [loading, setLoading] = useState(!initialCounts);
+  const [classifyBusy, setClassifyBusy] = useState(false);
+  const [classifyProgress, setClassifyProgress] = useState<string | null>(null);
+  const [classifierVersion, setClassifierVersion] = useState<"v1" | "v2">("v1");
 
   const loadStats = useCallback(async () => {
     try {
@@ -97,6 +100,35 @@ export default function DashboardActions({ initialCounts }: { initialCounts?: In
   }, []);
 
   useEffect(() => { void loadStats(); }, [loadStats]);
+
+  async function handleClassify() {
+    setClassifyBusy(true);
+    setClassifyProgress("Démarrage…");
+    try {
+      let classified = 0;
+      let remaining = Infinity;
+      while (remaining > 0) {
+        const res = await fetch("/api/classify/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ classifierVersion }),
+        });
+        const data = (await res.json()) as { classified: number; needs_review: number; batch_size: number; remaining: number };
+        classified += data.classified + data.needs_review;
+        remaining = data.remaining;
+        setClassifyProgress(`${classified} classifiés…`);
+        if (data.batch_size === 0) break;
+      }
+      setClassifyProgress(`✓ ${classified} classifiés`);
+      window.dispatchEvent(new Event("sortify:inbox-changed"));
+      await loadStats();
+    } catch {
+      setClassifyProgress("Erreur");
+    } finally {
+      setClassifyBusy(false);
+      setTimeout(() => setClassifyProgress(null), 3000);
+    }
+  }
 
   if (loading) {
     return (
@@ -137,6 +169,49 @@ export default function DashboardActions({ initialCounts }: { initialCounts?: In
         <p style={{ fontSize: 12, color: "var(--ink-mid)", margin: 0, flexShrink: 0 }}>
           Dernière sync : {relativeTime(stats?.last_sync_at ?? null)}
         </p>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button
+          onClick={handleClassify}
+          disabled={classifyBusy}
+          className="s-btn s-btn-sm"
+          style={{ opacity: classifyBusy ? 0.6 : 1 }}
+        >
+          {classifyBusy ? "Classification…" : "Classifier maintenant"}
+        </button>
+        <div
+          style={{
+            display: "flex",
+            borderRadius: 8,
+            border: "1px solid var(--border)",
+            overflow: "hidden",
+            flexShrink: 0,
+          }}
+        >
+          {(["v1", "v2"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setClassifierVersion(v)}
+              style={{
+                padding: "4px 10px",
+                fontSize: 11,
+                fontWeight: 600,
+                border: "none",
+                borderRight: v === "v1" ? "1px solid var(--border)" : undefined,
+                cursor: "pointer",
+                background: classifierVersion === v ? "var(--terra)" : "var(--surface)",
+                color: classifierVersion === v ? "#fff" : "var(--ink-mid)",
+                transition: "background 0.15s, color 0.15s",
+              }}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        {classifyProgress && (
+          <span style={{ fontSize: 12, color: "var(--ink-mid)" }}>{classifyProgress}</span>
+        )}
       </div>
     </div>
   );

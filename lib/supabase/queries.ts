@@ -915,6 +915,7 @@ export interface AdminLogsFilter {
   from?: string;
   to?: string;
   level?: number;
+  classifierVersion?: "v1" | "v2";
 }
 
 export interface AdminLogV2Row {
@@ -929,6 +930,7 @@ export interface AdminLogV2Row {
   reason: string | null;
   corrected_to: string | null;
   playlists_detail: { id: string; name: string; confidence: number }[] | null;
+  classifier_version: "v1" | "v2";
   created_at: string;
 }
 
@@ -943,7 +945,7 @@ export async function getAdminLogsV2(
 
   let query = supabase
     .from("classification_log")
-    .select("id, track_id, level_used, suggested, confidence, reason, corrected_to, playlists_detail, created_at", {
+    .select("id, track_id, level_used, suggested, confidence, reason, corrected_to, playlists_detail, classifier_version, created_at", {
       count: "exact",
     })
     .eq("user_id", userId)
@@ -958,6 +960,7 @@ export async function getAdminLogsV2(
     query = query.lte("created_at", toTs);
   }
   if (filters.level !== undefined) query = query.eq("level_used", filters.level);
+  if (filters.classifierVersion) query = query.eq("classifier_version", filters.classifierVersion);
 
   const { data: logRows, count, error } = await query;
   if (error) throw error;
@@ -997,6 +1000,7 @@ export async function getAdminLogsV2(
       reason: row.reason as string | null,
       corrected_to: row.corrected_to as string | null,
       playlists_detail: (row.playlists_detail as { id: string; name: string; confidence: number }[] | null) ?? null,
+      classifier_version: (row.classifier_version as "v1" | "v2") ?? "v1",
       created_at: row.created_at as string,
     };
   });
@@ -1077,6 +1081,7 @@ export async function insertClassificationLog(entry: {
   confidence: number;
   reason: string | null;
   playlists_detail?: { id: string; name: string; confidence: number }[] | null;
+  classifier_version?: "v1" | "v2";
 }): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("classification_log").insert(entry);
@@ -1205,7 +1210,8 @@ export async function getDashboardCounts(userId: string): Promise<DashboardCount
         .from("tracks")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("needs_review", true),
+        .eq("is_archived", false)
+        .or("needs_review.eq.true,classified_at.is.null"),
       supabase
         .from("tracks")
         .select("*", { count: "exact", head: true })
@@ -1321,5 +1327,33 @@ export async function countTracksForClassification(userId: string): Promise<numb
     .eq("user_id", userId)
     .is("classified_at", null)
     .eq("is_archived", false);
+  return count ?? 0;
+}
+
+/** Deletes all tracks (and their classification logs) for a user. Used by the full-reset admin endpoint. */
+export async function deleteAllUserTracks(userId: string): Promise<number> {
+  const supabase = createClient();
+
+  // Must delete logs first — FK classification_log_track_id_fkey references tracks.id
+  const { data: trackIds, error: fetchError } = await supabase
+    .from("tracks")
+    .select("id")
+    .eq("user_id", userId);
+  if (fetchError) throw fetchError;
+
+  if (trackIds && trackIds.length > 0) {
+    const ids = trackIds.map((r) => r.id as string);
+    const { error: logError } = await supabase
+      .from("classification_log")
+      .delete()
+      .in("track_id", ids);
+    if (logError) throw logError;
+  }
+
+  const { count, error } = await supabase
+    .from("tracks")
+    .delete({ count: "exact" })
+    .eq("user_id", userId);
+  if (error) throw error;
   return count ?? 0;
 }

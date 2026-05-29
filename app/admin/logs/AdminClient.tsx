@@ -54,6 +54,7 @@ interface AdminLog {
   reason: string | null;
   corrected_to: string | null;
   playlists_detail: PlaylistDetail[] | null;
+  classifier_version: "v1" | "v2";
   created_at: string;
 }
 
@@ -183,6 +184,11 @@ function LevelBar({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+interface ResetResult {
+  playlists: { name: string; removed: number }[];
+  deletedTracks: number;
+}
+
 export default function AdminClient() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [report, setReport] = useState<AdminReport | null>(null);
@@ -192,12 +198,16 @@ export default function AdminClient() {
   const [logPage, setLogPage] = useState(1);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingLogs, setLoadingLogs] = useState(true);
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<ResetResult | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   const [filterPlaylistId, setFilterPlaylistId] = useState("");
   const [filterLevel, setFilterLevel] = useState("");
   const [filterCorrectionsOnly, setFilterCorrectionsOnly] = useState(false);
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
+  const [filterClassifierVersion, setFilterClassifierVersion] = useState<"" | "v1" | "v2">("");
 
   const PER_PAGE = 50;
 
@@ -235,7 +245,7 @@ export default function AdminClient() {
     return () => {
       cancelled = true;
     };
-  }, [filterPlaylistId, filterLevel, filterCorrectionsOnly, filterFrom, filterTo]);
+  }, [filterPlaylistId, filterLevel, filterCorrectionsOnly, filterFrom, filterTo, filterClassifierVersion]);
 
   function buildLogParams(page: number): URLSearchParams {
     const p = new URLSearchParams({ page: String(page), per_page: String(PER_PAGE) });
@@ -244,7 +254,30 @@ export default function AdminClient() {
     if (filterCorrectionsOnly) p.set("corrections_only", "true");
     if (filterFrom) p.set("from", filterFrom);
     if (filterTo) p.set("to", filterTo);
+    if (filterClassifierVersion) p.set("classifier_version", filterClassifierVersion);
     return p;
+  }
+
+  async function handleResetAll() {
+    const confirmed = window.confirm(
+      "Reset complet ?\n\nTous les tracks seront supprimés de la DB et retirés des playlists Spotify.\nCette action est irréversible."
+    );
+    if (!confirmed) return;
+    setResetting(true);
+    setResetResult(null);
+    setResetError(null);
+    try {
+      const res = await fetch("/api/admin/reset-all", { method: "POST" });
+      const text = await res.text();
+      if (!text) { setResetError(`HTTP ${res.status} — réponse vide`); return; }
+      const data = JSON.parse(text) as ResetResult & { error?: string };
+      if (!res.ok || data.error) { setResetError(data.error ?? `HTTP ${res.status}`); return; }
+      setResetResult(data);
+    } catch (e) {
+      setResetError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setResetting(false);
+    }
   }
 
   async function loadMoreLogs() {
@@ -256,7 +289,7 @@ export default function AdminClient() {
   }
 
   const hasMoreLogs = logTotal > logPage * PER_PAGE;
-  const hasFilters = !!(filterPlaylistId || filterLevel || filterCorrectionsOnly || filterFrom || filterTo);
+  const hasFilters = !!(filterPlaylistId || filterLevel || filterCorrectionsOnly || filterFrom || filterTo || filterClassifierVersion);
 
   const levelTotal = stats
     ? (stats.by_level["1"] ?? 0) + (stats.by_level["2"] ?? 0) + (stats.by_level["3"] ?? 0)
@@ -274,15 +307,60 @@ export default function AdminClient() {
     <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
 
       {/* Page title */}
-      <div>
-        <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Admin</div>
-        <h1
-          className="font-fraunces s-page-h1"
-          style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
-        >
-          Qualité du{" "}
-          <em style={{ fontStyle: "italic", color: "var(--terra)" }}>classifier</em>
-        </h1>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Admin</div>
+          <h1
+            className="font-fraunces s-page-h1"
+            style={{ fontSize: 36, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink)", lineHeight: 1.1 }}
+          >
+            Qualité du{" "}
+            <em style={{ fontStyle: "italic", color: "var(--terra)" }}>classifier</em>
+          </h1>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+          <button
+            onClick={handleResetAll}
+            disabled={resetting}
+            className="s-btn"
+            style={{
+              borderColor: "var(--terra-border)",
+              color: resetting ? "var(--ink-dim)" : "var(--terra)",
+              opacity: resetting ? 0.6 : 1,
+            }}
+          >
+            {resetting ? "Reset en cours…" : "Reset complet"}
+          </button>
+          {(resetResult || resetError) && (
+            <div
+              style={{
+                borderRadius: 10,
+                border: `1px solid ${resetError ? "var(--terra-border)" : "var(--border)"}`,
+                background: resetError ? "var(--terra-light)" : "var(--surface)",
+                padding: "10px 14px",
+                fontSize: 11,
+                color: "var(--ink-mid)",
+                maxWidth: 280,
+                textAlign: "right",
+              }}
+            >
+              {resetError ? (
+                <p style={{ color: "var(--terra)", fontWeight: 500 }}>{resetError}</p>
+              ) : resetResult && (
+                <>
+                  <p style={{ color: "var(--sage)", fontWeight: 600, marginBottom: 4 }}>
+                    {resetResult.deletedTracks} tracks supprimés en DB
+                  </p>
+                  {resetResult.playlists.map((p) => (
+                    <p key={p.name} style={{ color: p.removed < 0 ? "var(--terra)" : "var(--ink-dim)" }}>
+                      {p.name} — {p.removed < 0 ? "erreur" : `${p.removed} retirés`}
+                    </p>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Section 1 — Stats globales ──────────────────────────────────────── */}
@@ -533,6 +611,16 @@ export default function AdminClient() {
             <option value="3">L3 — LLM</option>
           </select>
 
+          <select
+            value={filterClassifierVersion}
+            onChange={(e) => setFilterClassifierVersion(e.target.value as "" | "v1" | "v2")}
+            className="s-input"
+          >
+            <option value="">v1 + v2</option>
+            <option value="v1">v1 — L1/L2/L3</option>
+            <option value="v2">v2 — LLM first</option>
+          </select>
+
           <label
             style={{
               display: "flex",
@@ -647,7 +735,26 @@ export default function AdminClient() {
                       )}
                     </td>
                     <td>
-                      <LevelBadge level={row.level_used} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <LevelBadge level={row.level_used} />
+                        {row.classifier_version === "v2" && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              borderRadius: 6,
+                              padding: "1px 6px",
+                              fontSize: 10,
+                              fontWeight: 600,
+                              letterSpacing: "0.04em",
+                              background: "var(--terra-light)",
+                              color: "var(--terra)",
+                              border: "1px solid var(--terra-border)",
+                            }}
+                          >
+                            v2
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       {row.playlists_detail?.length ? (

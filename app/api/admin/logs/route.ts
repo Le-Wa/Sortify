@@ -20,12 +20,14 @@ export async function GET(req: Request): Promise<Response> {
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get("per_page") ?? String(PER_PAGE), 10)));
 
+  const cvParam = searchParams.get("classifier_version");
   const filters: AdminLogsFilter = {
     playlistId: searchParams.get("playlist_id") ?? undefined,
     correctionsOnly: searchParams.get("corrections_only") === "true",
     from: searchParams.get("from") ?? undefined,
     to: searchParams.get("to") ?? undefined,
     level: searchParams.has("level") ? parseInt(searchParams.get("level")!, 10) : undefined,
+    classifierVersion: cvParam === "v1" || cvParam === "v2" ? cvParam : undefined,
   };
 
   const [{ logs: rawLogs, total }, playlists] = await Promise.all([

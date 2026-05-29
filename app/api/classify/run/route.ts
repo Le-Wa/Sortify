@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { classify } from "@/lib/classifier/engine";
+import { classifyV2 } from "@/lib/classifier/engine-v2";
 import {
   getUserBySpotifyId,
   getUserPlaylists,
@@ -24,9 +25,13 @@ export async function POST(req: Request): Promise<Response> {
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) return Response.json({ error: "User not found" }, { status: 404 });
 
-  const RunBody = z.object({ skipLlm: z.boolean().optional() });
+  const RunBody = z.object({
+    skipLlm: z.boolean().optional(),
+    classifierVersion: z.enum(["v1", "v2"]).optional(),
+  });
   const parsed = RunBody.safeParse(await req.json().catch(() => ({})));
   const skipLlm = parsed.success ? (parsed.data.skipLlm ?? false) : false;
+  const classifierVersion: "v1" | "v2" = parsed.success ? (parsed.data.classifierVersion ?? "v1") : "v1";
 
   const batchSize = skipLlm ? BATCH_SIZE_FAST : BATCH_SIZE_LLM;
 
@@ -58,13 +63,9 @@ export async function POST(req: Request): Promise<Response> {
     };
 
     try {
-      const result = await classify(
-        track,
-        row.audio_features as AudioFeatures | null,
-        row.genres ?? [],
-        playlists,
-        { skipLlm }
-      );
+      const result = classifierVersion === "v2"
+        ? await classifyV2(track, row.audio_features as AudioFeatures | null, row.genres ?? [], playlists)
+        : await classify(track, row.audio_features as AudioFeatures | null, row.genres ?? [], playlists, { skipLlm });
 
       const { id: trackDbId } = await upsertTrack({
         user_id: dbUser.id,
@@ -90,6 +91,7 @@ export async function POST(req: Request): Promise<Response> {
         confidence: result.confidence,
         reason: result.reason ?? null,
         playlists_detail: result.playlistsDetail.length > 0 ? result.playlistsDetail : null,
+        classifier_version: classifierVersion,
       });
 
       if (result.playlistId) {
