@@ -177,7 +177,6 @@ function TrackCard({
   onAssign: (ids: string[]) => void;
   onArchive: () => void;
 }) {
-  const [showPlayer, setShowPlayer] = useState(false);
   const [showReason, setShowReason] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
@@ -214,9 +213,9 @@ function TrackCard({
     <li
       className="s-inbox-track-card"
       style={{
-        animationDelay: `${animDelay}ms`,
-        opacity: isExiting ? 0 : 1,
-        transform: isExiting ? "translateX(48px) scale(0.96)" : "none",
+        animation: `s-slide-in 0.25s ${animDelay}ms ease forwards`,
+        opacity: isExiting ? 0 : undefined,
+        transform: isExiting ? "translateX(48px) scale(0.96)" : undefined,
         transition: isExiting ? "opacity 0.35s ease, transform 0.35s ease" : undefined,
       }}
     >
@@ -231,42 +230,22 @@ function TrackCard({
         </div>
         <div className="itc-right">
           <span className={`s-conf-badge ${badge.cls}`}>{badge.label}</span>
-          <button
-            type="button"
-            className="s-play-btn"
-            onClick={() => setShowPlayer((v) => !v)}
-            title={showPlayer ? "Fermer" : "Écouter"}
-            aria-label={showPlayer ? "Fermer le lecteur" : "Écouter"}
-          >
-            {showPlayer ? (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                <rect x="2" y="2" width="3" height="8" rx="1" />
-                <rect x="7" y="2" width="3" height="8" rx="1" />
-              </svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style={{ marginLeft: 2 }}>
-                <path d="M2 2l8 4-8 4V2z" />
-              </svg>
-            )}
-          </button>
         </div>
       </div>
 
-      {/* Player embed */}
-      {showPlayer && (
-        <div className="itc-player-wrap">
-          <iframe
-            title="spotify-embed"
-            src={`https://open.spotify.com/embed/track/${track.spotify_track_id}?utm_source=sortify`}
-            width="100%"
-            height="80"
-            frameBorder="0"
-            loading="lazy"
-            allow="encrypted-media; clipboard-write"
-            style={{ borderRadius: 10, display: "block", colorScheme: "normal" }}
-          />
-        </div>
-      )}
+      {/* Player embed — always visible */}
+      <div className="itc-player-wrap">
+        <iframe
+          title="spotify-embed"
+          src={`https://open.spotify.com/embed/track/${track.spotify_track_id}?utm_source=sortify`}
+          width="100%"
+          height="80"
+          frameBorder="0"
+          loading="lazy"
+          allow="encrypted-media; clipboard-write"
+          style={{ borderRadius: 10, display: "block", colorScheme: "normal" }}
+        />
+      </div>
 
       {/* Genre tags */}
       {track.genres.length > 0 && (
