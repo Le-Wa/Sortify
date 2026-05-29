@@ -178,6 +178,7 @@ function TrackCard({
   onAssign: (ids: string[]) => void;
   onArchive: () => void;
 }) {
+  const [showReason, setShowReason] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
     const s = new Set<string>();
@@ -308,9 +309,26 @@ function TrackCard({
         </>
       )}
 
-      {/* Reason — always visible */}
+      {/* Reason toggle */}
       {hasReason && (
-        <div className="itc-reason">{track.classification_reason}</div>
+        <>
+          <div className="itc-action-row">
+            <button
+              type="button"
+              className={`s-action-chip${showReason ? " on" : ""}`}
+              onClick={() => setShowReason((v) => !v)}
+            >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+              Raison IA
+            </button>
+          </div>
+          {showReason && (
+            <div className="itc-reason">{track.classification_reason}</div>
+          )}
+        </>
       )}
 
       {/* Separator + actions */}
