@@ -1,0 +1,4 @@
+*.xlsx
+*.csv
+scripts/
+SONNET_TASKS.md
