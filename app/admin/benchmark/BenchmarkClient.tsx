@@ -15,8 +15,8 @@ interface ClassifierResult {
 }
 
 interface Label {
-  correct_playlist_id: string | null;
-  correct_playlist_name: string | null;
+  correct_playlist_ids: string[];
+  correct_playlist_names: string[];
   notes: string | null;
   labeled_at: string;
 }
@@ -71,7 +71,14 @@ type FilterTab = "all" | "disagree" | "unlabeled" | "labeled";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function agree(t: BenchmarkTrack): boolean {
+  // Classifiers agree if they chose the same primary playlist (both null = both inbox)
   return t.v1_playlist_id === t.v2_playlist_id;
+}
+
+function inCorrect(playlistId: string | null, needsReview: boolean, label: Label): boolean {
+  const isInbox = label.correct_playlist_ids.length === 0;
+  if (isInbox) return needsReview;
+  return playlistId !== null && label.correct_playlist_ids.includes(playlistId);
 }
 
 function confColor(c: number): string {
@@ -82,9 +89,8 @@ function confColor(c: number): string {
 
 function who(t: BenchmarkTrack): "v1" | "v2" | "both" | "neither" | null {
   if (!t.label) return null;
-  const cid = t.label.correct_playlist_id;
-  const v1ok = t.v1_playlist_id === cid;
-  const v2ok = t.v2_playlist_id === cid;
+  const v1ok = inCorrect(t.v1_playlist_id, t.v1_needs_review, t.label);
+  const v2ok = inCorrect(t.v2_playlist_id, t.v2_needs_review, t.label);
   if (v1ok && v2ok) return "both";
   if (v1ok) return "v1";
   if (v2ok) return "v2";
@@ -132,12 +138,25 @@ function LabelPanel({
 }: {
   track: BenchmarkTrack;
   playlists: Playlist[];
-  onSave: (playlistId: string | null, notes: string) => void;
+  onSave: (playlistIds: string[], notes: string) => void;
   onClear: () => void;
   saving: boolean;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(track.label?.correct_playlist_id ?? null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    new Set(track.label?.correct_playlist_ids ?? [])
+  );
   const [notes, setNotes] = useState(track.label?.notes ?? "");
+
+  function togglePlaylist(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const isInbox = selectedIds.size === 0;
 
   return (
     <div
@@ -176,46 +195,55 @@ function LabelPanel({
         )}
       </div>
 
-      {/* Playlist picker */}
+      {/* Playlist picker — multi-select */}
       <div>
         <p style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-mid)", marginBottom: 8 }}>
-          Bonne playlist :
+          Bonne(s) playlist(s) — sélection multiple :
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           <button
-            onClick={() => setSelectedId(null)}
+            onClick={() => setSelectedIds(new Set())}
             style={{
               padding: "5px 12px",
               borderRadius: 20,
               fontSize: 11,
               fontWeight: 600,
-              border: selectedId === null ? "1.5px solid var(--terra)" : "1px solid var(--border)",
-              background: selectedId === null ? "var(--terra-light)" : "var(--surface)",
-              color: selectedId === null ? "var(--terra)" : "var(--ink-mid)",
+              border: isInbox ? "1.5px solid var(--ink-mid)" : "1px solid var(--border)",
+              background: isInbox ? "var(--surface3)" : "var(--surface)",
+              color: isInbox ? "var(--ink-mid)" : "var(--ink-dimmer)",
               cursor: "pointer",
             }}
           >
             Inbox / Ambigu
           </button>
-          {playlists.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setSelectedId(p.id)}
-              style={{
-                padding: "5px 12px",
-                borderRadius: 20,
-                fontSize: 11,
-                fontWeight: 600,
-                border: selectedId === p.id ? "1.5px solid var(--terra)" : "1px solid var(--border)",
-                background: selectedId === p.id ? "var(--terra-light)" : "var(--surface)",
-                color: selectedId === p.id ? "var(--terra)" : "var(--ink-mid)",
-                cursor: "pointer",
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
+          {playlists.map((p) => {
+            const active = selectedIds.has(p.id);
+            return (
+              <button
+                key={p.id}
+                onClick={() => togglePlaylist(p.id)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  border: active ? "1.5px solid var(--terra)" : "1px solid var(--border)",
+                  background: active ? "var(--terra-light)" : "var(--surface)",
+                  color: active ? "var(--terra)" : "var(--ink-mid)",
+                  cursor: "pointer",
+                  transition: "all 0.1s",
+                }}
+              >
+                {active ? "✓ " : ""}{p.name}
+              </button>
+            );
+          })}
         </div>
+        {selectedIds.size > 1 && (
+          <p style={{ fontSize: 10, color: "var(--ink-dim)", marginTop: 6 }}>
+            {selectedIds.size} playlists sélectionnées — ce track appartient aux deux
+          </p>
+        )}
       </div>
 
       {/* Notes */}
@@ -231,7 +259,7 @@ function LabelPanel({
       {/* Actions */}
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <button
-          onClick={() => onSave(selectedId, notes)}
+          onClick={() => onSave([...selectedIds], notes)}
           disabled={saving}
           className="s-btn s-btn-sm"
           style={{ opacity: saving ? 0.6 : 1 }}
@@ -269,16 +297,16 @@ function TrackRow({
 }: {
   track: BenchmarkTrack;
   playlists: Playlist[];
-  onLabel: (trackId: string, playlistId: string | null, notes: string) => Promise<void>;
+  onLabel: (trackId: string, playlistIds: string[], notes: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const isAgree = agree(track);
 
-  async function handleSave(playlistId: string | null, notes: string) {
+  async function handleSave(playlistIds: string[], notes: string) {
     setSaving(true);
     try {
-      await onLabel(track.track_id, playlistId, notes);
+      await onLabel(track.track_id, playlistIds, notes);
       setOpen(false);
     } finally {
       setSaving(false);
@@ -289,7 +317,7 @@ function TrackRow({
     setSaving(true);
     try {
       await fetch(`/api/admin/benchmark/label?track_id=${track.track_id}`, { method: "DELETE" });
-      await onLabel(track.track_id, undefined as unknown as null, ""); // triggers reload
+      await onLabel(track.track_id, [], "");
       setOpen(false);
     } finally {
       setSaving(false);
@@ -297,7 +325,14 @@ function TrackRow({
   }
 
   const hasLabel = !!track.label;
-  const labelName = track.label?.correct_playlist_name ?? (track.label ? "Inbox" : null);
+  const labelNames = track.label?.correct_playlist_names ?? [];
+  const labelDisplay = !track.label
+    ? null
+    : labelNames.length === 0
+    ? "Inbox"
+    : labelNames.length === 1
+    ? labelNames[0]
+    : `${labelNames[0]} +${labelNames.length - 1}`;
 
   return (
     <div
@@ -371,9 +406,10 @@ function TrackRow({
                   background: "var(--sage-light)",
                   padding: "1px 6px",
                   borderRadius: 4,
+                  whiteSpace: "nowrap",
                 }}
               >
-                ✓ {labelName}
+                ✓ {labelDisplay}
               </span>
               <WhoWon t={track} />
             </div>
@@ -571,14 +607,12 @@ export default function BenchmarkClient() {
     }
   }
 
-  async function handleLabel(trackId: string, playlistId: string | null, notes: string) {
-    if (playlistId !== undefined) {
-      await fetch("/api/admin/benchmark/label", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ track_id: trackId, correct_playlist_id: playlistId, notes }),
-      });
-    }
+  async function handleLabel(trackId: string, playlistIds: string[], notes: string) {
+    await fetch("/api/admin/benchmark/label", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ track_id: trackId, correct_playlist_ids: playlistIds, notes }),
+    });
     await load();
   }
 

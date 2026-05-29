@@ -13,15 +13,17 @@ interface BenchmarkRow {
   af_danceability: number | null;
   af_valence: number | null;
   af_tempo: number | null;
+  v1_playlist_id: string | null;
   v1_playlist_name: string | null;
   v1_reason: string | null;
+  v2_playlist_id: string | null;
   v2_playlist_name: string | null;
   v2_reason: string | null;
 }
 
 interface Label {
   track_id: string;
-  correct_playlist_id: string | null;
+  correct_playlist_ids: string[];
   notes: string | null;
 }
 
@@ -36,7 +38,7 @@ export async function POST(): Promise<Response> {
 
   const [snapshotRes, labelsRes, playlists] = await Promise.all([
     supabase.from("benchmark_snapshot").select("results").eq("user_id", dbUser.id).single(),
-    supabase.from("benchmark_labels").select("track_id, correct_playlist_id, notes").eq("user_id", dbUser.id),
+    supabase.from("benchmark_labels").select("track_id, correct_playlist_ids, notes").eq("user_id", dbUser.id),
     getUserPlaylists(dbUser.id),
   ]);
 
@@ -48,19 +50,20 @@ export async function POST(): Promise<Response> {
   const results = snapshotRes.data.results as unknown as BenchmarkRow[];
   const resultMap = new Map(results.map((r) => [r.track_id, r]));
 
-  // Group labeled tracks by their correct_playlist_id
+  // Group labeled tracks by correct playlist (a track can appear in multiple groups)
   const byPlaylist = new Map<string, { track: BenchmarkRow; label: Label }[]>();
-  const inboxLabels: { track: BenchmarkRow; label: Label }[] = [];
+  const inboxItems: { track: BenchmarkRow; label: Label }[] = [];
 
   for (const label of labels) {
     const track = resultMap.get(label.track_id);
     if (!track) continue;
-    if (!label.correct_playlist_id) {
-      inboxLabels.push({ track, label });
+    if (label.correct_playlist_ids.length === 0) {
+      inboxItems.push({ track, label });
     } else {
-      const key = label.correct_playlist_id;
-      if (!byPlaylist.has(key)) byPlaylist.set(key, []);
-      byPlaylist.get(key)!.push({ track, label });
+      for (const pid of label.correct_playlist_ids) {
+        if (!byPlaylist.has(pid)) byPlaylist.set(pid, []);
+        byPlaylist.get(pid)!.push({ track, label });
+      }
     }
   }
 
@@ -72,13 +75,15 @@ export async function POST(): Promise<Response> {
       .map(async (playlist) => {
         const examples = byPlaylist.get(playlist.id)!;
 
-        // Tracks labeled as correct for this playlist
         const correct = examples.map(({ track, label }) => ({
           track: `${track.artist} — ${track.name}`,
           genres: track.genres.join(", "),
           audio: track.af_energy !== null
             ? `energy ${track.af_energy.toFixed(2)}, dance ${track.af_danceability?.toFixed(2)}, valence ${track.af_valence?.toFixed(2)}`
             : "no audio features",
+          also_in: label.correct_playlist_ids.filter((id) => id !== playlist.id).length > 0
+            ? `aussi dans : ${label.correct_playlist_ids.filter((id) => id !== playlist.id).map((id) => playlists.find((p) => p.id === id)?.name ?? id).join(", ")}`
+            : null,
           v1_said: track.v1_playlist_name ?? "inbox",
           v2_said: track.v2_playlist_name ?? "inbox",
           v1_reason: track.v1_reason,
@@ -86,8 +91,8 @@ export async function POST(): Promise<Response> {
           user_note: label.notes ?? null,
         }));
 
-        // Tracks labeled as inbox that the classifier sent here (false positives)
-        const falsePositives = inboxLabels
+        // False positives: inbox-labeled tracks that classifiers sent here
+        const falsePositives = inboxItems
           .filter(({ track }) => track.v1_playlist_name === playlist.name || track.v2_playlist_name === playlist.name)
           .map(({ track }) => ({
             track: `${track.artist} — ${track.name}`,
@@ -106,19 +111,18 @@ ${playlist.llm_help_text ?? "(vide — aucune description)"}
 ## Tracks labellisés comme corrects pour cette playlist (ground truth) :
 ${JSON.stringify(correct, null, 2)}
 
-${falsePositives.length > 0 ? `## Tracks que le classifier a mis ici, mais qui doivent aller en inbox (faux positifs) :
+${falsePositives.length > 0 ? `## Faux positifs (classifier a mis ici, mais c'est inbox) :
 ${JSON.stringify(falsePositives, null, 2)}` : ""}
 
 ## Ta mission :
 Écris un llm_help_text amélioré pour "${playlist.name}" qui :
 1. Capture mieux la vibe de ces tracks labellisés
-2. Distingue clairement des faux positifs (si présents)
-3. Reste concis (3-5 phrases max) et orienté vibe musicale, pas technique
+2. Distingue clairement des faux positifs si présents
+3. Reste concis (3-5 phrases) — vibe musicale, pas technique
 4. Inclut si utile : exemples d'artistes, cas limites, ce qu'on exclut
 
 Réponds avec un objet JSON unique :
-{"llm_help_text": "...", "reasoning": "..."}
-Le reasoning explique les changements clés par rapport à l'actuel.`;
+{"llm_help_text": "...", "reasoning": "..."}`;
 
         const msg = await anthropic.messages.create({
           model: "claude-haiku-4-5-20251001",

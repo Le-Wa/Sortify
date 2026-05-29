@@ -10,7 +10,9 @@ interface Level3Result {
   rawResponse: string;
 }
 
-const BATCH_SIZE = 10;
+// Smaller than v1 (10) — v2 system prompt is longer (llm_help_text blocks),
+// leaving less output budget for Haiku on large batches.
+const BATCH_SIZE = 5;
 const RETRY_DELAY_MS = 1000;
 
 function formatCentroid(c: PlaylistCentroid): string {
@@ -133,15 +135,34 @@ Les résultats doivent être dans le même ordre que les tracks (index 0, 1, 2..
 async function callBatch(
   inputs: Level3BatchInput[],
   playlists: PlaylistForClassifier[],
-  anthropic: Anthropic
+  anthropic: Anthropic,
+  depth = 0
 ): Promise<(Level3Result | null)[]> {
   try {
     return await callBatchOnce(inputs, playlists, anthropic);
   } catch (err) {
-    if (err instanceof StructuralError) throw err;
+    if (err instanceof StructuralError && depth === 0 && inputs.length > 1) {
+      // Split in half and retry each side — Haiku sometimes miscounts on long prompts
+      console.warn(`[L3-v2] StructuralError on ${inputs.length} inputs, splitting in half`);
+      const mid = Math.ceil(inputs.length / 2);
+      const [left, right] = await Promise.all([
+        callBatch(inputs.slice(0, mid), playlists, anthropic, 1),
+        callBatch(inputs.slice(mid), playlists, anthropic, 1),
+      ]);
+      return [...left, ...right];
+    }
+    if (err instanceof StructuralError) {
+      // Exhausted retries — return nulls (engine falls back to centroid)
+      console.error(`[L3-v2] StructuralError unrecoverable for ${inputs.length} inputs`);
+      return new Array(inputs.length).fill(null);
+    }
     console.warn("[L3-v2] transient error, retrying once:", err);
     await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-    return callBatchOnce(inputs, playlists, anthropic);
+    try {
+      return await callBatchOnce(inputs, playlists, anthropic);
+    } catch {
+      return new Array(inputs.length).fill(null);
+    }
   }
 }
 

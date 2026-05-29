@@ -14,7 +14,7 @@ export async function GET(): Promise<Response> {
 
   const [snapshotRes, labelsRes, playlists] = await Promise.all([
     supabase.from("benchmark_snapshot").select("ran_at, results").eq("user_id", dbUser.id).single(),
-    supabase.from("benchmark_labels").select("track_id, correct_playlist_id, notes, labeled_at").eq("user_id", dbUser.id),
+    supabase.from("benchmark_labels").select("track_id, correct_playlist_ids, notes, labeled_at").eq("user_id", dbUser.id),
     getUserPlaylists(dbUser.id),
   ]);
 
@@ -23,16 +23,20 @@ export async function GET(): Promise<Response> {
   }
 
   const playlistMap = new Map(playlists.map((p) => [p.id, p.name]));
+
   const labelMap = new Map(
-    (labelsRes.data ?? []).map((l) => [
-      l.track_id as string,
-      {
-        correct_playlist_id: l.correct_playlist_id as string | null,
-        correct_playlist_name: l.correct_playlist_id ? (playlistMap.get(l.correct_playlist_id as string) ?? null) : null,
-        notes: l.notes as string | null,
-        labeled_at: l.labeled_at as string,
-      },
-    ])
+    (labelsRes.data ?? []).map((l) => {
+      const ids = (l.correct_playlist_ids as string[]) ?? [];
+      return [
+        l.track_id as string,
+        {
+          correct_playlist_ids: ids,
+          correct_playlist_names: ids.map((id) => playlistMap.get(id) ?? id),
+          notes: l.notes as string | null,
+          labeled_at: l.labeled_at as string,
+        },
+      ];
+    })
   );
 
   const results = ((snapshotRes.data.results as unknown[]) ?? []).map((r) => {

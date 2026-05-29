@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const Body = z.object({
   track_id: z.string().uuid(),
-  correct_playlist_id: z.string().uuid().nullable(),
+  correct_playlist_ids: z.array(z.string().uuid()),
   notes: z.string().max(500).optional(),
 });
 
@@ -20,13 +20,13 @@ export async function POST(req: Request): Promise<Response> {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return Response.json({ error: parsed.error.message }, { status: 400 });
 
-  const { track_id, correct_playlist_id, notes } = parsed.data;
+  const { track_id, correct_playlist_ids, notes } = parsed.data;
   const supabase = createClient();
 
   const { error } = await supabase.from("benchmark_labels").upsert({
     user_id: dbUser.id,
     track_id,
-    correct_playlist_id,
+    correct_playlist_ids,
     notes: notes ?? null,
     labeled_at: new Date().toISOString(),
   });

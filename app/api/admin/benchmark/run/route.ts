@@ -70,10 +70,9 @@ export async function POST(req: Request): Promise<Response> {
     genres: t.genres ?? [],
   }));
 
-  const [v1Results, v2Results] = await Promise.all([
-    classifyBatch(inputs, playlists),
-    classifyBatchV2(inputs, playlists),
-  ]);
+  // Sequential to avoid Anthropic rate limits (parallel = 16+ concurrent calls)
+  const v1Results = await classifyBatch(inputs, playlists);
+  const v2Results = await classifyBatchV2(inputs, playlists);
 
   const results = tracks.map((t, i) => {
     const r1 = v1Results[i];
