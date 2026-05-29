@@ -68,6 +68,7 @@ export async function GET(req: Request): Promise<Response> {
     llm_suggestion_id: row.llm_suggestion ?? null,
     suggested_playlist: row.suggestion_playlist?.name ?? null,
     suggested_playlist_spotify_id: row.suggestion_playlist?.spotify_playlist_id ?? null,
+    suggested_playlist_color: row.suggestion_playlist?.color ?? null,
     confidence: row.confidence,
     classification_reason: row.classification_reason,
     is_unclassified: row.classified_at === null,

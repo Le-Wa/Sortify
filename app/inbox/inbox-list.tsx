@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { playlistSwatch } from "@/lib/playlist-swatch";
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,8 @@ function Confetti() {
   );
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 interface InboxTrack {
   id: string;
   spotify_track_id: string;
@@ -72,6 +75,7 @@ interface InboxPlaylist {
   id: string;
   spotify_playlist_id: string;
   name: string;
+  color: string | null;
 }
 
 interface ApiResponse {
@@ -83,256 +87,368 @@ interface ApiResponse {
 
 const PER_PAGE = 20;
 
-const GENRE_PALETTES = [
-  { bg: "var(--sage-light)", color: "var(--sage)", border: "var(--sage-border)" },
-  { bg: "var(--amber-light)", color: "var(--amber)", border: "rgba(200,152,64,0.25)" },
-  { bg: "var(--terra-light)", color: "var(--terra)", border: "var(--terra-border)" },
-  { bg: "rgba(136,120,208,0.12)", color: "#8878d0", border: "rgba(136,120,208,0.22)" },
-];
-function genrePalette(genre: string) {
-  let h = 0;
-  for (const c of genre) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
-  return GENRE_PALETTES[h % GENRE_PALETTES.length];
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function pillVars(color: string): React.CSSProperties {
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  return {
+    "--plbg": `rgba(${r},${g},${b},0.08)`,
+    "--plb": color,
+    "--plt": color,
+    "--plts": "rgba(255,255,255,0.88)",
+  } as React.CSSProperties;
 }
 
-function FeatureBar({ label, value }: { label: string; value: number }) {
+function confBadge(conf: number | null): { cls: string; label: string } {
+  if (conf === null) return { cls: "s-conf-none", label: "Aucun signal" };
+  if (conf < 40) return { cls: "s-conf-vlow", label: `${conf}%` };
+  return { cls: "s-conf-low", label: `${conf}%` };
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function PlaylistPill({
+  playlist,
+  selected,
+  isAI,
+  onToggle,
+}: {
+  playlist: InboxPlaylist;
+  selected: boolean;
+  isAI: boolean;
+  onToggle: () => void;
+}) {
+  const color = playlistSwatch(playlist.id, playlist.color);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-      <span style={{ width: 72, flexShrink: 0, color: "var(--ink-dim)" }}>{label}</span>
-      <div style={{ flex: 1, height: 3, borderRadius: 3, background: "var(--surface3)" }}>
-        <div
-          style={{
-            height: "100%",
-            borderRadius: 3,
-            background: "var(--ink-dim)",
-            width: `${Math.round(value * 100)}%`,
-          }}
-        />
-      </div>
-      <span style={{ width: 24, textAlign: "right", color: "var(--ink-dim)" }}>
-        {Math.round(value * 100)}
-      </span>
-    </div>
+    <button
+      type="button"
+      className={`s-pl-pill${selected ? " sel" : ""}`}
+      style={pillVars(color)}
+      onClick={onToggle}
+    >
+      <span className="pp-dot" />
+      <span className="pp-name">{playlist.name}</span>
+      {isAI && <span className="pp-ai">IA</span>}
+    </button>
   );
 }
+
+function PlaylistCardSm({
+  playlist,
+  selected,
+  onToggle,
+}: {
+  playlist: InboxPlaylist;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  const color = playlistSwatch(playlist.id, playlist.color);
+  return (
+    <button
+      type="button"
+      className={`s-pl-card-sm${selected ? " sel" : ""}`}
+      style={pillVars(color)}
+      onClick={onToggle}
+    >
+      <span className="pc-dot" />
+      <span className="pc-name">{playlist.name}</span>
+    </button>
+  );
+}
+
+// ── TrackCard ─────────────────────────────────────────────────────────────────
 
 function TrackCard({
   track,
   playlists,
-  playlistsLoading,
   isExiting,
   isBusy,
-  isCorrectingThis,
-  onStartCorrecting,
-  onCancelCorrecting,
-  onValidate,
-  onCorrect,
+  animDelay,
+  onAssign,
   onArchive,
 }: {
   track: InboxTrack;
   playlists: InboxPlaylist[];
-  playlistsLoading: boolean;
   isExiting: boolean;
   isBusy: boolean;
-  isCorrectingThis: boolean;
-  isReasonExpanded: boolean;
-  onStartCorrecting: () => void;
-  onCancelCorrecting: () => void;
-  onToggleReason: () => void;
-  onValidate: () => void;
-  onCorrect: (ids: string[]) => void;
+  animDelay: number;
+  onAssign: (ids: string[]) => void;
   onArchive: () => void;
 }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
-  const hasSuggestion = !!track.llm_suggestion_id && !!track.suggested_playlist;
-  const borderColor = track.is_unclassified
-    ? "rgba(136,120,208,0.35)"
-    : hasSuggestion
-    ? "rgba(200,147,90,0.35)"
-    : "rgba(255,255,255,0.07)";
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [showReason, setShowReason] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
+    const s = new Set<string>();
+    if (track.llm_suggestion_id) s.add(track.llm_suggestion_id);
+    return s;
+  });
 
-  const player = (
-    <iframe
-      title="spotify-embed"
-      src={`https://open.spotify.com/embed/track/${track.spotify_track_id}?utm_source=sortify`}
-      width="100%"
-      height="80"
-      frameBorder="0"
-      loading="lazy"
-      allow="encrypted-media; clipboard-write"
-      style={{ borderRadius: 12, display: "block", colorScheme: "normal" }}
-    />
-  );
+  const conf = track.confidence !== null ? Math.round(track.confidence * 100) : null;
+  const badge = confBadge(conf);
+  const selCount = selectedIds.size;
+
+  const suggestionId = track.llm_suggestion_id;
+  const suggestedPlaylists = suggestionId ? playlists.filter((p) => p.id === suggestionId) : [];
+  const otherPlaylists = playlists.filter((p) => p.id !== suggestionId);
+
+  // For unclassified tracks (no suggestion), show first 2 playlists inline
+  const primaryPills = suggestedPlaylists.length > 0 ? suggestedPlaylists : playlists.slice(0, 2);
+  const expandPills = suggestedPlaylists.length > 0 ? otherPlaylists : playlists.slice(2);
+
+  function toggle(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const hasReason =
+    !!track.classification_reason &&
+    !track.classification_reason.startsWith("L3 error:");
 
   return (
     <li
-      className="s-track-card"
+      className="s-inbox-track-card"
       style={{
-        background: "var(--surface)",
-        borderRadius: 14,
-        border: `1px solid var(--border)`,
-        borderLeft: `4px solid ${borderColor}`,
-        padding: "14px 18px 14px 16px",
-        boxShadow: "var(--shadow)",
-        transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+        animationDelay: `${animDelay}ms`,
         opacity: isExiting ? 0 : 1,
         transform: isExiting ? "translateX(48px) scale(0.96)" : "none",
+        transition: isExiting ? "opacity 0.35s ease, transform 0.35s ease" : undefined,
       }}
     >
-      {/* Header — titre + badge top-right */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
-        <div style={{ minWidth: 0 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3, margin: 0 }}>
-            {track.name ?? track.spotify_track_id}
+      {/* Main row */}
+      <div className="itc-main">
+        <div className="itc-info">
+          <p className="itc-title">{track.name ?? track.spotify_track_id}</p>
+          <p className="itc-sub">
+            {track.artist_name}
+            {track.album_name ? ` · ${track.album_name}` : ""}
           </p>
-          {track.artist_name && (
-            <p style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-mid)", marginTop: 2, margin: 0 }}>{track.artist_name}</p>
-          )}
-          {track.album_name && (
-            <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 1, margin: 0 }}>({track.album_name})</p>
-          )}
         </div>
-        {/* Badge */}
-        <div style={{ flexShrink: 0 }}>
-          {track.is_unclassified ? (
-            <span style={{
-              fontSize: 10, fontWeight: 500, color: "#8878d0",
-              background: "rgba(136,120,208,0.12)", border: "1px solid rgba(136,120,208,0.28)",
-              padding: "3px 9px", borderRadius: 20, letterSpacing: "0.02em",
-            }}>
-              À classer
-            </span>
-          ) : hasSuggestion ? (
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 5,
-              fontSize: 11, fontWeight: 500, color: "#c8935a",
-              background: "rgba(200,147,90,0.12)", border: "1px solid rgba(200,147,90,0.28)",
-              padding: "3px 10px", borderRadius: 20,
-            }}>
-              {track.suggested_playlist}
-              {conf !== null && <span style={{ opacity: 0.75 }}>· {conf}%</span>}
-            </span>
-          ) : (
-            <span style={{
-              fontSize: 10, fontWeight: 500, color: "var(--ink-dimmer)",
-              background: "var(--surface3)", border: "1px solid var(--border)",
-              padding: "3px 9px", borderRadius: 20, letterSpacing: "0.02em",
-            }}>
-              {conf !== null ? `Aucun signal · ${conf}%` : "Aucun signal"}
-            </span>
-          )}
+        <div className="itc-right">
+          <span className={`s-conf-badge ${badge.cls}`}>{badge.label}</span>
+          <button
+            type="button"
+            className="s-play-btn"
+            onClick={() => setShowPlayer((v) => !v)}
+            title={showPlayer ? "Fermer" : "Écouter"}
+            aria-label={showPlayer ? "Fermer le lecteur" : "Écouter"}
+          >
+            {showPlayer ? (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <rect x="2" y="2" width="3" height="8" rx="1" />
+                <rect x="7" y="2" width="3" height="8" rx="1" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style={{ marginLeft: 2 }}>
+                <path d="M2 2l8 4-8 4V2z" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Genres */}
+      {/* Player embed */}
+      {showPlayer && (
+        <div className="itc-player-wrap">
+          <iframe
+            title="spotify-embed"
+            src={`https://open.spotify.com/embed/track/${track.spotify_track_id}?utm_source=sortify`}
+            width="100%"
+            height="80"
+            frameBorder="0"
+            loading="lazy"
+            allow="encrypted-media; clipboard-write"
+            style={{ borderRadius: 10, display: "block", colorScheme: "normal" }}
+          />
+        </div>
+      )}
+
+      {/* Genre tags */}
       {track.genres.length > 0 && (
-        <div className="s-track-card-genres" style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
-          {track.genres.slice(0, 4).map((g) => {
-            const pal = genrePalette(g);
-            return (
-              <span key={g} style={{ background: pal.bg, border: `1px solid ${pal.border}`, borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 500, color: pal.color }}>
-                {g}
-              </span>
-            );
-          })}
-          {track.enrichment_source && (
-            <span style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 11, color: "var(--ink-mid)" }}>
-              {track.enrichment_source}
-            </span>
-          )}
+        <div className="itc-tags">
+          {track.genres.slice(0, 4).map((g) => (
+            <span key={g} className="itc-tag">{g}</span>
+          ))}
         </div>
       )}
 
-      {/* Raison LLM — texte complet, pas de truncate */}
-      {track.classification_reason && !track.classification_reason.startsWith("L3 error:") && (
-        <div className="s-track-card-reason" style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink)", marginBottom: 10, lineHeight: 1.65 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-mid)", display: "block", marginBottom: 3 }}>Raison</span>
-          {track.classification_reason}
-        </div>
-      )}
-
-      {/* Suggestion encart */}
-      {hasSuggestion && (
-        <div className="s-track-card-suggest" style={{ background: "var(--surface2)", border: "1px solid rgba(200,147,90,0.18)", borderRadius: 6, padding: "7px 12px", marginBottom: 10, fontSize: 13, fontWeight: 500, color: "#c8935a" }}>
-          → {track.suggested_playlist}
-        </div>
-      )}
-
-      {/* Body — deux colonnes sur desktop, en premier sur mobile */}
-      {!isCorrectingThis ? (
-        <div className="s-track-card-body" style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          {/* Player — left column */}
-          <div style={{ flex: 1, minWidth: 0 }}>{player}</div>
-
-          {/* Buttons — right column, empilés verticalement */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, width: 120 }}>
-            {hasSuggestion && (
+      {/* Playlist pills */}
+      {playlists.length > 0 && (
+        <>
+          <div className="itc-pl-row">
+            {primaryPills.map((p) => (
+              <PlaylistPill
+                key={p.id}
+                playlist={p}
+                selected={selectedIds.has(p.id)}
+                isAI={p.id === suggestionId}
+                onToggle={() => toggle(p.id)}
+              />
+            ))}
+            {expandPills.length > 0 && (
               <button
-                disabled={isBusy}
-                onClick={onValidate}
-                className="s-btn s-btn-primary"
-                style={{ minHeight: 36, width: "100%", justifyContent: "center" }}
+                type="button"
+                className="s-more-pl-btn"
+                onClick={() => setShowMore((v) => !v)}
               >
-                {isBusy ? "…" : "Valider"}
+                +{expandPills.length}{" "}
+                <span style={{ fontSize: 9, marginLeft: 1 }}>{showMore ? "▴" : "▾"}</span>
               </button>
             )}
-            <button
-              disabled={isBusy}
-              onClick={onStartCorrecting}
-              className="s-btn"
-              style={{ minHeight: 36, width: "100%", justifyContent: "center" }}
-            >
-              Assigner
-            </button>
-            <button
-              disabled={isBusy}
-              onClick={onArchive}
-              className="s-btn"
-              title="Archiver"
-              style={{ minHeight: 36, width: "100%", justifyContent: "center", color: "var(--ink-dim)" }}
-            >
-              ⊘
-            </button>
           </div>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: "8px 12px", minHeight: 40 }}>
-            {playlistsLoading ? (
-              <p style={{ fontSize: 12, color: "var(--ink-dim)", margin: "6px 0" }}>Chargement des playlists…</p>
-            ) : playlists.length === 0 ? (
-              <p style={{ fontSize: 12, color: "var(--ink-dim)", margin: "6px 0" }}>Aucune playlist configurée</p>
-            ) : playlists.map((p) => (
-              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer", fontSize: 13 }}>
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(p.id)}
-                  onChange={(e) =>
-                    setSelectedIds((prev) => e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id))
-                  }
-                  style={{ accentColor: "var(--terra)" }}
+
+          {showMore && (
+            <div className="itc-pl-expand">
+              {expandPills.map((p) => (
+                <PlaylistCardSm
+                  key={p.id}
+                  playlist={p}
+                  selected={selectedIds.has(p.id)}
+                  onToggle={() => toggle(p.id)}
                 />
-                <span style={{ color: selectedIds.includes(p.id) ? "var(--ink)" : "var(--ink-mid)" }}>{p.name}</span>
-              </label>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              disabled={isBusy || selectedIds.length === 0}
-              onClick={() => onCorrect(selectedIds)}
-              className="s-btn s-btn-primary"
-              style={{ flex: 1 }}
-            >
-              {isBusy ? "…" : `Assigner (${selectedIds.length})`}
-            </button>
-            <button disabled={isBusy} onClick={onCancelCorrecting} className="s-btn" aria-label="Annuler">↩</button>
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
+
+      {/* Reason toggle */}
+      {hasReason && (
+        <>
+          <div className="itc-action-row">
+            <button
+              type="button"
+              className={`s-action-chip${showReason ? " on" : ""}`}
+              onClick={() => setShowReason((v) => !v)}
+            >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+              Raison IA
+            </button>
+          </div>
+          {showReason && (
+            <div className="itc-reason">{track.classification_reason}</div>
+          )}
+        </>
+      )}
+
+      {/* Separator + actions */}
+      <div className="itc-sep" />
+      <div className="itc-actions">
+        <button
+          type="button"
+          className={`s-assign-btn${selCount > 0 ? " ready" : ""}`}
+          disabled={isBusy || selCount === 0}
+          onClick={() => onAssign([...selectedIds])}
+        >
+          {isBusy
+            ? "…"
+            : selCount === 0
+            ? "Assigner"
+            : `Assigner (${selCount} playlist${selCount > 1 ? "s" : ""})`}
+        </button>
+        <button
+          type="button"
+          className="s-icon-btn"
+          disabled={isBusy}
+          onClick={onArchive}
+          title="Archiver"
+          aria-label="Archiver"
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" />
+          </svg>
+        </button>
+      </div>
     </li>
   );
 }
+
+// ── PlaylistDropdown ──────────────────────────────────────────────────────────
+
+function PlaylistDropdown({
+  playlists,
+  value,
+  onChange,
+}: {
+  playlists: InboxPlaylist[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [open]);
+
+  const selected = playlists.find((p) => p.id === value);
+  const label = selected ? selected.name : "Toutes les playlists";
+
+  return (
+    <div className="s-pl-dropdown-wrap" ref={ref}>
+      <button
+        type="button"
+        className="s-pl-dropdown-btn"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>{label}</span>
+        <svg
+          className={`s-pl-dropdown-arrow${open ? " open" : ""}`}
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <polyline points="4 6 8 10 12 6" transform="translate(4 4)" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="s-pl-dropdown-menu">
+          <button
+            type="button"
+            className={`s-pl-dropdown-item${!value ? " active" : ""}`}
+            onClick={() => { onChange(""); setOpen(false); }}
+          >
+            <span className="s-pl-dropdown-dot" style={{ background: "var(--ink-dimmer)" }} />
+            Toutes les playlists
+          </button>
+          {playlists.map((p) => {
+            const color = playlistSwatch(p.id, p.color);
+            return (
+              <button
+                key={p.id}
+                type="button"
+                className={`s-pl-dropdown-item${value === p.id ? " active" : ""}`}
+                onClick={() => { onChange(p.id); setOpen(false); }}
+              >
+                <span className="s-pl-dropdown-dot" style={{ background: color }} />
+                {p.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── InboxClient ───────────────────────────────────────────────────────────────
 
 export default function InboxClient() {
   const [tracks, setTracks] = useState<InboxTrack[]>([]);
@@ -349,10 +465,8 @@ export default function InboxClient() {
   const [playlists, setPlaylists] = useState<InboxPlaylist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
 
-  const [correcting, setCorrecting] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [exiting, setExiting] = useState<Set<string>>(new Set());
-  const [expandedReasons, setExpandedReasons] = useState<Set<string>>(new Set());
 
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchMessage, setBatchMessage] = useState<string | null>(null);
@@ -365,7 +479,6 @@ export default function InboxClient() {
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 3000);
   }
 
-  // Confetti quand l'inbox se vide
   useEffect(() => {
     if (loading) return;
     if (prevTotalRef.current !== null && prevTotalRef.current > 0 && total === 0) {
@@ -427,28 +540,45 @@ export default function InboxClient() {
     setExiting((prev) => new Set([...prev, id]));
     setTimeout(() => {
       setTracks((prev) => prev.filter((t) => t.id !== id));
-      setTotal((prev) => { const next = prev - 1; return next; });
+      setTotal((prev) => prev - 1);
       setExiting((prev) => { const n = new Set(prev); n.delete(id); return n; });
       notifyInboxChanged();
-    }, 300);
+    }, 350);
   }
 
-  async function handleAction(
-    trackId: string,
-    action: "validate" | "correct" | "archive",
-    playlistIds?: string[]
-  ) {
+  async function handleAssign(trackId: string, playlistIds: string[]) {
     setBusy((prev) => new Set([...prev, trackId]));
     try {
-      const body: Record<string, unknown> = { action };
-      if (playlistIds) body.playlist_ids = playlistIds;
+      const track = tracks.find((t) => t.id === trackId);
+      const isSuggestionOnly =
+        playlistIds.length === 1 && playlistIds[0] === track?.llm_suggestion_id;
+      const body: Record<string, unknown> = isSuggestionOnly
+        ? { action: "validate" }
+        : { action: "correct", playlist_ids: playlistIds };
+
       const res = await fetch(`/api/inbox/${trackId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(await res.text());
-      setCorrecting((prev) => { const n = new Set(prev); n.delete(trackId); return n; });
+      exitTrack(trackId);
+    } catch (err) {
+      showToast(`Erreur : ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy((prev) => { const n = new Set(prev); n.delete(trackId); return n; });
+    }
+  }
+
+  async function handleArchive(trackId: string) {
+    setBusy((prev) => new Set([...prev, trackId]));
+    try {
+      const res = await fetch(`/api/inbox/${trackId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "archive" }),
+      });
+      if (!res.ok) throw new Error(await res.text());
       exitTrack(trackId);
     } catch (err) {
       showToast(`Erreur : ${err instanceof Error ? err.message : String(err)}`);
@@ -502,69 +632,75 @@ export default function InboxClient() {
 
   return (
     <main className="s-page">
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <div className="s-inbox-page-header">
-          <div>
-            <div style={{ fontSize: 12, color: "var(--ink-dim)", marginBottom: 4 }}>Inbox</div>
-            <h1 className="font-fraunces" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.6px", color: "var(--ink)", lineHeight: 1 }}>
-              {loading ? (
-                <span style={{ color: "var(--ink-dimmer)" }}>—</span>
-              ) : (
-                <>
-                  <span style={{ color: "var(--terra)" }}>{total}</span>
-                  <span style={{ fontSize: 16, fontWeight: 400, color: "var(--ink-mid)", marginLeft: 8 }}>
-                    {total !== 1 ? "tracks" : "track"} à revoir
-                  </span>
-                </>
-              )}
-            </h1>
-          </div>
+      {/* Hero header */}
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 12, color: "var(--ink-dimmer)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
+          Inbox
+        </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 18 }}>
+          <span className={`inbox-hero-num${total === 0 && !loading ? " zero" : ""} font-fraunces`}>
+            {loading ? "—" : total}
+          </span>
+          <span style={{ fontSize: 15, color: "var(--ink-mid)" }}>
+            {total !== 1 ? "tracks à revoir" : "track à revoir"}
+          </span>
+        </div>
+        {total > 0 && !loading && (
           <button
             onClick={handleBatchValidate}
-            disabled={batchLoading || total === 0 || loading}
-            className="s-btn s-btn-primary"
+            disabled={batchLoading}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: "var(--terra)",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "10px 20px",
+              borderRadius: 99,
+              border: "none",
+              cursor: "pointer",
+              marginBottom: 16,
+              opacity: batchLoading ? 0.6 : 1,
+              fontFamily: "inherit",
+            }}
           >
             {batchLoading ? "…" : "Tout valider (+55%)"}
           </button>
-        </div>
-
-        {/* Filters */}
-        <div className="s-filter-bar">
-          <div className="s-filter-chips">
-            {([
-              { key: "all", label: "Tous" },
-              { key: "uncertain", label: "Incertains (<55%)" },
-              { key: "very_uncertain", label: "Très incertains (<40%)" },
-            ] as { key: ConfidenceFilter; label: string }[]).map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                className={`s-chip${confidenceFilter === key ? " active" : ""}`}
-                onClick={() => setConfidenceFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="s-filter-sep" />
-          <select
-            value={filterPlaylistId}
-            onChange={(e) => setFilterPlaylistId(e.target.value)}
-            className="s-sort-select"
-            aria-label="Filtrer par playlist"
-          >
-            <option value="">Toutes les playlists</option>
-            {playlists.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {batchMessage && (
-          <p style={{ marginTop: 8, fontSize: 12, color: "var(--sage)" }}>{batchMessage}</p>
         )}
       </div>
+
+      {/* Confidence filters */}
+      <div className="s-filter-chips" style={{ marginBottom: 12 }}>
+        {([
+          { key: "all", label: "Tous" },
+          { key: "uncertain", label: "Incertains (<55%)" },
+          { key: "very_uncertain", label: "Très incertains (<40%)" },
+        ] as { key: ConfidenceFilter; label: string }[]).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            className={`s-chip${confidenceFilter === key ? " active" : ""}`}
+            onClick={() => setConfidenceFilter(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Playlist filter dropdown */}
+      {!playlistsLoading && playlists.length > 0 && (
+        <PlaylistDropdown
+          playlists={playlists}
+          value={filterPlaylistId}
+          onChange={setFilterPlaylistId}
+        />
+      )}
+
+      {batchMessage && (
+        <p style={{ marginBottom: 12, fontSize: 12, color: "var(--sage)" }}>{batchMessage}</p>
+      )}
 
       {/* Content */}
       {loading ? (
@@ -573,38 +709,22 @@ export default function InboxClient() {
         </div>
       ) : tracks.length === 0 ? (
         <div style={{ display: "flex", minHeight: 200, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, textAlign: "center" }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>Inbox vide</p>
-          <p style={{ fontSize: 12, color: "var(--ink-mid)" }}>Tout est trié ✓</p>
+          <p style={{ fontFamily: "var(--font-fraunces), serif", fontStyle: "italic", fontSize: 52, color: "var(--ink-dimmer)", margin: 0 }}>✓</p>
+          <p style={{ fontSize: 15, color: "var(--ink-mid)", margin: 0 }}>Inbox vide — tout est classé.</p>
         </div>
       ) : (
         <>
           <ul style={{ display: "flex", flexDirection: "column", gap: 8, listStyle: "none", padding: 0, margin: 0 }}>
-            {tracks.map((track) => (
+            {tracks.map((track, idx) => (
               <TrackCard
                 key={track.id}
                 track={track}
                 playlists={playlists}
-                playlistsLoading={playlistsLoading}
                 isExiting={exiting.has(track.id)}
                 isBusy={busy.has(track.id)}
-                isCorrectingThis={correcting.has(track.id)}
-                isReasonExpanded={expandedReasons.has(track.id)}
-                onStartCorrecting={() =>
-                  setCorrecting((prev) => new Set([...prev, track.id]))
-                }
-                onCancelCorrecting={() =>
-                  setCorrecting((prev) => { const n = new Set(prev); n.delete(track.id); return n; })
-                }
-                onToggleReason={() =>
-                  setExpandedReasons((prev) => {
-                    const n = new Set(prev);
-                    n.has(track.id) ? n.delete(track.id) : n.add(track.id);
-                    return n;
-                  })
-                }
-                onValidate={() => handleAction(track.id, "validate")}
-                onCorrect={(ids) => handleAction(track.id, "correct", ids)}
-                onArchive={() => handleAction(track.id, "archive")}
+                animDelay={idx * 60}
+                onAssign={(ids) => handleAssign(track.id, ids)}
+                onArchive={() => handleArchive(track.id)}
               />
             ))}
           </ul>

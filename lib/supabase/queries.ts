@@ -527,7 +527,7 @@ export interface InboxTrackRowV2 {
   audio_features: Partial<AudioFeatures> | null;
   llm_suggestion: string | null;
   classified_at: string | null;
-  suggestion_playlist: { id: string; name: string; spotify_playlist_id: string } | null;
+  suggestion_playlist: { id: string; name: string; spotify_playlist_id: string; color: string | null } | null;
 }
 
 export async function getInboxTracksNeedsReview(
@@ -538,7 +538,7 @@ export async function getInboxTracksNeedsReview(
   let query = supabase
     .from("tracks")
     .select(
-      "id, spotify_track_id, name, artist_name, artists, album_name, isrc, spotify_added_at, genres, enrichment_source, audio_features, llm_suggestion, classified_at, suggestion_playlist:playlists!llm_suggestion(id, name, spotify_playlist_id)"
+      "id, spotify_track_id, name, artist_name, artists, album_name, isrc, spotify_added_at, genres, enrichment_source, audio_features, llm_suggestion, classified_at, suggestion_playlist:playlists!llm_suggestion(id, name, spotify_playlist_id, color)"
     )
     .eq("user_id", userId)
     .eq("is_archived", false)
