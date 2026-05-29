@@ -218,9 +218,9 @@ function TrackCard({
     });
   }
 
-  const hasReason =
-    !!track.classification_reason &&
-    !track.classification_reason.startsWith("L3 error:");
+  const reason = track.classification_reason?.startsWith("L3 error:")
+    ? null
+    : track.classification_reason;
 
   return (
     <li
@@ -309,26 +309,24 @@ function TrackCard({
         </>
       )}
 
-      {/* Reason toggle */}
-      {hasReason && (
-        <>
-          <div className="itc-action-row">
-            <button
-              type="button"
-              className={`s-action-chip${showReason ? " on" : ""}`}
-              onClick={() => setShowReason((v) => !v)}
-            >
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4M12 8h.01" />
-              </svg>
-              Raison IA
-            </button>
-          </div>
-          {showReason && (
-            <div className="itc-reason">{track.classification_reason}</div>
-          )}
-        </>
+      {/* Reason toggle — always visible */}
+      <div className="itc-action-row">
+        <button
+          type="button"
+          className={`s-action-chip${showReason ? " on" : ""}`}
+          onClick={() => setShowReason((v) => !v)}
+        >
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          Raison IA
+        </button>
+      </div>
+      {showReason && (
+        <div className="itc-reason">
+          {reason ?? <span style={{ color: "var(--ink-dimmer)", fontStyle: "italic" }}>Aucune raison disponible</span>}
+        </div>
       )}
 
       {/* Separator + actions */}
