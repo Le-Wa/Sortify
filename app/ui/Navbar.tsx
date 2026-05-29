@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { signOut, useSession } from "next-auth/react";
 
 function nextMonday(): string {
@@ -90,7 +90,7 @@ export default function Sidebar() {
   const userName = session?.user?.name?.split(" ")[0] ?? "Profil";
   const userImage = session?.user?.image;
 
-  useEffect(() => {
+  const fetchStats = useCallback(() => {
     fetch("/api/dashboard/stats")
       .then((r) => r.json())
       .then((data: { needs_review?: number; cron_enabled?: boolean }) => {
@@ -99,6 +99,12 @@ export default function Sidebar() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+    window.addEventListener("sortify:inbox-changed", fetchStats);
+    return () => window.removeEventListener("sortify:inbox-changed", fetchStats);
+  }, [fetchStats]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -237,15 +243,26 @@ export default function Sidebar() {
                 Paramètres
               </Link>
               {isAdmin && (
-                <Link
-                  href="/admin/logs"
-                  onClick={() => setUserMenuOpen(false)}
-                  style={{ ...ddItem, color: "var(--ink-dim)" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface2)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
-                >
-                  Logs admin
-                </Link>
+                <>
+                  <Link
+                    href="/admin/logs"
+                    onClick={() => setUserMenuOpen(false)}
+                    style={{ ...ddItem, color: "var(--ink-dim)" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface2)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                  >
+                    Logs admin
+                  </Link>
+                  <Link
+                    href="/admin/benchmark"
+                    onClick={() => setUserMenuOpen(false)}
+                    style={{ ...ddItem, color: "var(--ink-dim)" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface2)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                  >
+                    Benchmark A/B
+                  </Link>
+                </>
               )}
               <div style={{ height: 1, background: "var(--border)" }} />
               <button
