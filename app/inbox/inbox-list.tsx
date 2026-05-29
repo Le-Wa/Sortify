@@ -76,6 +76,7 @@ interface InboxPlaylist {
   spotify_playlist_id: string;
   name: string;
   color: string | null;
+  genre_includes: string[];
 }
 
 interface ApiResponse {
@@ -193,9 +194,21 @@ function TrackCard({
   const suggestedPlaylists = suggestionId ? playlists.filter((p) => p.id === suggestionId) : [];
   const otherPlaylists = playlists.filter((p) => p.id !== suggestionId);
 
-  // For unclassified tracks (no suggestion), show first 2 playlists inline
-  const primaryPills = suggestedPlaylists.length > 0 ? suggestedPlaylists : playlists.slice(0, 2);
-  const expandPills = suggestedPlaylists.length > 0 ? otherPlaylists : playlists.slice(2);
+  // For unclassified tracks: rank by genre overlap (L1 heuristic)
+  const rankedOthers = suggestionId
+    ? otherPlaylists
+    : [...playlists].sort((a, b) => {
+        const scoreA = track.genres.filter((g) =>
+          a.genre_includes.some((gi) => g.toLowerCase().includes(gi.toLowerCase()) || gi.toLowerCase().includes(g.toLowerCase()))
+        ).length;
+        const scoreB = track.genres.filter((g) =>
+          b.genre_includes.some((gi) => g.toLowerCase().includes(gi.toLowerCase()) || gi.toLowerCase().includes(g.toLowerCase()))
+        ).length;
+        return scoreB - scoreA;
+      });
+
+  const primaryPills = suggestedPlaylists.length > 0 ? suggestedPlaylists : rankedOthers.slice(0, 2);
+  const expandPills = suggestedPlaylists.length > 0 ? otherPlaylists : rankedOthers.slice(2);
 
   function toggle(id: string) {
     setSelectedIds((prev) => {
@@ -474,8 +487,13 @@ export default function InboxClient() {
         if (!r.ok) throw new Error(`${r.status}`);
         return r.json();
       })
-      .then((data: InboxPlaylist[]) => {
-        if (Array.isArray(data)) setPlaylists(data);
+      .then((data: Array<InboxPlaylist & { rules?: { genres?: { include?: string[] } } }>) => {
+        if (Array.isArray(data)) {
+          setPlaylists(data.map((p) => ({
+            ...p,
+            genre_includes: p.rules?.genres?.include ?? [],
+          })));
+        }
       })
       .catch(() => {})
       .finally(() => setPlaylistsLoading(false));
