@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "SPOTIFY_CLIENT_ID / SECRET non configurés" }, { status: 500 });
   }
 
-  const secretEnc = encryptAES256GCM(clientSecret);
+  const encKey = process.env.ENCRYPTION_KEY ?? "6465766b65796465766b65796465766b65796465766b65796465766b65793132";
+  const secretEnc = encryptAES256GCM(clientSecret, encKey);
   const nonce = randomBytes(24).toString("base64url");
   await createPendingAuth(nonce, clientId, secretEnc);
 

@@ -23,9 +23,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/onboarding?error=session_expired", req.url));
   }
 
+  const encKey = process.env.ENCRYPTION_KEY ?? "6465766b65796465766b65796465766b65796465766b65796465766b65793132";
   let clientSecret: string;
   try {
-    clientSecret = decryptAES256GCM(pending.client_secret_enc);
+    clientSecret = decryptAES256GCM(pending.client_secret_enc, encKey);
   } catch {
     return NextResponse.redirect(new URL("/onboarding?error=decrypt_failed", req.url));
   }

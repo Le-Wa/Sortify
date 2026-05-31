@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { hashInviteCode } from "@/lib/crypto";
+import { hashInviteCode, encryptAES256GCM } from "@/lib/crypto";
 import { getInviteCode, createPendingAuth } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
 
@@ -31,13 +31,25 @@ export async function POST(req: NextRequest) {
     .eq("id", invite.inviter_id)
     .single();
 
-  if (!inviter?.spotify_client_id || !inviter.spotify_client_secret_enc) {
+  let clientId: string;
+  let clientSecretEnc: string;
+
+  if (inviter?.spotify_client_id && inviter.spotify_client_secret_enc) {
+    // BYOK inviter — use their credentials
+    clientId = inviter.spotify_client_id;
+    clientSecretEnc = inviter.spotify_client_secret_enc;
+  } else if (process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET) {
+    // v1 inviter or dev — fall back to shared app credentials
+    // Use ENCRYPTION_KEY if available, otherwise a dev-only fallback key
+    const encKey = process.env.ENCRYPTION_KEY ?? "6465766b65796465766b65796465766b65796465766b65796465766b65793132";
+    clientId = process.env.SPOTIFY_CLIENT_ID;
+    clientSecretEnc = encryptAES256GCM(process.env.SPOTIFY_CLIENT_SECRET, encKey);
+  } else {
     return NextResponse.json({ error: "L'invitant n'a pas de credentials configurés" }, { status: 400 });
   }
 
-  // Re-encrypt the secret with the same key (it's already encrypted; pass it through)
   const nonce = randomBytes(24).toString("base64url");
-  await createPendingAuth(nonce, inviter.spotify_client_id, inviter.spotify_client_secret_enc, invite.inviter_id);
+  await createPendingAuth(nonce, clientId, clientSecretEnc, invite.inviter_id);
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set("byok_nonce", nonce, {

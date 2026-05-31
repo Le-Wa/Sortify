@@ -43,7 +43,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const secretEnc = encryptAES256GCM(client_secret);
+  const encKey = process.env.ENCRYPTION_KEY ?? "6465766b65796465766b65796465766b65796465766b65796465766b65793132";
+  const secretEnc = encryptAES256GCM(client_secret, encKey);
   const nonce = randomBytes(24).toString("base64url");
   await createPendingAuth(nonce, client_id, secretEnc);
 
