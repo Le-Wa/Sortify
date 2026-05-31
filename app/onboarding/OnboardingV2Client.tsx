@@ -31,30 +31,28 @@ type Screen =
 type Mode = "import" | "analyse" | "scratch" | null;
 
 interface Props {
-  /** onboarding_step from DB — null means not authenticated yet */
   initialStep?: number | null;
   initialMode?: string | null;
+  /** 'pending' | 'in_progress' | 'complete' | null (not authenticated) */
+  initialStatus?: string | null;
 }
 
-function stepToScreen(step: number, mode: string | null): Screen {
-  if (step === 0) return "s3";
-  if (step === 1 || step === 2) return "s-preview";
-  if (step === 3) return "s-preview";
-  return "s3";
-}
-
-export default function OnboardingV2Client({ initialStep, initialMode }: Props) {
+export default function OnboardingV2Client({ initialStep, initialMode, initialStatus }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const error = params.get("error");
 
-  // If user is authenticated (initialStep not null), resume from appropriate screen
-  const startScreen: Screen =
-    initialStep != null && initialStep > 0
-      ? "s-preview"
-      : initialStep === 0
-      ? "s3"
-      : "s0";
+  // Routing logic:
+  //  - Not authenticated (initialStatus null) → S0 landing
+  //  - Authenticated, status pending, step 0 → S0 (dev persona fresh, or user before they chose a path)
+  //  - Authenticated, status in_progress, step 0 → S3 (just completed OAuth, pick mode)
+  //  - Authenticated, step > 0 → S-Preview (job running)
+  const startScreen: Screen = (() => {
+    if (initialStatus == null) return "s0";
+    if (initialStatus === "pending") return "s0";
+    if ((initialStep ?? 0) > 0) return "s-preview";
+    return "s3";
+  })();
 
   const [screen, setScreen] = useState<Screen>(startScreen);
   const [mode, setMode] = useState<Mode>((initialMode as Mode) ?? null);

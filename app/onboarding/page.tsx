@@ -9,7 +9,7 @@ export default async function OnboardingPage() {
 
   // Not authenticated — show landing (S0)
   if (!session?.userId) {
-    return <OnboardingV2Client initialStep={null} initialMode={null} />;
+    return <OnboardingV2Client initialStep={null} initialMode={null} initialStatus={null} />;
   }
 
   const dbUser = await getUserWithOnboarding(session.userId);
@@ -25,6 +25,7 @@ export default async function OnboardingPage() {
     <OnboardingV2Client
       initialStep={dbUser.onboarding_step}
       initialMode={dbUser.onboarding_mode}
+      initialStatus={dbUser.onboarding_status}
     />
   );
 }
