@@ -3,18 +3,22 @@ import { createClient } from "@/lib/supabase/client";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
 const EXPIRY_MARGIN_MS = 5 * 60 * 1000;
 
-export async function refreshSpotifyToken(refreshToken: string): Promise<{
+export async function refreshSpotifyToken(
+  refreshToken: string,
+  clientId?: string,
+  clientSecret?: string
+): Promise<{
   access_token: string;
   refresh_token: string;
   expires_at: number;
 }> {
+  const id = clientId ?? process.env.SPOTIFY_CLIENT_ID!;
+  const secret = clientSecret ?? process.env.SPOTIFY_CLIENT_SECRET!;
   const res = await fetch(SPOTIFY_TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(
-        `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-      ).toString("base64")}`,
+      Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
     },
     body: new URLSearchParams({
       grant_type: "refresh_token",
@@ -39,7 +43,7 @@ export async function refreshAccessToken(userId: string): Promise<string> {
 
   const { data: user, error } = await supabase
     .from("users")
-    .select("access_token, refresh_token, expires_at")
+    .select("access_token, refresh_token, expires_at, spotify_client_id, spotify_client_secret_enc")
     .eq("spotify_id", userId)
     .single();
 
@@ -49,7 +53,15 @@ export async function refreshAccessToken(userId: string): Promise<string> {
     return user.access_token;
   }
 
-  const refreshed = await refreshSpotifyToken(user.refresh_token);
+  let clientId: string | undefined;
+  let clientSecret: string | undefined;
+  if (user.spotify_client_id && user.spotify_client_secret_enc) {
+    const { decryptAES256GCM } = await import("@/lib/crypto");
+    clientId = user.spotify_client_id;
+    clientSecret = decryptAES256GCM(user.spotify_client_secret_enc);
+  }
+
+  const refreshed = await refreshSpotifyToken(user.refresh_token, clientId, clientSecret);
 
   await supabase
     .from("users")

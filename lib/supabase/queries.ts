@@ -1,6 +1,200 @@
 import { createClient } from "./client";
 import type { AudioFeatures, PlaylistCentroid, PlaylistForClassifier, PlaylistRules } from "@/lib/types";
 
+// ── Onboarding v2 — pending_auth ──────────────────────────────────────────────
+
+export async function createPendingAuth(
+  nonce: string,
+  clientId: string,
+  clientSecretEnc: string,
+  invitedBy?: string
+): Promise<void> {
+  const supabase = createClient();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("pending_auth").insert({
+    nonce,
+    client_id: clientId,
+    client_secret_enc: clientSecretEnc,
+    state: "",
+    invited_by: invitedBy ?? null,
+    expires_at: expiresAt,
+  });
+  if (error) throw error;
+}
+
+export async function setPendingAuthState(nonce: string, state: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("pending_auth")
+    .update({ state })
+    .eq("nonce", nonce)
+    .gt("expires_at", new Date().toISOString());
+  if (error) throw error;
+}
+
+export async function getPendingAuthByNonce(nonce: string): Promise<{
+  nonce: string;
+  client_id: string;
+  client_secret_enc: string;
+  state: string;
+  invited_by: string | null;
+  expires_at: string;
+} | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("pending_auth")
+    .select("nonce, client_id, client_secret_enc, state, invited_by, expires_at")
+    .eq("nonce", nonce)
+    .gt("expires_at", new Date().toISOString())
+    .single();
+  return data ?? null;
+}
+
+export async function getPendingAuthByState(state: string): Promise<{
+  nonce: string;
+  client_id: string;
+  client_secret_enc: string;
+  invited_by: string | null;
+} | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("pending_auth")
+    .select("nonce, client_id, client_secret_enc, invited_by")
+    .eq("state", state)
+    .gt("expires_at", new Date().toISOString())
+    .single();
+  return data ?? null;
+}
+
+export async function deletePendingAuth(nonce: string): Promise<void> {
+  const supabase = createClient();
+  await supabase.from("pending_auth").delete().eq("nonce", nonce);
+}
+
+// ── Onboarding v2 — invite_codes ──────────────────────────────────────────────
+
+export async function getInviteCode(codeHash: string): Promise<{
+  id: string;
+  inviter_id: string;
+  used_by: string | null;
+  expires_at: string;
+} | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("invite_codes")
+    .select("id, inviter_id, used_by, expires_at")
+    .eq("code_hash", codeHash)
+    .single();
+  return data ?? null;
+}
+
+export async function getActiveInviteCount(inviterId: string): Promise<number> {
+  const supabase = createClient();
+  const { count } = await supabase
+    .from("invite_codes")
+    .select("id", { count: "exact", head: true })
+    .eq("inviter_id", inviterId)
+    .is("used_by", null)
+    .gt("expires_at", new Date().toISOString());
+  return count ?? 0;
+}
+
+export async function createInviteCode(
+  inviterId: string,
+  codeHash: string
+): Promise<void> {
+  const supabase = createClient();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("invite_codes").insert({
+    inviter_id: inviterId,
+    code_hash: codeHash,
+    expires_at: expiresAt,
+  });
+  if (error) throw error;
+}
+
+export async function markInviteCodeUsed(codeHash: string, usedBy: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("invite_codes")
+    .update({ used_by: usedBy })
+    .eq("code_hash", codeHash)
+    .is("used_by", null);
+  if (error) throw error;
+}
+
+// ── Onboarding v2 — users ─────────────────────────────────────────────────────
+
+export async function getUserWithOnboarding(spotifyId: string): Promise<{
+  id: string;
+  spotify_id: string;
+  email: string | null;
+  onboarding_status: string;
+  onboarding_step: number;
+  onboarding_mode: string | null;
+  spotify_client_id: string | null;
+  spotify_client_secret_enc: string | null;
+  invited_by: string | null;
+} | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("users")
+    .select(
+      "id, spotify_id, email, onboarding_status, onboarding_step, onboarding_mode, spotify_client_id, spotify_client_secret_enc, invited_by"
+    )
+    .eq("spotify_id", spotifyId)
+    .single();
+  return data ?? null;
+}
+
+export async function upsertUserFromByok(params: {
+  spotifyId: string;
+  email: string | null;
+  displayName: string | null;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  clientId: string;
+  clientSecretEnc: string;
+  invitedBy?: string;
+}): Promise<{ id: string; onboarding_status: string }> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("users")
+    .upsert(
+      {
+        spotify_id: params.spotifyId,
+        email: params.email,
+        access_token: params.accessToken,
+        refresh_token: params.refreshToken,
+        expires_at: params.expiresAt,
+        spotify_client_id: params.clientId,
+        spotify_client_secret_enc: params.clientSecretEnc,
+        invited_by: params.invitedBy ?? null,
+        onboarding_status: "in_progress",
+      },
+      { onConflict: "spotify_id", ignoreDuplicates: false }
+    )
+    .select("id, onboarding_status")
+    .single();
+  if (error) throw error;
+  return data as { id: string; onboarding_status: string };
+}
+
+export async function updateOnboardingStatus(
+  userId: string,
+  status: "pending" | "in_progress" | "complete",
+  step?: number,
+  mode?: string
+): Promise<void> {
+  const supabase = createClient();
+  const update: Record<string, unknown> = { onboarding_status: status };
+  if (step !== undefined) update.onboarding_step = step;
+  if (mode !== undefined) update.onboarding_mode = mode;
+  const { error } = await supabase.from("users").update(update).eq("id", userId);
+  if (error) throw error;
+}
+
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function getCronEnabledUsers(): Promise<
@@ -861,6 +1055,7 @@ export async function upsertLikedTracks(
       classification_level: null,
       needs_review: false,
       is_archived: false,
+      is_liked: true,
     })),
     { onConflict: "user_id,spotify_track_id", ignoreDuplicates: true }
   );
@@ -1356,4 +1551,121 @@ export async function deleteAllUserTracks(userId: string): Promise<number> {
     .eq("user_id", userId);
   if (error) throw error;
   return count ?? 0;
+}
+
+// ── Sync helpers (unlike + manual-removal detection) ─────────────────────────
+
+/** Returns all liked DB tracks with their assigned playlist's Spotify ID (for unlike detection). */
+export async function getLikedTracksWithPlaylist(userId: string): Promise<
+  { spotify_track_id: string; spotify_playlist_id: string | null }[]
+> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .select(
+      "spotify_track_id, playlists!assigned_playlist(spotify_playlist_id)"
+    )
+    .eq("user_id", userId)
+    .eq("is_liked", true);
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    spotify_track_id: r.spotify_track_id as string,
+    spotify_playlist_id:
+      (
+        r.playlists as unknown as
+          | { spotify_playlist_id: string }
+          | null
+      )?.spotify_playlist_id ?? null,
+  }));
+}
+
+/** Returns all spotify_track_ids in DB where is_liked = true. */
+export async function getLikedSpotifyTrackIds(userId: string): Promise<string[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("spotify_track_id")
+    .eq("user_id", userId)
+    .eq("is_liked", true);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.spotify_track_id as string);
+}
+
+/**
+ * Marks tracks as unliked: is_liked = false, is_archived = true, assigned_playlist = null.
+ * Keeps the rows in DB for history.
+ */
+export async function markTracksUnliked(
+  userId: string,
+  spotifyTrackIds: string[]
+): Promise<void> {
+  if (spotifyTrackIds.length === 0) return;
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("tracks")
+    .update({ is_liked: false, is_archived: true, assigned_playlist: null })
+    .eq("user_id", userId)
+    .in("spotify_track_id", spotifyTrackIds);
+  if (error) throw error;
+}
+
+/**
+ * Returns tracks assigned to a given playlist that are still liked.
+ * Used to compare against the live Spotify playlist state.
+ */
+export async function getTracksAssignedToPlaylist(
+  userId: string,
+  playlistId: string
+): Promise<{ id: string; spotify_track_id: string }[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("id, spotify_track_id")
+    .eq("user_id", userId)
+    .eq("assigned_playlist", playlistId)
+    .eq("is_liked", true);
+  if (error) throw error;
+  return (data ?? []) as { id: string; spotify_track_id: string }[];
+}
+
+/**
+ * Records that the user manually removed tracks from a playlist on Spotify.
+ * Appends the playlist to manually_removed_playlists[] and clears assigned_playlist.
+ */
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+export interface ProfileTrackRow {
+  id: string;
+  name: string | null;
+  artists: string[] | null;
+  genres: string[] | null;
+  spotify_added_at: string | null;
+  assigned_playlist: string | null;
+  classified_at: string | null;
+}
+
+export async function getProfileTracks(userId: string): Promise<ProfileTrackRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("id, name, artists, genres, spotify_added_at, assigned_playlist, classified_at")
+    .eq("user_id", userId)
+    .eq("is_archived", false)
+    .not("classified_at", "is", null)
+    .order("spotify_added_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ProfileTrackRow[];
+}
+
+export async function markManuallyRemovedFromPlaylist(
+  trackDbIds: string[],
+  playlistId: string
+): Promise<void> {
+  if (trackDbIds.length === 0) return;
+  const supabase = createClient();
+  const { error } = await supabase.rpc("mark_manually_removed_from_playlist", {
+    p_track_ids: trackDbIds,
+    p_playlist_id: playlistId,
+  });
+  if (error) throw error;
 }

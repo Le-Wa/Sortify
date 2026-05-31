@@ -1,8 +1,10 @@
 import "@/lib/types";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@/lib/supabase/client";
 import { refreshSpotifyToken } from "@/lib/spotify/token";
+import { verifyHandoffToken } from "@/lib/byok-session";
 
 const SCOPES = [
   "user-library-read",
@@ -19,17 +21,37 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
       authorization: { params: { scope: SCOPES, show_dialog: true } },
     }),
+    CredentialsProvider({
+      id: "byok-handoff",
+      name: "BYOK Handoff",
+      credentials: { token: { type: "text" } },
+      async authorize(credentials) {
+        if (!credentials?.token) return null;
+        try {
+          const payload = verifyHandoffToken(credentials.token);
+          return { id: payload.spotifyId, name: payload.displayName };
+        } catch {
+          return null;
+        }
+      },
+    }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
-      // Initial sign-in: persist tokens and sync to DB
+    async jwt({ token, account, user, profile }) {
+      // BYOK handoff: CredentialsProvider sets user.id = spotifyId
+      if (account?.type === "credentials" && user) {
+        token.spotifyId = user.id;
+        // Access token will be loaded from DB on first API call
+        return token;
+      }
+
+      // Initial Spotify OAuth sign-in
       if (account) {
         const expiresAt = account.expires_at ?? Math.floor(Date.now() / 1000) + 3600;
 
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = expiresAt;
-        // providerAccountId is always the Spotify user ID
         token.spotifyId = account.providerAccountId;
 
         const supabase = createClient();
@@ -52,16 +74,31 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // Access token expired — refresh it
+      // Access token expired — refresh it (uses per-user credentials if available)
       try {
-        const refreshed = await refreshSpotifyToken(token.refreshToken ?? "");
+        const supabase = createClient();
+        const { data: dbUser } = await supabase
+          .from("users")
+          .select("refresh_token, spotify_client_id, spotify_client_secret_enc")
+          .eq("spotify_id", token.spotifyId)
+          .single();
+
+        let clientId: string | undefined;
+        let clientSecret: string | undefined;
+        if (dbUser?.spotify_client_id && dbUser.spotify_client_secret_enc) {
+          const { decryptAES256GCM } = await import("@/lib/crypto");
+          clientId = dbUser.spotify_client_id;
+          clientSecret = decryptAES256GCM(dbUser.spotify_client_secret_enc);
+        }
+
+        const refreshToken = dbUser?.refresh_token ?? token.refreshToken ?? "";
+        const refreshed = await refreshSpotifyToken(refreshToken, clientId, clientSecret);
 
         token.accessToken = refreshed.access_token;
         token.refreshToken = refreshed.refresh_token;
         token.expiresAt = refreshed.expires_at;
         delete token.error;
 
-        const supabase = createClient();
         await supabase
           .from("users")
           .update({
@@ -78,7 +115,20 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      session.accessToken = token.accessToken ?? "";
+      // For BYOK users whose token was just set, load access token from DB
+      if (!token.accessToken && token.spotifyId) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("users")
+          .select("access_token, expires_at")
+          .eq("spotify_id", token.spotifyId)
+          .single();
+        if (data) {
+          session.accessToken = data.access_token ?? "";
+        }
+      } else {
+        session.accessToken = token.accessToken ?? "";
+      }
       session.userId = token.spotifyId ?? "";
       if (token.error) session.error = token.error;
       return session;
