@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -61,6 +61,18 @@ export default function DevPersonaSwitcher() {
             Switcher
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 180, overflowY: "auto" }}>
+            {isDevUser && (
+              <button
+                onClick={() => signOut({ callbackUrl: "/api/auth/signin" })}
+                style={{
+                  background: "rgba(255,255,255,.06)", border: "1px solid #444",
+                  borderRadius: 6, padding: "6px 8px", cursor: "pointer",
+                  textAlign: "left", color: "#aaa", fontSize: 11,
+                }}
+              >
+                ← Mon vrai compte
+              </button>
+            )}
             {personas.map(p => (
               <button
                 key={p.spotify_id}
