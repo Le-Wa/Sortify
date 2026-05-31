@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import Sidebar from "./ui/Navbar";
 import MobileNav from "./ui/MobileNav";
+import DevPersonaSwitcher from "./ui/DevPersonaSwitcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
             {children}
           </div>
           <MobileNav />
+          {process.env.NODE_ENV !== "production" && <DevPersonaSwitcher />}
         </Providers>
       </body>
     </html>

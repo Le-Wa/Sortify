@@ -82,6 +82,28 @@ export default function S2Credentials({ onSuccess, onBack }: Props) {
         <button className="s-btn s-btn-primary ob-cta" disabled={!isValid || loading}>
           {loading ? "Vérification…" : "Valider et connecter Spotify →"}
         </button>
+
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            type="button"
+            className="ob-cta-secondary"
+            style={{ marginTop: 4, fontSize: 12 }}
+            onClick={async () => {
+              setLoading(true);
+              setError(null);
+              try {
+                const res = await fetch("/api/dev/byok-skip", { method: "POST" });
+                if (res.ok) onSuccess();
+                else setError("Vérifie que SPOTIFY_CLIENT_ID/SECRET sont dans .env.local");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+          >
+            ⚡ Dev — utiliser les credentials de l&apos;app
+          </button>
+        )}
       </form>
     </div>
   );
