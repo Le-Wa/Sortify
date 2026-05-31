@@ -81,7 +81,15 @@ export default function OnboardingV2Client({ initialStep, initialMode, initialSt
   }
 
   // ── Handle invite validation → start OAuth flow ──
-  function handleInviteSuccess() {
+  async function handleInviteSuccess() {
+    if (process.env.NODE_ENV !== "production") {
+      const res = await fetch("/api/dev/byok-skip", { method: "POST" });
+      const { token } = await res.json();
+      const { signIn } = await import("next-auth/react");
+      const result = await signIn("byok-handoff", { token, redirect: false });
+      if (result?.ok) setScreen("s3");
+      return;
+    }
     window.location.href = "/api/auth/spotify-byok/authorize";
   }
 
