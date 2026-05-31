@@ -11,11 +11,12 @@ export async function createPendingAuth(
 ): Promise<void> {
   const supabase = createClient();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const { randomBytes } = await import("crypto");
   const { error } = await supabase.from("pending_auth").insert({
     nonce,
     client_id: clientId,
     client_secret_enc: clientSecretEnc,
-    state: "",
+    state: randomBytes(24).toString("base64url"), // unique placeholder, overwritten by setPendingAuthState
     invited_by: invitedBy ?? null,
     expires_at: expiresAt,
   });
