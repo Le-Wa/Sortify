@@ -121,6 +121,14 @@ export async function runOnboardingJob(
   startStep = 1
 ): Promise<JobProgress> {
   const supabase = createClient();
+
+  // Dev personas have fake tokens — skip Spotify steps and mark done immediately
+  if (spotifyId.startsWith("dev_")) {
+    await supabase.from("users").update({ onboarding_step: 4 }).eq("id", dbUserId);
+    await updateOnboardingStatus(dbUserId, "complete");
+    return { step: 4, done: true };
+  }
+
   const deadline = Date.now() + 240_000; // 240s budget (60s safety margin)
 
   try {
