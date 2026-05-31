@@ -15,6 +15,7 @@ const SCOPES = [
 ].join(" ");
 
 export const authOptions: NextAuthOptions = {
+  session: { maxAge: 30 * 24 * 60 * 60 }, // 30 jours
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID!,
