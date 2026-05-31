@@ -63,7 +63,7 @@ export default function DevPersonaSwitcher() {
           <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 180, overflowY: "auto" }}>
             {isDevUser && (
               <button
-                onClick={() => signOut({ callbackUrl: "/api/auth/signin" })}
+                onClick={() => signOut({ callbackUrl: "/" })}
                 style={{
                   background: "rgba(255,255,255,.06)", border: "1px solid #444",
                   borderRadius: 6, padding: "6px 8px", cursor: "pointer",
