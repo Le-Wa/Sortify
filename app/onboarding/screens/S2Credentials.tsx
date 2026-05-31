@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 type Props = {
   onSuccess: () => void;
@@ -93,15 +94,19 @@ export default function S2Credentials({ onSuccess, onBack }: Props) {
               setError(null);
               try {
                 const res = await fetch("/api/dev/byok-skip", { method: "POST" });
-                if (res.ok) onSuccess();
-                else setError("Vérifie que SPOTIFY_CLIENT_ID/SECRET sont dans .env.local");
+                const data = await res.json();
+                if (!res.ok) { setError(data.error ?? "Erreur"); return; }
+                // Bypass OAuth — sign in directly with the handoff token
+                const result = await signIn("byok-handoff", { token: data.token, redirect: false });
+                if (result?.ok) onSuccess();
+                else setError("Sign-in échoué");
               } finally {
                 setLoading(false);
               }
             }}
             disabled={loading}
           >
-            ⚡ Dev — utiliser les credentials de l&apos;app
+            ⚡ Dev — bypasser l&apos;OAuth Spotify
           </button>
         )}
       </form>
