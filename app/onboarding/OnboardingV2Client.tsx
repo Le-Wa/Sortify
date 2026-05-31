@@ -72,8 +72,12 @@ export default function OnboardingV2Client({ initialStep, initialMode, initialSt
 
   // ── Handle credential validation → start OAuth flow ──
   function handleCredentialsSuccess() {
-    // Redirect to Spotify authorize using the user's own credentials
     window.location.href = "/api/auth/spotify-byok/authorize";
+  }
+
+  // ── Dev bypass: skip OAuth, go straight to S3 ──
+  function handleDevBypass() {
+    setScreen("s3");
   }
 
   // ── Handle invite validation → start OAuth flow ──
@@ -129,7 +133,7 @@ export default function OnboardingV2Client({ initialStep, initialMode, initialSt
       )}
 
       {screen === "s2" && (
-        <S2Credentials onSuccess={handleCredentialsSuccess} onBack={() => setScreen("s1")} />
+        <S2Credentials onSuccess={handleCredentialsSuccess} onDevBypass={handleDevBypass} onBack={() => setScreen("s1")} />
       )}
 
       {screen === "s3" && (

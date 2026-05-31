@@ -5,10 +5,11 @@ import { signIn } from "next-auth/react";
 
 type Props = {
   onSuccess: () => void;
+  onDevBypass: () => void;
   onBack: () => void;
 };
 
-export default function S2Credentials({ onSuccess, onBack }: Props) {
+export default function S2Credentials({ onSuccess, onDevBypass, onBack }: Props) {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
@@ -98,7 +99,7 @@ export default function S2Credentials({ onSuccess, onBack }: Props) {
                 if (!res.ok) { setError(data.error ?? "Erreur"); return; }
                 // Bypass OAuth — sign in directly with the handoff token
                 const result = await signIn("byok-handoff", { token: data.token, redirect: false });
-                if (result?.ok) onSuccess();
+                if (result?.ok) onDevBypass();
                 else setError("Sign-in échoué");
               } finally {
                 setLoading(false);
