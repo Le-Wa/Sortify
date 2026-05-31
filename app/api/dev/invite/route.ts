@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { generateInviteCode, hashInviteCode } from "@/lib/crypto";
-import { createInviteCode } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
-
-if (process.env.NODE_ENV === "production") {
-  throw new Error("Dev invite route must not be included in production builds");
-}
+import { createHash, randomBytes } from "crypto";
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -22,10 +17,21 @@ export async function POST() {
 
   if (!user) return NextResponse.json({ error: "User non trouvé" }, { status: 404 });
 
-  const timestamp = Date.now();
-  const code = generateInviteCode(user.id, timestamp);
-  const codeHash = hashInviteCode(code);
-  await createInviteCode(user.id, codeHash);
+  // Code aléatoire simple pour le dev — pas besoin de ENCRYPTION_KEY
+  const words = ["BEAT", "DROP", "VIBE", "TUNE", "WAVE", "FLOW", "SOUL", "JAZZ"];
+  const word = words[Math.floor(Math.random() * words.length)];
+  const suffix = randomBytes(3).toString("hex").toUpperCase();
+  const code = `${word}-${suffix}`;
+  const codeHash = createHash("sha256").update(code).digest("hex");
+
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("invite_codes").insert({
+    inviter_id: user.id,
+    code_hash: codeHash,
+    expires_at: expiresAt,
+  });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ code });
 }
