@@ -83,13 +83,29 @@ export default function DevPersonaSwitcher() {
             )}
           </div>
 
-          <Link
-            href="/admin/personas"
-            onClick={() => setOpen(false)}
-            style={{ display: "block", marginTop: 10, fontSize: 11, color: "#666", textDecoration: "none", textAlign: "center" }}
-          >
-            Gérer les personas →
-          </Link>
+          <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+            <Link
+              href="/admin/personas"
+              onClick={() => setOpen(false)}
+              style={{ flex: 1, fontSize: 11, color: "#666", textDecoration: "none", textAlign: "center", padding: "4px 0" }}
+            >
+              Gérer →
+            </Link>
+            <button
+              onClick={async () => {
+                const res = await fetch("/api/dev/invite", { method: "POST" });
+                const { code, error } = await res.json();
+                if (error) alert(error);
+                else { await navigator.clipboard.writeText(code); alert(`Code copié : ${code}`); }
+              }}
+              style={{
+                flex: 1, background: "rgba(255,255,255,.05)", border: "1px solid #333",
+                borderRadius: 6, color: "#aaa", fontSize: 11, cursor: "pointer", padding: "4px 0",
+              }}
+            >
+              🎟 Invite
+            </button>
+          </div>
         </div>
       )}
 
