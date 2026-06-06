@@ -14,6 +14,9 @@ interface Level3Result {
 // leaving less output budget for Haiku on large batches.
 const BATCH_SIZE = 5;
 const RETRY_DELAY_MS = 1000;
+// Max concurrent Haiku calls — prevents rate limit floods (65 hits observed with Promise.all on 100+ chunks)
+const CONCURRENCY = 4;
+const GROUP_DELAY_MS = 250;
 
 function formatCentroid(c: PlaylistCentroid): string {
   return `energy ${c.energy.toFixed(2)}, danceability ${c.danceability.toFixed(2)}, valence ${c.valence.toFixed(2)}, acousticness ${c.acousticness.toFixed(2)}`;
@@ -71,9 +74,12 @@ async function callBatchOnce(
       type: "text",
       text: [
         `Tu es un classificateur de musique pour une bibliothèque personnelle Spotify.`,
-        `Règle centrale : la **vibe** prime sur les étiquettes de genre. Un track peut appartenir à plusieurs playlists si sa vibe est partagée. Tes décisions doivent refléter une écoute humaine attentive, pas une catégorisation mécanique.`,
-        `Pour chaque track, utilise en priorité le llm_help_text de chaque playlist — il décrit la vibe, les cas limites, et ce qu'on exclut. Le centroïde audio est une aide secondaire.`,
-        `Réponds uniquement avec le JSON demandé, sans markdown. Le champ "reason" est en français, une phrase concise.`,
+        `Les playlists sont de deux natures différentes — adapte ton raisonnement en conséquence :`,
+        `- **Playlist de GENRE** : elle collecte un genre ou une sous-culture musicale précise (ex : "Rap FR", "Électro", "Jazz manouche"). Critère principal = l'appartenance au genre, indépendamment de la vibe. Un track rap français mélancolique va dans "Rap FR" même si sa vibe ne colle pas à l'ambiance générale de la playlist.`,
+        `- **Playlist de VIBE** : elle collecte par humeur, contexte ou énergie (ex : "Good Vibes", "Late Night", "Workout"). Critère principal = la vibe et l'intention d'écoute, indépendamment du genre. Un track électro calme peut aller dans "Late Night" si l'énergie colle.`,
+        `Comment identifier le type : lis le llm_help_text ou la description de la playlist. S'ils décrivent une ambiance/contexte → VIBE. S'ils décrivent un style musical/culture → GENRE. En l'absence de description, déduis-le du nom.`,
+        `Un track peut appartenir à plusieurs playlists si les critères sont remplis pour chacune (ex : un track rap FR énergique peut aller dans "Rap FR" ET dans "Workout").`,
+        `Réponds uniquement avec le JSON demandé, sans markdown. Le champ "reason" est en français, une phrase concise qui explique le type de playlist retenu et pourquoi le track correspond.`,
         `--- PLAYLISTS DISPONIBLES ---`,
         playlistContext,
       ].join("\n\n"),
@@ -86,7 +92,7 @@ async function callBatchOnce(
     ...buildTrackSummary(input),
   }));
 
-  const userMessage = `Assigne chaque track aux playlists dont elle correspond à la vibe. Si aucune playlist ne convient, retourne un tableau vide.
+  const userMessage = `Assigne chaque track aux playlists qui correspondent — genre pour les playlists de genre, vibe pour les playlists de vibe. Si aucune playlist ne convient, retourne un tableau vide.
 
 Tracks (${inputs.length}, indexés 0 à ${inputs.length - 1}) :
 ${JSON.stringify(tracksPayload, null, 2)}
@@ -180,18 +186,24 @@ export async function matchLevel3BatchV2(
     chunks.push({ start: i, batch: inputs.slice(i, i + BATCH_SIZE) });
   }
 
-  await Promise.all(
-    chunks.map(async ({ start, batch }) => {
-      try {
-        const batchResults = await callBatch(batch, playlists, anthropic);
-        for (let j = 0; j < batchResults.length; j++) {
-          results[start + j] = batchResults[j];
+  for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+    const group = chunks.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      group.map(async ({ start, batch }) => {
+        try {
+          const batchResults = await callBatch(batch, playlists, anthropic);
+          for (let j = 0; j < batchResults.length; j++) {
+            results[start + j] = batchResults[j];
+          }
+        } catch (err) {
+          console.error(`[L3-v2] batch starting at ${start} failed:`, err);
         }
-      } catch (err) {
-        console.error(`[L3-v2] batch starting at ${start} failed:`, err);
-      }
-    })
-  );
+      })
+    );
+    if (i + CONCURRENCY < chunks.length) {
+      await new Promise((r) => setTimeout(r, GROUP_DELAY_MS));
+    }
+  }
 
   return results;
 }

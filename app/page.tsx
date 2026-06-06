@@ -6,46 +6,61 @@ import SpotifySignInButton from "@/app/ui/SpotifySignInButton";
 
 const ACCENT = "#c6925a";
 const SPOTIFY_GREEN = "#1DB954";
-const SIGNIN_URL = "/api/auth/signin/spotify?callbackUrl=%2Fdashboard";
 
-const PILLS = [
-  { name: "Late Night Drive", color: "#c6925a" },
-  { name: "Dark Club", color: "#4e8fa8" },
-  { name: "Sunday Morning", color: "#7a9e5a" },
-  { name: "Mediterranean Vibes", color: "#3d7a70" },
-  { name: "Hip-Hop FR", color: "#7f77dd" },
-  { name: "Peak Hours", color: "#b85c48" },
-  { name: "Workout", color: "#c4a440" },
-  { name: "Jazz & Soul", color: "#c4758a" },
+const DEMO_TRACKS = [
+  { title: "Runaway", artist: "AURORA", playlist: "Late Night Drive", color: "#c6925a" },
+  { title: "Get Lucky", artist: "Daft Punk", playlist: "Workout", color: "#c4a440" },
+  { title: "No Ordinary Love", artist: "Sade", playlist: "Jazz & Soul", color: "#c4758a" },
 ];
 
 const FEATURES = [
   {
     title: "Tri automatique",
     desc: "Tes nouveaux likes sont analysés et rangés dans la bonne playlist — sans que tu n'aies rien à faire.",
+    colors: {
+      fg: "#c6925a",
+      iconBg: "rgba(198,146,90,0.15)",
+      iconBorder: "rgba(198,146,90,0.30)",
+      cardBg: "rgba(198,146,90,0.06)",
+      cardBorder: "rgba(198,146,90,0.18)",
+    },
     icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 18, height: 18 }}>
-        <path d="M2 4h12M5 8h6M8 12h0" strokeLinecap="round" />
-        <path d="M11 6l3-2-3-2M5 14L2 12l3-2" strokeLinecap="round" strokeLinejoin="round" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22 }}>
+        <path d="M3 7h18M7 12h10M11 17h2" strokeLinecap="round" />
+        <path d="M17 4l3 3-3 3M7 17L4 20l3 3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
   {
     title: "Classifieur intelligent",
     desc: "Genres, tempo, énergie — Sortify comprend le mood de chaque track et sait exactement où elle a sa place.",
+    colors: {
+      fg: "#6a9070",
+      iconBg: "rgba(106,144,112,0.15)",
+      iconBorder: "rgba(106,144,112,0.28)",
+      cardBg: "rgba(106,144,112,0.06)",
+      cardBorder: "rgba(106,144,112,0.18)",
+    },
     icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 18, height: 18 }}>
-        <circle cx="8" cy="8" r="5" />
-        <path d="M8 5v3l2 2" strokeLinecap="round" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22 }}>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     title: "Tes règles, ta logique",
     desc: "Configure tes playlists avec quelques mots. Sortify apprend et s'adapte à ta façon d'écouter.",
+    colors: {
+      fg: "#c89840",
+      iconBg: "rgba(200,152,64,0.14)",
+      iconBorder: "rgba(200,152,64,0.28)",
+      cardBg: "rgba(200,152,64,0.06)",
+      cardBorder: "rgba(200,152,64,0.18)",
+    },
     icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 18, height: 18 }}>
-        <path d="M2 5h2m8 0h2M6 5a2 2 0 104 0 2 2 0 00-4 0zM2 11h6m4 0h2M10 11a2 2 0 10-4 0 2 2 0 004 0z" strokeLinecap="round" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22 }}>
+        <path d="M2 7h2m14 0h4M8 7a3 3 0 106 0 3 3 0 00-6 0zM2 17h8m6 0h4M14 17a3 3 0 10-6 0 3 3 0 006 0z" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -88,15 +103,30 @@ export default async function RootPage() {
           grid-template-columns: repeat(3, 1fr);
           gap: 16px;
         }
+        @keyframes lp-tag-appear {
+          0%, 5%   { opacity: 0; transform: translateX(10px); }
+          18%      { opacity: 1; transform: translateX(0); }
+          74%      { opacity: 1; transform: translateX(0); }
+          84%      { opacity: 0; }
+          100%     { opacity: 0; }
+        }
+        .lp-demo-tag {
+          opacity: 0;
+          animation: lp-tag-appear 8s ease-out infinite;
+        }
+        .lp-demo-tag-0 { animation-delay: 0.4s; }
+        .lp-demo-tag-1 { animation-delay: 1.1s; }
+        .lp-demo-tag-2 { animation-delay: 1.8s; }
         @media (max-width: 640px) {
           .lp-features-grid { grid-template-columns: 1fr; }
-          .lp-hero { padding: 52px 20px 40px !important; }
+          .lp-hero { padding: 52px 20px 36px !important; }
           .lp-hero-title { font-size: 36px !important; }
           .lp-logo-hero { font-size: 52px !important; }
           .lp-section { padding: 48px 20px !important; }
           .lp-nav { padding: 0 16px !important; }
           .lp-nav-btn span { display: none; }
           .lp-bottom-cta-title { font-size: 34px !important; }
+          .lp-demo-tag { font-size: 10px !important; padding: 4px 8px !important; }
         }
       `}</style>
 
@@ -169,7 +199,7 @@ export default async function RootPage() {
               flexDirection: "column",
               alignItems: "center",
               textAlign: "center",
-              padding: "80px 24px 60px",
+              padding: "80px 24px 48px",
               maxWidth: 680,
               margin: "0 auto",
             }}
@@ -183,30 +213,10 @@ export default async function RootPage() {
                 color: "var(--ink)",
                 letterSpacing: "-0.02em",
                 lineHeight: 1,
-                marginBottom: 20,
+                marginBottom: 24,
               }}
             >
               Sortify<span style={{ color: ACCENT }}>.</span>
-            </div>
-
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: `${ACCENT}14`,
-                border: `0.5px solid ${ACCENT}4d`,
-                borderRadius: 20,
-                padding: "7px 16px",
-                fontSize: 12,
-                fontWeight: 500,
-                color: ACCENT,
-                marginBottom: 20,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-              }}
-            >
-              ✦ Compagnon Spotify
             </div>
 
             <h1
@@ -217,13 +227,25 @@ export default async function RootPage() {
                 color: "var(--ink)",
                 letterSpacing: "-0.03em",
                 lineHeight: 1.1,
-                marginBottom: 32,
+                marginBottom: 16,
               }}
             >
               Tes liked songs,
               <em style={{ fontStyle: "normal", color: ACCENT, display: "block" }}>enfin rangées</em>
             </h1>
 
+            <p
+              style={{
+                fontSize: 16,
+                color: "var(--ink-mid)",
+                lineHeight: 1.65,
+                maxWidth: 400,
+                marginBottom: 36,
+              }}
+            >
+              Connecte ton Spotify, décris tes playlists en deux mots —<br />
+              Sortify fait le reste chaque semaine.
+            </p>
 
             <SpotifySignInButton
               style={{
@@ -248,46 +270,126 @@ export default async function RootPage() {
             </p>
           </section>
 
-          {/* ── Playlist pills ── */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              gap: 8,
-              padding: "0 24px 72px",
-              maxWidth: 680,
-              margin: "0 auto",
-            }}
-          >
-            {PILLS.map(({ name, color }) => (
-              <span
-                key={name}
+          {/* ── Sort demo ── */}
+          <div style={{ padding: "0 24px 72px", maxWidth: 540, margin: "0 auto" }}>
+            <div
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border-strong)",
+                borderRadius: 20,
+                overflow: "hidden",
+              }}
+            >
+              {/* Demo header */}
+              <div
                 style={{
-                  display: "inline-flex",
+                  padding: "11px 20px",
+                  borderBottom: "1px solid var(--border)",
+                  display: "flex",
                   alignItems: "center",
-                  gap: 7,
-                  padding: "7px 15px",
-                  borderRadius: 40,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  background: `${color}18`,
-                  border: `1px solid ${color}38`,
-                  color,
+                  justifyContent: "space-between",
                 }}
               >
-                <span
+                <div
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: color,
-                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: SPOTIFY_GREEN,
                   }}
-                />
-                {name}
-              </span>
-            ))}
+                >
+                  <SpotifyIcon size={13} />
+                  Liked Songs
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11,
+                    color: "var(--ink-dim)",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#4ade80",
+                      display: "inline-block",
+                      boxShadow: "0 0 5px #4ade8066",
+                    }}
+                  />
+                  Tri en cours
+                </div>
+              </div>
+
+              {/* Track rows */}
+              {DEMO_TRACKS.map(({ title, artist, playlist, color }, i) => (
+                <div
+                  key={title}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    padding: "14px 20px",
+                    borderBottom:
+                      i < DEMO_TRACKS.length - 1 ? "1px solid var(--border)" : "none",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                        letterSpacing: "-0.01em",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 2 }}>
+                      {artist}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`lp-demo-tag lp-demo-tag-${i}`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "5px 10px",
+                      borderRadius: 20,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      background: `${color}18`,
+                      border: `1px solid ${color}40`,
+                      color,
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: "50%",
+                        background: color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {playlist}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* ── Features ── */}
@@ -316,28 +418,28 @@ export default async function RootPage() {
               </p>
 
               <div className="lp-features-grid">
-                {FEATURES.map(({ title, desc, icon }) => (
+                {FEATURES.map(({ title, desc, icon, colors }) => (
                   <div
                     key={title}
                     style={{
-                      background: "var(--surface2)",
-                      border: "1px solid var(--border-strong)",
+                      background: colors.cardBg,
+                      border: `1px solid ${colors.cardBorder}`,
                       borderRadius: 20,
                       padding: "28px 24px",
                     }}
                   >
                     <div
                       style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: `${ACCENT}18`,
-                        border: `1px solid ${ACCENT}35`,
+                        width: 52,
+                        height: 52,
+                        borderRadius: 14,
+                        background: colors.iconBg,
+                        border: `1px solid ${colors.iconBorder}`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         marginBottom: 20,
-                        color: ACCENT,
+                        color: colors.fg,
                       }}
                     >
                       {icon}

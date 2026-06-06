@@ -234,6 +234,15 @@ export default function Sidebar() {
               }}
             >
               <Link
+                href="/profile"
+                onClick={() => setUserMenuOpen(false)}
+                style={{ ...ddItem }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface2)"; (e.currentTarget as HTMLElement).style.color = "var(--ink)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = "var(--ink-mid)"; }}
+              >
+                Sonic portrait
+              </Link>
+              <Link
                 href="/settings"
                 onClick={() => setUserMenuOpen(false)}
                 style={{ ...ddItem }}

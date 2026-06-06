@@ -37,6 +37,59 @@ async function assertOk(res: Response, ctx: string): Promise<void> {
 // ── Public fetchers ────────────────────────────────────────────────────────────
 
 /**
+ * Returns ALL liked track IDs for the current user (full pagination).
+ * Used for unlike detection — compares against DB tracks with is_liked = true.
+ */
+export async function getAllLikedTrackIds(token: string): Promise<string[]> {
+  const ids: string[] = [];
+  let url: string | null =
+    `${BASE}/me/tracks?fields=next%2Citems(track(id))&limit=50`;
+
+  while (url) {
+    const res = await spotifyFetch(url, token);
+    await assertOk(res, "getAllLikedTrackIds");
+    const data = (await res.json()) as {
+      items: Array<{ track: { id: string } | null }>;
+      next: string | null;
+    };
+    for (const item of data.items) {
+      if (item.track?.id) ids.push(item.track.id);
+    }
+    url = data.next;
+  }
+
+  return ids;
+}
+
+/**
+ * Removes tracks from a Spotify playlist in batches of 100.
+ */
+export async function removeTracksFromPlaylist(
+  token: string,
+  spotifyPlaylistId: string,
+  trackIds: string[]
+): Promise<void> {
+  if (trackIds.length === 0) return;
+  const BATCH = 100;
+  for (let i = 0; i < trackIds.length; i += BATCH) {
+    const batch = trackIds.slice(i, i + BATCH);
+    const res = await spotifyFetch(
+      `${BASE}/playlists/${spotifyPlaylistId}/tracks`,
+      token,
+      3,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tracks: batch.map((id) => ({ uri: `spotify:track:${id}` })),
+        }),
+      }
+    );
+    await assertOk(res, "removeTracksFromPlaylist");
+  }
+}
+
+/**
  * Returns all liked tracks added strictly after `date`, in newest-first order.
  * Stops paginating as soon as it encounters a track older than the cutoff.
  */
@@ -250,6 +303,7 @@ export interface SpotifyUserPlaylist {
   description: string | null;
   images: { url: string }[];
   tracks: { total: number } | null;
+  owner: { id: string };
 }
 
 /**

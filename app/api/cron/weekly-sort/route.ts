@@ -3,17 +3,24 @@ import { resolveGenres } from "@/lib/enrichment";
 import { classifyBatch } from "@/lib/classifier/engine";
 import {
   addTracksToPlaylist,
+  getAllLikedTrackIds,
   getAudioFeaturesBatch,
   getLikedSinceDate,
+  getPlaylistTracks,
+  removeTracksFromPlaylist,
   type SavedTrackItem,
 } from "@/lib/spotify/fetchers";
 import { refreshAccessToken } from "@/lib/spotify/token";
 import {
   getCronEnabledUsers,
   getClassifiedTrackIds,
+  getLikedTracksWithPlaylist,
   getPlaylistAssignedFeatures,
+  getTracksAssignedToPlaylist,
   getUserPlaylists,
   insertClassificationLog,
+  markManuallyRemovedFromPlaylist,
+  markTracksUnliked,
   saveLastCronReport,
   updatePlaylistCentroid,
   upsertLikedTracks,
@@ -37,6 +44,8 @@ const CENTROID_DIMS: CentroidDim[] = [
 interface ProcessReport {
   imported: number;
   already_existing: number;
+  unliked: number;
+  manually_removed: number;
   enriched: number;
   enrichment_failures: number;
   classified_auto: number;
@@ -77,6 +86,8 @@ async function processUser(
   const report: ProcessReport = {
     imported: 0,
     already_existing: 0,
+    unliked: 0,
+    manually_removed: 0,
     enriched: 0,
     enrichment_failures: 0,
     classified_auto: 0,
@@ -85,6 +96,66 @@ async function processUser(
   };
 
   const token = await refreshAccessToken(user.spotify_id);
+
+  // ── Step 2: Unlike detection ─────────────────────────────────────────────────
+  try {
+    const [spotifyLikedIds, dbLikedTracks] = await Promise.all([
+      getAllLikedTrackIds(token),
+      getLikedTracksWithPlaylist(user.id),
+    ]);
+    const spotifySet = new Set(spotifyLikedIds);
+    const unliked = dbLikedTracks.filter(
+      (t) => !spotifySet.has(t.spotify_track_id)
+    );
+    if (unliked.length > 0) {
+      // Remove from Spotify playlists grouped by playlist to minimise API calls
+      const byPlaylist = new Map<string, string[]>();
+      for (const t of unliked) {
+        if (!t.spotify_playlist_id) continue;
+        const list = byPlaylist.get(t.spotify_playlist_id) ?? [];
+        list.push(t.spotify_track_id);
+        byPlaylist.set(t.spotify_playlist_id, list);
+      }
+      await Promise.all(
+        [...byPlaylist.entries()].map(([pid, ids]) =>
+          removeTracksFromPlaylist(token, pid, ids)
+        )
+      );
+      await markTracksUnliked(
+        user.id,
+        unliked.map((t) => t.spotify_track_id)
+      );
+      report.unliked = unliked.length;
+    }
+  } catch (err) {
+    report.errors.push(`unlike-detection: ${String(err)}`);
+  }
+
+  // ── Step 3: Manual-removal detection ────────────────────────────────────────
+  try {
+    const playlists = await getUserPlaylists(user.id);
+    await Promise.all(
+      playlists.map(async (playlist) => {
+        const [liveIds, dbTracks] = await Promise.all([
+          getPlaylistTracks(token, playlist.spotify_playlist_id),
+          getTracksAssignedToPlaylist(user.id, playlist.id),
+        ]);
+        const liveSet = new Set(liveIds);
+        const removed = dbTracks.filter((t) => !liveSet.has(t.spotify_track_id));
+        if (removed.length > 0) {
+          await markManuallyRemovedFromPlaylist(
+            removed.map((t) => t.id),
+            playlist.id
+          );
+          report.manually_removed += removed.length;
+        }
+      })
+    );
+  } catch (err) {
+    report.errors.push(`manual-removal-detection: ${String(err)}`);
+  }
+
+  // ── Step 1: Import new liked tracks ─────────────────────────────────────────
   const likedItems = await getLikedSinceDate(token, since);
   if (likedItems.length === 0) return report;
 

@@ -19,12 +19,14 @@ export async function GET(): Promise<Response> {
     const playlists = await getUserSpotifyPlaylists(token);
 
     return Response.json(
-      playlists.map((p) => ({
-        id: p.id,
-        name: p.name,
-        tracks_total: p.tracks?.total ?? 0,
-        already_linked: linkedIds.has(p.id),
-      }))
+      playlists
+        .filter((p) => p.owner.id === session.userId)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          tracks_total: p.tracks?.total ?? 0,
+          already_linked: linkedIds.has(p.id),
+        }))
     );
   } catch (err) {
     console.error("[my-playlists]", err);

@@ -11,6 +11,15 @@ import {
 import Link from "next/link";
 import DashboardActions from "./DashboardActions";
 import DashboardInboxPreview from "./DashboardInboxPreview";
+import { playlistSwatch } from "@/lib/playlist-swatch";
+
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 const MS_30D = 30 * 24 * 60 * 60 * 1000;
 
@@ -76,7 +85,6 @@ export default async function DashboardPage() {
   }
 
   const firstName = session.user?.name?.split(" ")[0] ?? "toi";
-  const swatchColors = ["#c89840", "#8878d0", "#6a9070", "#c87a52", "#a06848", "#508860"];
 
   const needsReview = counts.needs_review;
   const isNew = counts.imported === 0;
@@ -146,17 +154,20 @@ export default async function DashboardPage() {
         <section style={{ marginTop: 32 }}>
           <div className="s-section-title">Playlists</div>
           <div className="s-pl-grid">
-            {playlists.map((pl, i) => {
-              const swatch = swatchColors[i % swatchColors.length];
+            {playlists.map((pl) => {
+              const swatch = playlistSwatch(pl.id);
               const trackCount = trackCountByPlaylist.get(pl.id) ?? 0;
               return (
                 <Link
                   key={pl.id}
                   href={`/playlists/${pl.id}`}
                   className="s-pl-card"
-                  style={{ textDecoration: "none", display: "block" }}
+                  style={{
+                    textDecoration: "none", display: "block",
+                    background: hexToRgba(swatch, 0.10),
+                    borderColor: `${swatch}44`,
+                  }}
                 >
-                  <div style={{ height: 3, borderRadius: 2, background: swatch, marginBottom: 14, opacity: 0.85 }} />
                   <div
                     className="font-fraunces"
                     style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", marginBottom: 6, lineHeight: 1.2 }}
@@ -177,6 +188,7 @@ export default async function DashboardPage() {
                       titres
                     </span>
                   </div>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: swatch }} />
                 </Link>
               );
             })}

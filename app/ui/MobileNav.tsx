@@ -112,36 +112,38 @@ export default function MobileNav() {
           );
         })}
 
-        {/* Profil — ouvre un bottom sheet */}
-        <button
-          onClick={() => setProfileOpen(true)}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 3,
-            padding: "4px 6px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--ink-dim)",
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          {userImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={userImage} width={20} height={20} style={{ borderRadius: "50%", opacity: 0.7 }} alt="" />
-          ) : (
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 20, height: 20, opacity: 0.6 }}>
-              <circle cx="8" cy="6" r="3" />
-              <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-            </svg>
-          )}
-          <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: "0.02em" }}>
-            {userName}
-          </span>
-        </button>
+        {/* Profil — nav directe, bottom sheet si déjà sur /profile */}
+        {pathname === "/profile" ? (
+          <button
+            onClick={() => setProfileOpen(true)}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 6px", background: "none", border: "none", cursor: "pointer", color: "var(--terra)", flex: 1, minWidth: 0 }}
+          >
+            {userImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={userImage} width={20} height={20} style={{ borderRadius: "50%" }} alt="" />
+            ) : (
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 20, height: 20 }}>
+                <circle cx="8" cy="6" r="3" /><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+              </svg>
+            )}
+            <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.02em", color: "var(--terra)" }}>{userName}</span>
+          </button>
+        ) : (
+          <Link
+            href="/profile"
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 6px", color: "var(--ink-dim)", textDecoration: "none", flex: 1, minWidth: 0 }}
+          >
+            {userImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={userImage} width={20} height={20} style={{ borderRadius: "50%", opacity: 0.6 }} alt="" />
+            ) : (
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 20, height: 20, opacity: 0.6 }}>
+                <circle cx="8" cy="6" r="3" /><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+              </svg>
+            )}
+            <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: "0.02em" }}>{userName}</span>
+          </Link>
+        )}
       </nav>
 
       {/* Profil bottom sheet */}
@@ -166,6 +168,10 @@ export default function MobileNav() {
             </div>
 
             <div className="s-bs-sep" />
+
+            <Link href="/profile" onClick={() => setProfileOpen(false)} className="s-bs-item" style={{ textDecoration: "none" }}>
+              Sonic portrait
+            </Link>
 
             <Link href="/settings" onClick={() => setProfileOpen(false)} className="s-bs-item" style={{ textDecoration: "none" }}>
               Paramètres

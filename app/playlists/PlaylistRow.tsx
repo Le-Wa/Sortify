@@ -89,7 +89,8 @@ export default function PlaylistRow({
       className="s-pl-row"
       style={{
         opacity: isDragging ? 0.35 : 1,
-        borderColor: isOver ? "var(--terra)" : undefined,
+        background: hexToRgba(swatch, 0.07),
+        borderColor: isOver ? "var(--terra)" : `${swatch}33`,
         outline: isOver ? "1px solid var(--terra-border)" : "none",
       }}
     >

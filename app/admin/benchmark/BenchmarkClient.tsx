@@ -438,10 +438,12 @@ function TrackRow({
 function TrainModal({
   suggestions,
   onClose,
+  onClear,
   onApply,
 }: {
   suggestions: TrainSuggestion[];
   onClose: () => void;
+  onClear: () => void;
   onApply: (playlistId: string, text: string) => Promise<void>;
 }) {
   const [applying, setApplying] = useState<string | null>(null);
@@ -470,7 +472,6 @@ function TrainModal({
         alignItems: "flex-end",
         justifyContent: "center",
         zIndex: 1000,
-        padding: "0 0 0 0",
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -481,83 +482,96 @@ function TrainModal({
           width: "100%",
           maxWidth: 720,
           maxHeight: "85vh",
-          overflow: "auto",
-          padding: "24px 20px 32px",
           display: "flex",
           flexDirection: "column",
-          gap: 20,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>
-            Suggestions d'entraînement
-          </h2>
-          <button
-            onClick={onClose}
-            style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--ink-dim)", padding: "4px 8px" }}
-          >
-            ×
-          </button>
+        {/* Sticky header */}
+        <div style={{ padding: "20px 20px 12px", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>
+              Suggestions d'entraînement
+            </h2>
+            <button
+              onClick={onClose}
+              style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--ink-dim)", padding: "4px 8px" }}
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: "var(--ink-mid)" }}>
+            Basé sur tes {suggestions.reduce((s, x) => s + x.examples_count, 0)} corrections.
+            Édite si besoin, puis applique playlist par playlist.
+          </p>
         </div>
 
-        <p style={{ fontSize: 12, color: "var(--ink-mid)" }}>
-          Basé sur tes {suggestions.reduce((s, x) => s + x.examples_count, 0)} corrections.
-          Édite si besoin, puis applique playlist par playlist.
-        </p>
-
-        {suggestions.map((s) => (
-          <div
-            key={s.playlist_id}
-            style={{
-              borderRadius: 12,
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)" }}>{s.playlist_name}</p>
-                <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 2 }}>
-                  {s.examples_count} track{s.examples_count > 1 ? "s" : ""} labelisés · {s.reasoning}
-                </p>
-              </div>
-              <button
-                onClick={() => void handleApply(s.playlist_id)}
-                disabled={applying === s.playlist_id || applied.has(s.playlist_id)}
-                className="s-btn s-btn-sm"
-                style={{ opacity: applying === s.playlist_id ? 0.6 : 1, flexShrink: 0 }}
-              >
-                {applied.has(s.playlist_id) ? "✓ Appliqué" : applying === s.playlist_id ? "…" : "Appliquer"}
-              </button>
-            </div>
-
-            <div style={{ padding: 14, display: "grid", gap: 10 }}>
-              {s.current_llm_help_text && (
-                <div>
-                  <p style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-dimmer)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Actuel</p>
-                  <p style={{ fontSize: 11, color: "var(--ink-dim)", lineHeight: 1.5 }}>{s.current_llm_help_text}</p>
+        {/* Scrollable content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {suggestions.map((s) => (
+            <div
+              key={s.playlist_id}
+              style={{
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+              }}
+            >
+              {/* Card header */}
+              <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)" }}>{s.playlist_name}</p>
+                  <p style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 2, lineHeight: 1.4 }}>
+                    {s.examples_count} track{s.examples_count > 1 ? "s" : ""} labelisés · {s.reasoning}
+                  </p>
                 </div>
-              )}
-              <div>
-                <p style={{ fontSize: 10, fontWeight: 600, color: "var(--terra)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Suggéré</p>
-                <textarea
-                  value={edited[s.playlist_id]}
-                  onChange={(e) => setEdited((prev) => ({ ...prev, [s.playlist_id]: e.target.value }))}
-                  rows={4}
-                  className="s-input"
-                  style={{ fontSize: 12, resize: "vertical", width: "100%", boxSizing: "border-box" }}
-                />
+                <button
+                  onClick={() => void handleApply(s.playlist_id)}
+                  disabled={applying === s.playlist_id || applied.has(s.playlist_id)}
+                  className="s-btn s-btn-sm"
+                  style={{ opacity: applying === s.playlist_id ? 0.6 : 1, flexShrink: 0 }}
+                >
+                  {applied.has(s.playlist_id) ? "✓ Appliqué" : applying === s.playlist_id ? "…" : "Appliquer"}
+                </button>
+              </div>
+
+              {/* Card body */}
+              <div style={{ padding: 14, display: "grid", gap: 10 }}>
+                {s.current_llm_help_text && (
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-dimmer)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Actuel</p>
+                    <p style={{ fontSize: 11, color: "var(--ink-dim)", lineHeight: 1.5 }}>{s.current_llm_help_text}</p>
+                  </div>
+                )}
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 600, color: "var(--terra)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Suggéré</p>
+                  <textarea
+                    value={edited[s.playlist_id]}
+                    onChange={(e) => setEdited((prev) => ({ ...prev, [s.playlist_id]: e.target.value }))}
+                    rows={4}
+                    className="s-input"
+                    style={{ fontSize: 12, resize: "vertical", width: "100%", boxSizing: "border-box" }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+
+          {/* Footer action */}
+          <button
+            onClick={onClear}
+            style={{ alignSelf: "center", background: "none", border: "none", fontSize: 11, color: "var(--ink-dimmer)", cursor: "pointer", padding: "8px 16px" }}
+          >
+            Effacer les suggestions
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = "benchmark_train_suggestions";
 
 export default function BenchmarkClient() {
   const [tracks, setTracks] = useState<BenchmarkTrack[]>([]);
@@ -569,6 +583,7 @@ export default function BenchmarkClient() {
   const [filter, setFilter] = useState<FilterTab>("all");
   const [filterPlaylist, setFilterPlaylist] = useState("");
   const [trainSuggestions, setTrainSuggestions] = useState<TrainSuggestion[] | null>(null);
+  const [showTrainModal, setShowTrainModal] = useState(false);
   const [training, setTraining] = useState(false);
 
   const load = useCallback(async () => {
@@ -590,6 +605,13 @@ export default function BenchmarkClient() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { setTrainSuggestions(JSON.parse(saved) as TrainSuggestion[]); } catch { /* ignore */ }
+    }
+  }, []);
 
   async function handleRun() {
     setRunning(true);
@@ -622,10 +644,19 @@ export default function BenchmarkClient() {
       const res = await fetch("/api/admin/benchmark/train", { method: "POST" });
       const data = (await res.json()) as { suggestions?: TrainSuggestion[]; error?: string };
       if (data.error) { alert(data.error); return; }
-      setTrainSuggestions(data.suggestions ?? []);
+      const suggestions = data.suggestions ?? [];
+      setTrainSuggestions(suggestions);
+      setShowTrainModal(true);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(suggestions));
     } finally {
       setTraining(false);
     }
+  }
+
+  function handleClearSuggestions() {
+    setTrainSuggestions(null);
+    setShowTrainModal(false);
+    localStorage.removeItem(STORAGE_KEY);
   }
 
   async function handleApply(playlistId: string, text: string) {
@@ -681,14 +712,23 @@ export default function BenchmarkClient() {
           )}
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {trainSuggestions && !showTrainModal && (
+            <button
+              onClick={() => setShowTrainModal(true)}
+              className="s-btn s-btn-sm"
+              style={{ background: "var(--terra)", color: "#fff", border: "none" }}
+            >
+              Voir suggestions ({trainSuggestions.length})
+            </button>
+          )}
           {labeled > 0 && (
             <button
               onClick={() => void handleTrain()}
               disabled={training}
               className="s-btn s-btn-sm"
-              style={{ opacity: training ? 0.6 : 1, background: "var(--terra)", color: "#fff", border: "none" }}
+              style={{ opacity: training ? 0.6 : 1 }}
             >
-              {training ? "Analyse…" : `Générer suggestions (${labeled})`}
+              {training ? "Analyse…" : `Régénérer suggestions (${labeled})`}
             </button>
           )}
           <button
@@ -818,10 +858,11 @@ export default function BenchmarkClient() {
       )}
 
       {/* Train modal */}
-      {trainSuggestions && (
+      {trainSuggestions && showTrainModal && (
         <TrainModal
           suggestions={trainSuggestions}
-          onClose={() => setTrainSuggestions(null)}
+          onClose={() => setShowTrainModal(false)}
+          onClear={handleClearSuggestions}
           onApply={handleApply}
         />
       )}
