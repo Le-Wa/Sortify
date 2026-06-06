@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const supabase = createClient();
   const { data: user } = await supabase
     .from("users")
-    .select("id, onboarding_status, onboarding_step, onboarding_mode")
+    .select("id, onboarding_status, onboarding_step, onboarding_mode, proposal_ready")
     .eq("spotify_id", session.userId)
     .single();
 
@@ -60,8 +60,14 @@ export async function GET(req: NextRequest) {
     pct,
     step,
     imported: total,
+    enriched,
     classified,
+    import_count: total,
+    enrich_count: enriched,
+    enrich_total: total,
+    classify_count: classified,
     inbox_count: inboxCount,
     onboarding_status: user.onboarding_status,
+    proposal_ready: user.proposal_ready ?? false,
   });
 }
