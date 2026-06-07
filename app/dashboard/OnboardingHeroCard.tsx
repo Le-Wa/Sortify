@@ -176,12 +176,21 @@ export default function OnboardingHeroCard({
   if (mode === "auto") {
     if (proposalReady) {
       return (
-        <div className="s-card" style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 16 }}>Ton analyse est prête.</div>
-          <div style={{ fontSize: 13, color: "var(--ink-dim)" }}>
-            Sortify a analysé ta bibliothèque et te propose une organisation.
+        <div className="s-card" style={{
+          marginBottom: 24, padding: "20px 22px",
+          display: "flex", flexDirection: "column", gap: 14,
+          borderColor: "var(--terra-border)",
+          background: "linear-gradient(135deg, rgba(200,122,82,0.06) 0%, transparent 60%)",
+        }}>
+          <div>
+            <div className="font-fraunces" style={{ fontWeight: 700, color: "var(--ink)", fontSize: 20, letterSpacing: "-0.3px", marginBottom: 6 }}>
+              Ton analyse est prête.
+            </div>
+            <div style={{ fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.55 }}>
+              Sortify a analysé ta bibliothèque et te propose une organisation en playlists.
+            </div>
           </div>
-          <a href="/onboarding/propose" className="s-btn s-btn-primary" style={{ textDecoration: "none", alignSelf: "flex-start" }}>
+          <a href="/onboarding/propose" className="s-btn s-btn-primary" style={{ textDecoration: "none", alignSelf: "flex-start", fontSize: 13, fontWeight: 600 }}>
             Voir ma proposition →
           </a>
         </div>
@@ -208,7 +217,7 @@ export default function OnboardingHeroCard({
     ];
 
     return (
-      <div className="s-card" style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="s-card" style={{ marginBottom: 24, padding: "18px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-mid)" }}>Analyse en cours…</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {stepItems.map((s) => (
@@ -235,8 +244,8 @@ export default function OnboardingHeroCard({
   // ── Mode null — orientation (A1) ────────────────────────────────────────────
   return (
     <>
-      <div className="s-card" style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 17, fontFamily: "var(--font-fraunces), serif" }}>
+      <div className="s-card" style={{ marginBottom: 24, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="font-fraunces" style={{ fontWeight: 700, color: "var(--ink)", fontSize: 20, letterSpacing: "-0.3px" }}>
           Bienvenue — configurons ton Sortify.
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -321,7 +330,7 @@ export default function OnboardingHeroCard({
                       onClick={() => setPeriod(opt.value)}
                       style={{
                         background: period === opt.value ? "var(--terra)" : undefined,
-                        color: period === opt.value ? "#fff" : undefined,
+                        color: period === opt.value ? "var(--bg)" : undefined,
                         borderColor: period === opt.value ? "var(--terra)" : undefined,
                       }}
                     >
