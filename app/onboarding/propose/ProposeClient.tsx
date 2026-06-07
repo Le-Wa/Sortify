@@ -7,6 +7,25 @@ import type {
   TaxonomyProposal,
 } from "@/app/api/onboarding/propose-taxonomy/route";
 
+const SWATCH_COLORS = [
+  "#c8935a", // Ambre
+  "#c4a440", // Moutarde
+  "#b85c48", // Brique
+  "#c4758a", // Rose poudré
+  "#7f77dd", // Lavande
+  "#4e8fa8", // Ardoise
+  "#7a9e5a", // Olive
+  "#3d7a70", // Pétrole
+];
+
+function hexToRgba(hex: string, alpha: number) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 type EditablePlaylist = ProposedPlaylist & {
   _id: string;
   _deleted: boolean;
@@ -20,10 +39,10 @@ function uid() {
 function Spinner() {
   return (
     <span style={{
-      display: "inline-block", width: 14, height: 14, borderRadius: "50%",
+      display: "inline-block", width: 13, height: 13, borderRadius: "50%",
       border: "2px solid var(--terra)", borderTopColor: "transparent",
-      animation: "spin 0.8s linear infinite",
-      verticalAlign: "middle",
+      animation: "spin 0.8s linear infinite", verticalAlign: "middle",
+      flexShrink: 0,
     }} />
   );
 }
@@ -32,38 +51,26 @@ export default function ProposeClient() {
   const router = useRouter();
   const [proposal, setProposal] = useState<TaxonomyProposal | null>(null);
   const [playlists, setPlaylists] = useState<EditablePlaylist[]>([]);
-  const [targetCount, setTargetCount] = useState(4);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
-
-  // Inline editing of llm_help_text
   const [editingId, setEditingId] = useState<string | null>(null);
   const [helpDraft, setHelpDraft] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  async function fetchProposal(force = false, count = targetCount) {
+  async function fetchProposal(force = false) {
     try {
       const res = await fetch("/api/onboarding/propose-taxonomy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ force, target_count: count }),
+        body: JSON.stringify({ force, target_count: 6 }),
       });
       const data = await res.json() as TaxonomyProposal & { error?: string };
-      if (!res.ok || data.error) {
-        setError(data.error ?? "Erreur inconnue");
-        return;
-      }
+      if (!res.ok || data.error) { setError(data.error ?? "Erreur inconnue"); return; }
       setProposal(data);
-      setTargetCount(data.target_count ?? count);
       setPlaylists(
-        (data.playlists ?? []).map((p, i) => ({
-          ...p,
-          _id: uid(),
-          _deleted: false,
-          _origIndex: i,
-        }))
+        (data.playlists ?? []).map((p, i) => ({ ...p, _id: uid(), _deleted: false, _origIndex: i }))
       );
     } catch (e) {
       setError(String(e));
@@ -71,21 +78,15 @@ export default function ProposeClient() {
   }
 
   useEffect(() => {
-    fetchProposal(false, 4).finally(() => setLoading(false));
+    fetchProposal(false).finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function regenerate(count = targetCount) {
+  async function regenerate() {
     setRegenerating(true);
     setError(null);
-    await fetchProposal(true, count);
+    await fetchProposal(true);
     setRegenerating(false);
-  }
-
-  async function handleSegmentChange(delta: number) {
-    const next = Math.min(8, Math.max(2, targetCount + delta));
-    setTargetCount(next);
-    await regenerate(next);
   }
 
   function updatePlaylist(id: string, patch: Partial<EditablePlaylist>) {
@@ -110,27 +111,17 @@ export default function ProposeClient() {
   }
 
   function addPlaylist() {
-    setPlaylists((prev) => [
-      ...prev,
-      {
-        _id: uid(),
-        _deleted: false,
-        _origIndex: -1,
-        name: "",
-        description: "",
-        llm_help_text: "",
-        genres_include: [],
-        genres_exclude: [],
-        example_artists: [],
-        coverage: { matched: 0, total: 0, pct: 0, sample_tracks: [] },
-      },
-    ]);
+    setPlaylists((prev) => [...prev, {
+      _id: uid(), _deleted: false, _origIndex: -1,
+      name: "", description: "", llm_help_text: "",
+      genres_include: [], genres_exclude: [], example_artists: [],
+      coverage: { matched: 0, total: 0, pct: 0, sample_tracks: [] },
+    }]);
   }
 
   async function validate() {
     setValidating(true);
     const toCreate = playlists.filter((p) => !p._deleted && p.name.trim());
-
     for (const pl of toCreate) {
       const res = await fetch("/api/playlists", {
         method: "POST",
@@ -152,10 +143,7 @@ export default function ProposeClient() {
         return;
       }
     }
-
-    // Effacer la proposition temporaire
     await fetch("/api/onboarding/taxonomy-proposal", { method: "DELETE" }).catch(() => {});
-
     await fetch("/api/onboarding/jobs/start", { method: "POST" });
     router.replace("/dashboard");
   }
@@ -166,7 +154,7 @@ export default function ProposeClient() {
         <div style={{ textAlign: "center", color: "var(--ink-dim)" }}>
           <Spinner />
           <div style={{ fontSize: 14, marginTop: 12 }}>Analyse de ta bibliothèque…</div>
-          <div style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 4 }}>Quelques secondes</div>
+          <div style={{ fontSize: 12, color: "var(--ink-dimmer)", marginTop: 4 }}>Quelques secondes</div>
         </div>
       </main>
     );
@@ -192,169 +180,168 @@ export default function ProposeClient() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* En-tête */}
-      <div style={{ marginBottom: 6 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <h1 className="font-fraunces" style={{ fontSize: 28, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.4px", lineHeight: 1.2 }}>
-            Ton organisation proposée
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 28 }}>
+        <div>
+          <h1 className="font-fraunces" style={{ fontSize: 30, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.5px", lineHeight: 1.15, marginBottom: 8 }}>
+            Ton organisation<br />proposée
           </h1>
-          <button
-            className="s-btn s-btn-sm"
-            disabled={regenerating}
-            onClick={() => regenerate()}
-            style={{ flexShrink: 0, marginTop: 4, whiteSpace: "nowrap" }}
-          >
-            {regenerating ? <><Spinner />&nbsp;…</> : "Régénérer"}
-          </button>
+          <p style={{ fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.6, maxWidth: 340, margin: 0 }}>
+            Sortify a analysé ta bibliothèque. Valide, renomme ou supprime les playlists avant de lancer le tri.
+          </p>
         </div>
-        <p style={{ color: "var(--ink-dim)", fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>
-          Sortify a analysé ta bibliothèque. Valide, renomme ou supprime les playlists.
-        </p>
-      </div>
-
-      {/* Contrôle de segmentation (A5) */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 10,
-        marginTop: 20, marginBottom: 20,
-        padding: "10px 14px",
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        width: "fit-content",
-      }}>
         <button
           className="s-btn s-btn-sm"
-          disabled={regenerating || targetCount <= 2}
-          onClick={() => handleSegmentChange(-1)}
-          style={{ minWidth: 32, padding: "4px 10px" }}
+          disabled={regenerating}
+          onClick={regenerate}
+          style={{ flexShrink: 0, marginTop: 4, whiteSpace: "nowrap" }}
         >
-          −
+          {regenerating ? <><Spinner />&nbsp;…</> : "Régénérer"}
         </button>
-        <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, minWidth: 76, textAlign: "center" }}>
-          {targetCount} playlists
-        </span>
-        <button
-          className="s-btn s-btn-sm"
-          disabled={regenerating || targetCount >= 8}
-          onClick={() => handleSegmentChange(+1)}
-          style={{ minWidth: 32, padding: "4px 10px" }}
-        >
-          +
-        </button>
-        {regenerating && (
-          <span style={{ fontSize: 12, color: "var(--ink-dim)", marginLeft: 4 }}>
-            <Spinner /> &nbsp;Génération…
-          </span>
-        )}
       </div>
 
-      {/* Cartes de playlists */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, opacity: regenerating ? 0.4 : 1, transition: "opacity 0.2s" }}>
-        {active.map((pl) => (
-          <div key={pl._id} className="s-card" style={{ display: "flex", flexDirection: "column", gap: 14, padding: "18px 20px" }}>
-            {/* Ligne nom + supprimer */}
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <input
-                className="ob-input"
-                style={{ flex: 1, fontWeight: 600, fontFamily: "var(--font-fraunces), serif", fontSize: 16 }}
-                value={pl.name}
-                placeholder="Nom de la playlist"
-                onChange={(e) => updatePlaylist(pl._id, { name: e.target.value })}
-              />
-              <button
-                className="s-btn s-btn-sm s-btn-danger"
-                onClick={() => updatePlaylist(pl._id, { _deleted: true })}
-                title="Supprimer"
-              >
-                ✕
-              </button>
+      {/* Grille de playlists */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, opacity: regenerating ? 0.4 : 1, transition: "opacity 0.25s" }}>
+        {active.map((pl, idx) => {
+          const color = SWATCH_COLORS[idx % SWATCH_COLORS.length];
+          const bg = hexToRgba(color, 0.07);
+          const border = hexToRgba(color, 0.28);
+          const tagBg = hexToRgba(color, 0.12);
+          const tagBorder = hexToRgba(color, 0.25);
+
+          return (
+            <div
+              key={pl._id}
+              style={{
+                background: bg,
+                border: `1px solid ${border}`,
+                borderRadius: 14,
+                overflow: "hidden",
+                position: "relative",
+              }}
+            >
+              {/* Barre top colorée */}
+              <div style={{ height: 3, background: color, opacity: 0.8 }} />
+
+              <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
+
+                {/* Nom + supprimer */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    style={{
+                      flex: 1, background: "transparent", border: "none",
+                      fontFamily: "var(--font-fraunces), serif",
+                      fontSize: 17, fontWeight: 700, color: color,
+                      outline: "none", padding: 0, letterSpacing: "-0.2px",
+                    }}
+                    value={pl.name}
+                    placeholder="Nom de la playlist"
+                    onChange={(e) => updatePlaylist(pl._id, { name: e.target.value })}
+                  />
+                  <button
+                    onClick={() => updatePlaylist(pl._id, { _deleted: true })}
+                    style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--ink-dimmer)", fontSize: 16, lineHeight: 1,
+                      padding: "2px 4px", borderRadius: 4, flexShrink: 0,
+                      transition: "color 0.15s",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "var(--terra)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "var(--ink-dimmer)")}
+                    title="Supprimer"
+                    aria-label="Supprimer cette playlist"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Help text éditable */}
+                {editingId === pl._id ? (
+                  <textarea
+                    ref={textareaRef}
+                    value={helpDraft}
+                    onChange={(e) => setHelpDraft(e.target.value)}
+                    onBlur={() => saveHelpText(pl)}
+                    rows={3}
+                    style={{
+                      width: "100%", background: hexToRgba(color, 0.08),
+                      border: `1px solid ${border}`, borderRadius: 8,
+                      padding: "8px 10px", fontSize: 13, color: "var(--ink)",
+                      lineHeight: 1.6, resize: "vertical", boxSizing: "border-box",
+                      fontFamily: "var(--font-sans), sans-serif", outline: "none",
+                    }}
+                  />
+                ) : (
+                  <div
+                    onClick={() => startEditHelp(pl)}
+                    style={{
+                      fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.65,
+                      cursor: "text", borderRadius: 6,
+                      padding: "2px 0",
+                    }}
+                    title="Cliquer pour modifier"
+                  >
+                    {pl.llm_help_text || (
+                      <span style={{ color: "var(--ink-dimmer)", fontStyle: "italic" }}>
+                        Ajouter un texte de guidage…
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Genre tags */}
+                {pl.genres_include.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {pl.genres_include.map((g) => (
+                      <span key={g} style={{
+                        fontSize: 11, fontWeight: 500,
+                        padding: "3px 9px", borderRadius: 99,
+                        background: tagBg, color: color, border: `1px solid ${tagBorder}`,
+                      }}>
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Sample tracks + couverture */}
+                {(pl.coverage.sample_tracks.length > 0 || pl.coverage.total > 0) && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+                    {pl.coverage.sample_tracks.slice(0, 3).map((t, i) => (
+                      <span key={i} style={{
+                        fontSize: 11, padding: "2px 8px", borderRadius: 99,
+                        background: "var(--surface2)", color: "var(--ink-mid)",
+                        border: "1px solid var(--border)",
+                      }}>
+                        {t.artist}
+                      </span>
+                    ))}
+                    {pl.coverage.total > 0 && (
+                      <span style={{ fontSize: 11, color: color, fontWeight: 600, marginLeft: 2 }}>
+                        {pl.coverage.pct}%
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-
-            {/* Help text (A9) — affiché, éditable inline */}
-            {editingId === pl._id ? (
-              <textarea
-                ref={textareaRef}
-                value={helpDraft}
-                onChange={(e) => setHelpDraft(e.target.value)}
-                onBlur={() => saveHelpText(pl)}
-                rows={3}
-                style={{
-                  width: "100%", background: "var(--surface2)",
-                  border: "1px solid var(--terra)", borderRadius: 6,
-                  padding: "8px 10px", fontSize: 13, color: "var(--ink)",
-                  lineHeight: 1.6, resize: "vertical", boxSizing: "border-box",
-                  fontFamily: "var(--font-sans), sans-serif",
-                }}
-              />
-            ) : (
-              <div
-                onClick={() => startEditHelp(pl)}
-                style={{
-                  fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.6,
-                  cursor: "text", padding: "6px 8px",
-                  border: "1px solid transparent", borderRadius: 6,
-                  transition: "border-color 0.15s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-strong)")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = "transparent")}
-                title="Cliquer pour modifier"
-              >
-                {pl.llm_help_text || <span style={{ color: "var(--ink-dimmer)", fontStyle: "italic" }}>Ajouter un texte de guidage…</span>}
-              </div>
-            )}
-
-            {/* Couverture (A4) */}
-            {pl.coverage.total > 0 && (
-              <div style={{ fontSize: 12, color: "var(--ink-mid)" }}>
-                {pl.coverage.matched} tracks correspondent · {pl.coverage.pct}%
-              </div>
-            )}
-
-            {/* Tracks exemples (A8) */}
-            {pl.coverage.sample_tracks.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {pl.coverage.sample_tracks.map((t, i) => (
-                  <span key={i} style={{
-                    fontSize: 11, padding: "3px 9px", borderRadius: 99,
-                    background: "var(--surface3)", color: "var(--ink-mid)",
-                    border: "1px solid var(--border)",
-                  }}>
-                    {t.artist} — {t.name}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Genres (A8) */}
-            {pl.genres_include.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {pl.genres_include.map((g) => (
-                  <span key={g} style={{
-                    fontSize: 11, padding: "2px 8px", borderRadius: 99,
-                    background: "var(--terra-light)", color: "var(--terra)",
-                    border: "1px solid var(--terra-border)",
-                  }}>
-                    {g}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
+      {/* Ajouter */}
       <button
         className="s-btn"
-        style={{ marginTop: 8, alignSelf: "flex-start" }}
+        style={{ marginTop: 12 }}
         onClick={addPlaylist}
         disabled={regenerating}
       >
         + Ajouter une playlist
       </button>
 
-      {/* Indicateur global de couverture (A4) */}
+      {/* Couverture globale */}
       {globalCoverage && (
         <div style={{
-          marginTop: 24, padding: "14px 16px", borderRadius: 10,
+          marginTop: 20, padding: "12px 16px", borderRadius: 10,
           background: lowCoverage ? "rgba(200,152,64,.08)" : "var(--surface)",
           border: `1px solid ${lowCoverage ? "var(--amber-light)" : "var(--border)"}`,
         }}>
@@ -362,14 +349,14 @@ export default function ProposeClient() {
             {globalCoverage.matched} / {globalCoverage.total} tracks couvertes ({globalCoverage.pct}%)
           </div>
           {lowCoverage && (
-            <div style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 6, lineHeight: 1.5 }}>
-              Certains sons ne rentrent dans aucune playlist. Affine la segmentation ou ajoute une playlist.
+            <div style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 5, lineHeight: 1.5 }}>
+              Certains sons ne rentrent dans aucune playlist. Ajoute une playlist ou régénère.
             </div>
           )}
         </div>
       )}
 
-      {/* Barre de validation */}
+      {/* Barre de validation fixe */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         background: "rgba(19,17,16,0.95)",
@@ -380,8 +367,8 @@ export default function ProposeClient() {
         display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between",
         zIndex: 50,
       }}>
-        <span style={{ fontSize: 12, color: "var(--ink-dim)", alignSelf: "center" }}>
-          {active.length} playlist{active.length !== 1 ? "s" : ""} sélectionnée{active.length !== 1 ? "s" : ""}
+        <span style={{ fontSize: 12, color: "var(--ink-dim)" }}>
+          {active.length} playlist{active.length !== 1 ? "s" : ""}
         </span>
         <button
           className="s-btn s-btn-primary"
