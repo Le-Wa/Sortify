@@ -141,7 +141,7 @@ export default function PlaylistRow({
             className="s-btn s-btn-sm"
             onClick={onLearn}
             disabled={!!load}
-            style={{ background: "rgba(200,147,90,0.12)", borderColor: "rgba(200,147,90,0.3)", color: "#c8935a" }}
+            style={{ background: "var(--terra-light)", borderColor: "var(--terra-border)", color: "var(--terra)" }}
           >
             {load === "learn" ? "…" : "Learn"}
           </button>
@@ -204,7 +204,7 @@ export default function PlaylistRow({
             }}>
               <div style={{ height: 1, background: "var(--border)" }} />
               <button
-                style={{ ...ddItem, color: "#b85c48" }}
+                style={{ ...ddItem, color: "var(--danger)" }}
                 onClick={() => { setDropdownOpen(false); onToggle(); }}
               >
                 {p.enabled ? "Désactiver" : "Activer"}
@@ -213,7 +213,7 @@ export default function PlaylistRow({
                 <>
                   <div style={{ height: 1, background: "var(--border)" }} />
                   <button
-                    style={{ ...ddItem, color: "#b85c48" }}
+                    style={{ ...ddItem, color: "var(--danger)" }}
                     onClick={() => { setDropdownOpen(false); onRequestDelete(); }}
                   >
                     Supprimer

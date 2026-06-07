@@ -73,7 +73,7 @@ export default function MobileNav() {
 
   return (
     <>
-      <nav className="s-mobile-nav">
+      <nav className="s-mobile-nav" aria-label="Navigation principale">
         {NAV_LINKS.map((link) => {
           const { href, label, icon } = link;
           const badge = "badge" in link ? link.badge : false;
@@ -100,7 +100,7 @@ export default function MobileNav() {
               <span style={{ opacity: isActive ? 1 : 0.6, transition: "opacity 0.15s" }}>
                 {icon}
               </span>
-              <span style={{ fontSize: 9, fontWeight: isActive ? 500 : 400, letterSpacing: "0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
+              <span style={{ fontSize: 10, fontWeight: isActive ? 500 : 400, letterSpacing: "0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
                 {label}
               </span>
               {badge && inboxCount !== null && inboxCount > 0 && (
@@ -126,7 +126,7 @@ export default function MobileNav() {
                 <circle cx="8" cy="6" r="3" /><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
               </svg>
             )}
-            <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.02em", color: "var(--terra)" }}>{userName}</span>
+            <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: "0.02em", color: "var(--terra)" }}>{userName}</span>
           </button>
         ) : (
           <Link
@@ -141,7 +141,7 @@ export default function MobileNav() {
                 <circle cx="8" cy="6" r="3" /><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
               </svg>
             )}
-            <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: "0.02em" }}>{userName}</span>
+            <span style={{ fontSize: 10, fontWeight: 400, letterSpacing: "0.02em" }}>{userName}</span>
           </Link>
         )}
       </nav>
@@ -149,8 +149,8 @@ export default function MobileNav() {
       {/* Profil bottom sheet */}
       {profileOpen && (
         <>
-          <div className="s-bs-backdrop" onClick={() => setProfileOpen(false)} />
-          <div className="s-bs" role="dialog" aria-modal="true" aria-label="Profil">
+          <div className="s-bs-backdrop" onClick={() => setProfileOpen(false)} onKeyDown={(e) => e.key === "Escape" && setProfileOpen(false)} />
+          <div className="s-bs" role="dialog" aria-modal="true" aria-label="Profil" onKeyDown={(e) => e.key === "Escape" && setProfileOpen(false)}>
             <div className="s-bs-handle" />
 
             {/* User info header */}

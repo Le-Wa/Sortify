@@ -683,8 +683,8 @@ export default function PlaylistDetailClient({ playlistId }: { playlistId: strin
       {/* Bottom sheet */}
       {bottomSheet && (
         <>
-          <div className="s-bs-backdrop" onClick={() => setBottomSheet(false)} />
-          <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Actions — ${playlist.name}`}>
+          <div className="s-bs-backdrop" onClick={() => setBottomSheet(false)} onKeyDown={(e) => e.key === "Escape" && setBottomSheet(false)} />
+          <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Actions — ${playlist.name}`} onKeyDown={(e) => e.key === "Escape" && setBottomSheet(false)}>
             <div className="s-bs-handle" />
             <p className="s-bs-title" style={{ color: swatch }}>{playlist.name}</p>
             <button className="s-bs-item" disabled={actionLoading === "learn"} onClick={() => void handleLearn()}>

@@ -80,7 +80,15 @@ function genrePalette(genre: string) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function PlaylistsClient({ playlists: initial }: { playlists: PlaylistData[] }) {
+export default function PlaylistsClient({
+  playlists: initial,
+  onboardingMode = null,
+  onboardingDone = true,
+}: {
+  playlists: PlaylistData[];
+  onboardingMode?: string | null;
+  onboardingDone?: boolean;
+}) {
 
   // Lists
   const [active, setActive] = useState<PlaylistData[]>(() =>
@@ -589,13 +597,31 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
         {/* Active playlists */}
         {active.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "56px 0", textAlign: "center" }}>
-            <p style={{ fontSize: 14, color: "var(--ink-mid)", margin: 0 }}>Aucune playlist active</p>
-            <button
-              className="s-btn s-btn-primary"
-              onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
-            >
-              Lier ta première playlist Spotify
-            </button>
+            {!onboardingDone && onboardingMode === "auto" ? (
+              <p style={{ fontSize: 14, color: "var(--ink-dim)", maxWidth: 280, lineHeight: 1.5, margin: 0 }}>
+                En attente de ta validation. Une fois l'analyse terminée, tu pourras valider les playlists proposées par Sortify.
+              </p>
+            ) : !onboardingDone && onboardingMode === "manual" ? (
+              <>
+                <p style={{ fontSize: 14, color: "var(--ink-mid)", margin: 0 }}>Crée ta première playlist pour démarrer le tri automatique.</p>
+                <button
+                  className="s-btn s-btn-primary"
+                  onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
+                >
+                  Créer une playlist
+                </button>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: 14, color: "var(--ink-mid)", margin: 0 }}>Aucune playlist active</p>
+                <button
+                  className="s-btn s-btn-primary"
+                  onClick={() => { setModal({ type: "new" }); void loadPicker(); }}
+                >
+                  Lier ta première playlist Spotify
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1040,8 +1066,8 @@ export default function PlaylistsClient({ playlists: initial }: { playlists: Pla
       {/* ── Bottom sheet ────────────────────────────────────────────────────── */}
       {bsPlaylist && (
         <>
-          <div className="s-bs-backdrop" onClick={() => setBottomSheet(null)} />
-          <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Options — ${bsPlaylist.name}`}>
+          <div className="s-bs-backdrop" onClick={() => setBottomSheet(null)} onKeyDown={(e) => e.key === "Escape" && setBottomSheet(null)} />
+          <div className="s-bs" role="dialog" aria-modal="true" aria-label={`Options — ${bsPlaylist.name}`} onKeyDown={(e) => e.key === "Escape" && setBottomSheet(null)}>
             <div className="s-bs-handle" />
             <p className="s-bs-title">{bsPlaylist.name}</p>
 
