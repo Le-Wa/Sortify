@@ -188,64 +188,69 @@ export default function ProposeClient() {
   const lowCoverage = globalCoverage && globalCoverage.pct < 60;
 
   return (
-    <main className="s-page" style={{ paddingBottom: 100 }}>
+    <main className="s-page" style={{ paddingBottom: 120 }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* En-tête */}
-      <div className="s-page-header" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", fontFamily: "var(--font-fraunces), serif" }}>
+      <div style={{ marginBottom: 6 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          <h1 className="font-fraunces" style={{ fontSize: 28, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.4px", lineHeight: 1.2 }}>
             Ton organisation proposée
           </h1>
-          <p style={{ color: "var(--ink-dim)", fontSize: 13, marginTop: 4 }}>
-            Sortify a analysé ta bibliothèque. Valide, renomme ou supprime les playlists.
-          </p>
+          <button
+            className="s-btn s-btn-sm"
+            disabled={regenerating}
+            onClick={() => regenerate()}
+            style={{ flexShrink: 0, marginTop: 4, whiteSpace: "nowrap" }}
+          >
+            {regenerating ? <><Spinner />&nbsp;…</> : "Régénérer"}
+          </button>
         </div>
-        <button
-          className="s-btn s-btn-sm"
-          disabled={regenerating}
-          onClick={() => regenerate()}
-          style={{ flexShrink: 0, marginTop: 4 }}
-        >
-          {regenerating ? <><Spinner /> &nbsp;Régénération…</> : "Régénérer"}
-        </button>
+        <p style={{ color: "var(--ink-dim)", fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>
+          Sortify a analysé ta bibliothèque. Valide, renomme ou supprime les playlists.
+        </p>
       </div>
 
       {/* Contrôle de segmentation (A5) */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 12,
-        marginTop: 16, marginBottom: 8,
+        display: "flex", alignItems: "center", gap: 10,
+        marginTop: 20, marginBottom: 20,
+        padding: "10px 14px",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 10,
+        width: "fit-content",
       }}>
         <button
           className="s-btn s-btn-sm"
           disabled={regenerating || targetCount <= 2}
           onClick={() => handleSegmentChange(-1)}
-          style={{ minWidth: 36 }}
+          style={{ minWidth: 32, padding: "4px 10px" }}
         >
           −
         </button>
-        <span style={{ fontSize: 13, color: "var(--ink-dim)", minWidth: 80, textAlign: "center" }}>
+        <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, minWidth: 76, textAlign: "center" }}>
           {targetCount} playlists
         </span>
         <button
           className="s-btn s-btn-sm"
           disabled={regenerating || targetCount >= 8}
           onClick={() => handleSegmentChange(+1)}
-          style={{ minWidth: 36 }}
+          style={{ minWidth: 32, padding: "4px 10px" }}
         >
           +
         </button>
         {regenerating && (
-          <span style={{ fontSize: 12, color: "var(--ink-dim)" }}>
-            <Spinner /> &nbsp;Génération en cours…
+          <span style={{ fontSize: 12, color: "var(--ink-dim)", marginLeft: 4 }}>
+            <Spinner /> &nbsp;Génération…
           </span>
         )}
       </div>
 
       {/* Cartes de playlists */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8, opacity: regenerating ? 0.4 : 1, transition: "opacity 0.2s" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, opacity: regenerating ? 0.4 : 1, transition: "opacity 0.2s" }}>
         {active.map((pl) => (
-          <div key={pl._id} className="s-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div key={pl._id} className="s-card" style={{ display: "flex", flexDirection: "column", gap: 14, padding: "18px 20px" }}>
             {/* Ligne nom + supprimer */}
             <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
               <input
@@ -338,8 +343,8 @@ export default function ProposeClient() {
       </div>
 
       <button
-        className="s-btn s-btn-sm"
-        style={{ marginTop: 12, alignSelf: "flex-start" }}
+        className="s-btn"
+        style={{ marginTop: 8, alignSelf: "flex-start" }}
         onClick={addPlaylist}
         disabled={regenerating}
       >
@@ -349,17 +354,16 @@ export default function ProposeClient() {
       {/* Indicateur global de couverture (A4) */}
       {globalCoverage && (
         <div style={{
-          marginTop: 20, padding: "12px 14px", borderRadius: 8,
-          background: lowCoverage ? "rgba(200,152,64,.08)" : "var(--surface2)",
+          marginTop: 24, padding: "14px 16px", borderRadius: 10,
+          background: lowCoverage ? "rgba(200,152,64,.08)" : "var(--surface)",
           border: `1px solid ${lowCoverage ? "var(--amber-light)" : "var(--border)"}`,
         }}>
-          <div style={{ fontSize: 13, color: lowCoverage ? "var(--amber)" : "var(--ink-dim)" }}>
-            Organisation actuelle : {globalCoverage.matched} / {globalCoverage.total} tracks couvertes
-            ({globalCoverage.pct}%)
+          <div style={{ fontSize: 13, color: lowCoverage ? "var(--amber)" : "var(--ink-mid)", fontWeight: 500 }}>
+            {globalCoverage.matched} / {globalCoverage.total} tracks couvertes ({globalCoverage.pct}%)
           </div>
           {lowCoverage && (
             <div style={{ fontSize: 12, color: "var(--ink-dim)", marginTop: 6, lineHeight: 1.5 }}>
-              Certains sons ne rentrent dans aucune playlist. Tu peux affiner la segmentation ou ajouter une playlist.
+              Certains sons ne rentrent dans aucune playlist. Affine la segmentation ou ajoute une playlist.
             </div>
           )}
         </div>
@@ -368,8 +372,12 @@ export default function ProposeClient() {
       {/* Barre de validation */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "var(--bg)", borderTop: "1px solid var(--border)",
-        padding: "12px 16px", display: "flex", gap: 10, justifyContent: "flex-end",
+        background: "rgba(19,17,16,0.95)",
+        backdropFilter: "blur(8px)",
+        borderTop: "1px solid var(--border)",
+        padding: "12px 20px",
+        paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+        display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between",
         zIndex: 50,
       }}>
         <span style={{ fontSize: 12, color: "var(--ink-dim)", alignSelf: "center" }}>
