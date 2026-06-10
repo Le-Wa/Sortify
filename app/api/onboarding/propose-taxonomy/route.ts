@@ -25,6 +25,7 @@ export interface ProposedPlaylist {
 export interface TaxonomyProposal {
   playlists: ProposedPlaylist[];
   global_coverage: { matched: number; total: number; pct: number };
+  unmatched_tracks: { name: string; artist: string }[];
   target_count: number;
   generated_at: string;
 }
@@ -177,9 +178,15 @@ Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans explication :
   const globalTotal = sample.length;
   const globalPct = globalTotal > 0 ? Math.round((globalMatched / globalTotal) * 100) : 0;
 
+  const unmatchedTracks = sample
+    .filter((_, i) => !coveredTracks.has(String(i)))
+    .slice(0, 12)
+    .map((t) => ({ name: t.name, artist: t.artist }));
+
   const proposal: TaxonomyProposal = {
     playlists: playlistsWithCoverage,
     global_coverage: { matched: globalMatched, total: globalTotal, pct: globalPct },
+    unmatched_tracks: unmatchedTracks,
     target_count: targetCount,
     generated_at: new Date().toISOString(),
   };

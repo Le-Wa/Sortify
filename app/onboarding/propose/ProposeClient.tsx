@@ -174,6 +174,10 @@ export default function ProposeClient() {
   const active = playlists.filter((p) => !p._deleted);
   const globalCoverage = proposal?.global_coverage;
   const lowCoverage = globalCoverage && globalCoverage.pct < 60;
+  const unmatchedTracks = proposal?.unmatched_tracks ?? [];
+  const remainingUnmatched = globalCoverage
+    ? globalCoverage.total - globalCoverage.matched - unmatchedTracks.length
+    : 0;
 
   return (
     <main className="s-page" style={{ paddingBottom: 120 }}>
@@ -327,6 +331,50 @@ export default function ProposeClient() {
           );
         })}
       </div>
+
+      {/* Card "Non classés" */}
+      {unmatchedTracks.length > 0 && (
+        <div style={{
+          border: "1px solid var(--border)",
+          borderRadius: 14, overflow: "hidden",
+          opacity: regenerating ? 0.4 : 1, transition: "opacity 0.25s",
+        }}>
+          <div style={{ height: 3, background: "var(--ink-dimmer)" }} />
+          <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <span className="font-fraunces" style={{ fontSize: 15, fontWeight: 700, color: "var(--ink-dim)", letterSpacing: "-0.2px" }}>
+                Non classés
+              </span>
+              <span style={{ fontSize: 11, color: "var(--ink-dimmer)", background: "var(--surface2)", padding: "2px 8px", borderRadius: 99, border: "1px solid var(--border)" }}>
+                {globalCoverage ? globalCoverage.total - globalCoverage.matched : unmatchedTracks.length} tracks
+              </span>
+            </div>
+            <p style={{ fontSize: 12, color: "var(--ink-dimmer)", margin: 0, lineHeight: 1.55 }}>
+              Ces tracks ne correspondent à aucune playlist proposée. Ajoute une playlist ou régénère pour les couvrir.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {unmatchedTracks.map((t, i) => (
+                <span key={i} style={{
+                  fontSize: 11, padding: "3px 9px", borderRadius: 99,
+                  background: "var(--surface2)", color: "var(--ink-dimmer)",
+                  border: "1px solid var(--border)",
+                }}>
+                  {t.artist}
+                </span>
+              ))}
+              {remainingUnmatched > 0 && (
+                <span style={{
+                  fontSize: 11, padding: "3px 9px", borderRadius: 99,
+                  background: "transparent", color: "var(--ink-dimmer)",
+                  border: "1px dashed var(--border)",
+                }}>
+                  +{remainingUnmatched} autres
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ajouter */}
       <button
