@@ -170,36 +170,38 @@ export default function ProposeClient() {
     setRecalculating(true);
     const active = playlists.filter((p) => !p._deleted);
     try {
-      const res = await fetch("/api/onboarding/coverage-recalculate", {
+      const res = await fetch("/api/onboarding/recalculate-proposal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playlists: active.map((p) => ({ genres_include: p.genres_include })) }),
+        body: JSON.stringify({
+          anchors: active.map((p) => ({
+            name: p.name,
+            genres_include: p.genres_include,
+            llm_help_text: p.llm_help_text,
+          })),
+        }),
       });
       const data = await res.json() as {
-        coverage_per_playlist: { matched: number; pct: number }[];
-        global_coverage: { matched: number; total: number; pct: number };
+        new_playlists: typeof playlists[number][];
         unmatched_tracks: { name: string; artist: string }[];
         unmatched_count: number;
+        global_coverage: { matched: number; total: number; pct: number };
+        message?: string;
       };
+      if ("error" in data) { setError((data as { error: string }).error); setRecalculating(false); return; }
       setGlobalCoverage(data.global_coverage);
       setUnmatchedTracks(data.unmatched_tracks);
-      setPlaylists((prev) =>
-        prev.map((p, visIdx) => {
-          if (p._deleted) return p;
-          const activeIdx = active.findIndex((a) => a._id === p._id);
-          const cov = data.coverage_per_playlist[activeIdx];
-          if (!cov) return p;
-          return {
+      if (data.new_playlists?.length > 0) {
+        setPlaylists((prev) => [
+          ...prev,
+          ...data.new_playlists.map((p) => ({
             ...p,
-            coverage: {
-              ...p.coverage,
-              matched: cov.matched,
-              pct: cov.pct,
-              total: data.global_coverage.total,
-            },
-          };
-        })
-      );
+            _id: uid(),
+            _deleted: false,
+            _origIndex: -1,
+          })),
+        ]);
+      }
     } catch (e) { setError(String(e)); }
     setRecalculating(false);
   }
@@ -307,7 +309,7 @@ export default function ProposeClient() {
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="s-btn" disabled={busy} onClick={recalculate} style={{ minHeight: 36 }}>
-            {recalculating ? <><Spinner />&nbsp;Recalcul…</> : "↺ Recalculer la couverture"}
+            {recalculating ? <><Spinner />&nbsp;Analyse…</> : "✦ Compléter avec le LLM"}
           </button>
           <button className="s-btn s-btn-sm" disabled={busy} onClick={regenerate} style={{ minHeight: 36 }}>
             {regenerating ? <><Spinner />&nbsp;…</> : "Régénérer"}
@@ -426,7 +428,7 @@ export default function ProposeClient() {
               </span>
             </div>
             <p style={{ fontSize: 12, color: "var(--ink-dimmer)", margin: 0, lineHeight: 1.55 }}>
-              Ces tracks ne correspondent à aucune playlist. Ajoute une playlist avec les bons genres puis clique sur <strong style={{ color: "var(--ink-mid)" }}>Recalculer</strong>.
+              Ces tracks ne rentrent dans aucune playlist. Clique sur <strong style={{ color: "var(--ink-mid)" }}>Compléter avec le LLM</strong> pour que Sortify propose de nouvelles playlists qui les couvrent.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {unmatchedTracks.map((t, i) => (
