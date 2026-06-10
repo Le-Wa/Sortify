@@ -30,6 +30,7 @@ type EditablePlaylist = ProposedPlaylist & {
   _id: string;
   _deleted: boolean;
   _origIndex: number;
+  _isNew?: boolean;
 };
 
 function uid() { return Math.random().toString(36).slice(2); }
@@ -199,6 +200,7 @@ export default function ProposeClient() {
             _id: uid(),
             _deleted: false,
             _origIndex: -1,
+            _isNew: true,
           })),
         ]);
       }
@@ -324,9 +326,20 @@ export default function ProposeClient() {
           const color = SWATCH_COLORS[idx % SWATCH_COLORS.length];
           const bg = hexToRgba(color, 0.07);
           const border = hexToRgba(color, 0.28);
+          const isFirstNew = pl._isNew && (idx === 0 || !active[idx - 1]._isNew);
 
           return (
-            <div key={pl._id} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
+            <div key={pl._id}>
+              {isFirstNew && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 4px" }}>
+                  <div style={{ flex: 1, height: 1, background: "var(--border-strong)" }} />
+                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-dimmer)", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                    Proposées pour les non classés
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: "var(--border-strong)" }} />
+                </div>
+              )}
+            <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
               <div style={{ height: 3, background: color, opacity: 0.8 }} />
               <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
 
@@ -410,6 +423,7 @@ export default function ProposeClient() {
                   </div>
                 )}
               </div>
+            </div>
             </div>
           );
         })}
