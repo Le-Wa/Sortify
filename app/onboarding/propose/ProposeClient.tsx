@@ -246,6 +246,7 @@ export default function ProposeClient() {
         body: JSON.stringify({
           name: pl.name,
           description: pl.description || null,
+          llm_help_text: pl.llm_help_text || null,
           rules: {
             genres: { include: pl.genres_include, exclude: pl.genres_exclude ?? [] },
             audio_features: {},

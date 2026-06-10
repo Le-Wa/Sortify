@@ -47,11 +47,12 @@ export async function POST(req: Request): Promise<Response> {
     spotifyPlaylistId: z.string().optional(),
     name: z.string().min(1),
     description: z.string().optional(),
+    llm_help_text: z.string().optional(),
     rules: PlaylistRulesSchema.optional(),
   });
   const parsed = PostBody.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return Response.json({ error: "Missing name" }, { status: 400 });
-  const { name, description, rules } = parsed.data;
+  const { name, description, llm_help_text, rules } = parsed.data;
   let { spotifyPlaylistId } = parsed.data;
 
   const dbUser = await getUserBySpotifyId(session.userId);
@@ -89,6 +90,7 @@ export async function POST(req: Request): Promise<Response> {
     description: description ?? null,
     centroid: null,
     rules: rules ?? EMPTY_RULES,
+    llm_help_text: llm_help_text ?? null,
   });
 
   return Response.json({ ...playlist, spotify_playlist_id: spotifyPlaylistId }, { status: 201 });
