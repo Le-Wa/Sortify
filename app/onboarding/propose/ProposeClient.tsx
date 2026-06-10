@@ -298,21 +298,19 @@ export default function ProposeClient() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* En-tête */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 28 }}>
-        <div>
-          <h1 className="font-fraunces" style={{ fontSize: 30, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.5px", lineHeight: 1.15, marginBottom: 8 }}>
-            Ton organisation<br />proposée
-          </h1>
-          <p style={{ fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.6, maxWidth: 340, margin: 0 }}>
-            Sortify a analysé ta bibliothèque. Valide, renomme ou supprime les playlists avant de lancer le tri.
-          </p>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, marginTop: 4 }}>
-          <button className="s-btn s-btn-sm" disabled={busy} onClick={regenerate} style={{ whiteSpace: "nowrap" }}>
-            {regenerating ? <><Spinner />&nbsp;…</> : "Régénérer"}
+      <div style={{ marginBottom: 24 }}>
+        <h1 className="font-fraunces" style={{ fontSize: 30, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.5px", lineHeight: 1.15, marginBottom: 8 }}>
+          Ton organisation<br />proposée
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.6, margin: "0 0 16px" }}>
+          Sortify a analysé ta bibliothèque. Valide, renomme ou supprime les playlists avant de lancer le tri.
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="s-btn" disabled={busy} onClick={recalculate} style={{ minHeight: 36 }}>
+            {recalculating ? <><Spinner />&nbsp;Recalcul…</> : "↺ Recalculer la couverture"}
           </button>
-          <button className="s-btn s-btn-sm" disabled={busy} onClick={recalculate} style={{ whiteSpace: "nowrap" }}>
-            {recalculating ? <><Spinner />&nbsp;…</> : "Recalculer"}
+          <button className="s-btn s-btn-sm" disabled={busy} onClick={regenerate} style={{ minHeight: 36 }}>
+            {regenerating ? <><Spinner />&nbsp;…</> : "Régénérer"}
           </button>
         </div>
       </div>
