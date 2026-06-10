@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { refreshAccessToken } from "@/lib/spotify/token";
 import { createSpotifyPlaylist } from "@/lib/spotify/fetchers";
+import { spotifyFetch } from "@/lib/spotify/rate-limiter";
 import {
   getUserBySpotifyId,
   getUserPlaylists,
@@ -60,13 +61,23 @@ export async function POST(req: Request): Promise<Response> {
   if (!spotifyPlaylistId) {
     try {
       const token = await refreshAccessToken(session.userId);
-      const created = await createSpotifyPlaylist(token, session.userId, name, description);
+      // Use real Spotify ID from /me — session.userId may be a dev persona ID
+      const meRes = await spotifyFetch("https://api.spotify.com/v1/me", token);
+      const me = meRes.ok ? (await meRes.json() as { id: string }) : null;
+      const realSpotifyId = me?.id ?? session.userId;
+      const created = await createSpotifyPlaylist(token, realSpotifyId, name, description);
       spotifyPlaylistId = created.id;
     } catch (err) {
-      return Response.json(
-        { error: `Impossible de créer la playlist dans Spotify : ${String(err)}` },
-        { status: 502 }
-      );
+      // En dev, les personas peuvent avoir des tokens expirés — on génère un ID local
+      // plutôt que de bloquer toute la création.
+      if (process.env.NODE_ENV !== "production") {
+        spotifyPlaylistId = `dev_playlist_${Date.now()}`;
+      } else {
+        return Response.json(
+          { error: `Impossible de créer la playlist dans Spotify : ${String(err)}` },
+          { status: 502 }
+        );
+      }
     }
   }
 
