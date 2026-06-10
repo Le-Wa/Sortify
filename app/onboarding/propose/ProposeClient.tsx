@@ -30,7 +30,8 @@ type EditablePlaylist = ProposedPlaylist & {
   _id: string;
   _deleted: boolean;
   _origIndex: number;
-  _isNew?: boolean;
+  _isNew?: boolean;    // ajoutée par "Compléter avec le LLM"
+  _isManual?: boolean; // ajoutée manuellement par le user
 };
 
 function uid() { return Math.random().toString(36).slice(2); }
@@ -231,7 +232,7 @@ export default function ProposeClient() {
 
   function addPlaylist() {
     setPlaylists((prev) => [...prev, {
-      _id: uid(), _deleted: false, _origIndex: -1,
+      _id: uid(), _deleted: false, _origIndex: -1, _isManual: true,
       name: "", description: "", llm_help_text: "",
       genres_include: [], genres_exclude: [], example_artists: [],
       coverage: { matched: 0, total: 0, pct: 0, sample_tracks: [] },
@@ -326,10 +327,21 @@ export default function ProposeClient() {
           const color = SWATCH_COLORS[idx % SWATCH_COLORS.length];
           const bg = hexToRgba(color, 0.07);
           const border = hexToRgba(color, 0.28);
-          const isFirstNew = pl._isNew && (idx === 0 || !active[idx - 1]._isNew);
+          const prev = idx > 0 ? active[idx - 1] : null;
+          const isFirstManual = pl._isManual && !prev?._isManual && !prev?._isNew;
+          const isFirstNew = pl._isNew && !prev?._isNew;
 
           return (
             <div key={pl._id}>
+              {isFirstManual && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 4px" }}>
+                  <div style={{ flex: 1, height: 1, background: "var(--border-strong)" }} />
+                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-dimmer)", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                    Ajoutées par toi
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: "var(--border-strong)" }} />
+                </div>
+              )}
               {isFirstNew && (
                 <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 4px" }}>
                   <div style={{ flex: 1, height: 1, background: "var(--border-strong)" }} />
