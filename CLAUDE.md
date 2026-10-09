@@ -2,59 +2,26 @@
 
 # Sortify
 
-Compagnon Spotify qui trie automatiquement les liked songs dans des playlists personnalisées.
+Compagnon Spotify : l'IA analyse ta bibliothèque, propose les playlists qui la résument, puis y range automatiquement tes nouveaux likes.
 
-## Stack
-- Next.js 15, App Router, TypeScript strict
-- Supabase (Postgres) pour la DB
+## Statut — refonte V2 (depuis oct. 2026)
+
+- On repart de zéro, branche `v2`. La V1 est figée au tag `legacy-v1`.
+- **Specs = source de vérité** : `docs/specs/` (01-produit, 02-moteur-ia, …). Lire avant de coder.
+- `docs/archive/` : docs, benchmarks et maquettes de la V1 — référence uniquement, pas des consignes.
+- Ordre : specs produit → parcours/wireframes → direction visuelle (page blanche) → design system → code.
+
+## Stack (V1, à reconfirmer pour la V2)
+- Next.js App Router, TypeScript strict
+- Supabase (Postgres)
 - NextAuth.js avec Spotify OAuth
-- Vercel pour le déploiement + Cron Jobs
-- Claude API (claude-sonnet-4-6) pour l'arbitrage LLM
+- Vercel (déploiement + Cron)
+- Claude API pour l'analyse et le classement
 
 ## Conventions
-- Tous les composants en TypeScript strict, pas de `any`
-- Queries Supabase dans lib/supabase/queries.ts uniquement
+- TypeScript strict, pas de `any`
 - Variables d'env dans .env.local (jamais hardcodées)
 - Gestion d'erreurs explicite partout — pas de try/catch vide
-
-## Workflow
 - Commit après chaque tâche terminée, sans attendre qu'on le demande
 - Mobile-first : zones tactiles 44px min, pas de hover-only, bottom sheet plutôt que modal sur mobile
-- Design system custom (CSS vars + classes `s-*` dans globals.css) — pas de classes Tailwind utilitaires dans les composants
-
-## Priorités V1
-1. Auth Spotify fonctionnelle (NextAuth + stockage tokens en DB)
-2. Schéma Supabase + migrations
-3. Moteur de classification 3 niveaux
-4. Cron hebdomadaire
-
-## Focus actuel — Design & UX
-
-Le moteur tourne. La phase active est le design et l'UX.
-
-### Pages existantes
-- `/home` — nouvelle page d'accueil centrée sur les playlists (à comparer avec `/dashboard`)
-- `/dashboard` — ancien dashboard avec KPIs, à garder pour comparaison
-- `/playlists` — gestion des playlists (reorder, create, toggle, modifier description+couleur)
-- `/playlists/[id]` — détail avec actions (learn, décrire, sync, toggle, recompute)
-- `/inbox` — review des tracks un par un
-- `/archive` — tracks archivés
-- `/admin/logs` — logs de classification
-
-### Design system
-- Tokens dans `:root` de `globals.css` — modifier là en priorité
-- Classes utilitaires : `s-page`, `s-btn`, `s-btn-sm`, `s-card`, `s-section-title`, etc.
-- Palette swatch playlists : 8 couleurs dans `lib/playlist-swatch.ts` — `playlistSwatch(id, color?)` : couleur custom (stockée en DB) prioritaire, hash fallback
-- Genre tags : 24 couleurs, assignées par hash du nom de genre
-- Bottom sheet (`s-bs-*`) : pattern mobile pour toutes les actions secondaires
-
-### Branches design actives
-- `design/variant-warm` — palette plus chaude, touches subtiles
-- `design/impeccable-warm` — version bolder, terra dominant, h1 44px
-
-### Principes UX retenus
-- Mobile-first, bottom sheet pour les actions secondaires (pas de hover-only)
-- Pas de side-stripe (`border-left` coloré) — utiliser tint de fond + border colorée
-- Swatch couleur : sur la barre top des cards, le compteur de tracks, la date "Appris le"
-- Titre de page en blanc (`var(--ink)`), barre courte swatch au-dessus
-- Breadcrumbs en `var(--ink-dim)` neutre
+- Principe produit : simple et fini > léché et inachevé

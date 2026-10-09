@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sortify — Dark Vinyl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0d0b;
+    --surface: #161410;
+    --surface2: #1d1b17;
+    --amber: #e8a020;
+    --amber-dim: #7a5210;
+    --text: #d8cfc0;
+    --text-dim: #6a6050;
+    --text-dimmer: #3a3528;
+    --border: rgba(255,255,255,0.06);
+    --border-amber: rgba(232,160,32,0.2);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* sidebar */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+  }
+
+  .logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-word {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px;
+    letter-spacing: 5px;
+    color: var(--amber);
+    line-height: 1;
+  }
+  .logo-sub {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .nav { margin-top: 20px; flex: 1; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 24px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+    position: relative;
+  }
+  .nav-item.active { color: var(--amber); }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--amber);
+  }
+  .nav-item:hover:not(.active) { color: var(--text); }
+  .nav-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .sidebar-badge {
+    background: var(--amber);
+    color: var(--bg);
+    font-size: 9px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: auto;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .sidebar-bottom {
+    padding: 20px 24px 0;
+    border-top: 1px solid var(--border);
+  }
+  .cron-status {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dimmer);
+    line-height: 1.8;
+  }
+  .cron-dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #3a8a4a;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  /* main */
+  .main { flex: 1; overflow-y: auto; padding: 36px 40px; }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 4px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .page-date { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+
+  /* stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-val.accent { color: var(--amber); }
+  .stat-sub { font-size: 9px; color: var(--text-dimmer); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* inbox preview */
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  .inbox-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--amber);
+    border-radius: 6px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .inbox-track { flex: 1; }
+  .inbox-track-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .inbox-track-artist { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .inbox-suggestion {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--amber);
+    border: 1px solid var(--border-amber);
+    padding: 3px 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .inbox-confidence {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    width: 44px;
+    text-align: right;
+  }
+  .inbox-level {
+    font-size: 9px;
+    color: var(--text-dimmer);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    width: 80px;
+  }
+
+  .inbox-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.15s;
+  }
+  .btn-confirm { border-color: var(--amber); color: var(--amber); background: transparent; }
+  .btn-confirm:hover { background: var(--amber); color: var(--bg); }
+  .btn-skip { border-color: var(--border); color: var(--text-dim); background: transparent; }
+  .btn-skip:hover { border-color: var(--text-dim); color: var(--text); }
+
+  /* playlists grid */
+  .pl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
+  .pl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pl-card::after {
+    content: '';
+    position: absolute;
+    right: -20px; top: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 20px solid;
+    opacity: 0.06;
+  }
+  .pl-card[data-color="amber"]::after { border-color: #e8a020; }
+  .pl-card[data-color="purple"]::after { border-color: #9080e0; }
+  .pl-card[data-color="teal"]::after { border-color: #40a880; }
+  .pl-card[data-color="coral"]::after { border-color: #e06040; }
+  .pl-card[data-color="blue"]::after { border-color: #4080e0; }
+  .pl-card[data-color="green"]::after { border-color: #60c060; }
+
+  .pl-accent { width: 24px; height: 2px; border-radius: 1px; margin-bottom: 10px; }
+  .pl-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+  .pl-meta { font-size: 10px; color: var(--text-dim); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+  .pl-new { font-size: 9px; color: var(--amber); letter-spacing: 1px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-word">Sortify</div>
+      <div class="logo-sub">Playlist engine</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active"><span class="nav-dot"></span> Dashboard</div>
+      <div class="nav-item">
+        <span class="nav-dot"></span> Inbox
+        <span class="sidebar-badge">14</span>
+      </div>
+      <div class="nav-item"><span class="nav-dot"></span> Playlists</div>
+      <div class="nav-item"><span class="nav-dot"></span> Archive</div>
+      <div class="nav-item"><span class="nav-dot"></span> Logs</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="cron-status">
+        <span class="cron-dot"></span> cron actif<br>
+        run lun · 08h00 UTC<br>
+        dernier : 19 mai 2026
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-date">vendredi 22 mai 2026</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Inbox</div>
+        <div class="stat-val accent">14</div>
+        <div class="stat-sub">en attente de review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Classifiés total</div>
+        <div class="stat-val">539</div>
+        <div class="stat-sub">toutes playlists</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ce run</div>
+        <div class="stat-val">6</div>
+        <div class="stat-sub">nouveaux placés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Taux auto</div>
+        <div class="stat-val">81<span style="font-size:18px">%</span></div>
+        <div class="stat-sub">sans review</div>
+      </div>
+    </div>
+
+    <div class="section-label">Inbox — à valider</div>
+
+    <div class="inbox-card">
+      <div class="inbox-track">
+        <div class="inbox-track-name">Souvenirs d'ailleurs</div>
+        <div class="inbox-track-artist">Acid Arab · 2024</div>
+      </div>
+      <div class="inbox-level">~ audio match</div>
+      <div class="inbox-suggestion">Good Vibes</div>
+      <div class="inbox-confidence">71%</div>
+      <div class="inbox-actions">
+        <button class="btn btn-confirm">✓ Valider</button>
+        <button class="btn btn-skip">↔ Changer</button>
+      </div>
+    </div>
+
+    <div class="inbox-card">
+      <div class="inbox-track">
+        <div class="inbox-track-name">Body Movin' (Fatboy Edit)</div>
+        <div class="inbox-track-artist">Various Artists · 2025</div>
+      </div>
+      <div class="inbox-level">⚙ Claude</div>
+      <div class="inbox-suggestion">Good Electro</div>
+      <div class="inbox-confidence">63%</div>
+      <div class="inbox-actions">
+        <button class="btn btn-confirm">✓ Valider</button>
+        <button class="btn btn-skip">↔ Changer</button>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:28px">Playlists</div>
+    <div class="pl-grid">
+      <div class="pl-card" data-color="amber">
+        <div class="pl-accent" style="background:#e8a020"></div>
+        <div class="pl-name">Good Electro</div>
+        <div class="pl-meta">248 tracks · afro house · tech house</div>
+        <div class="pl-new">+3 ce run</div>
+      </div>
+      <div class="pl-card" data-color="purple">
+        <div class="pl-accent" style="background:#9080e0"></div>
+        <div class="pl-name">Good Techno</div>
+        <div class="pl-meta">91 tracks · techno · dnb · acid</div>
+        <div class="pl-new">+1 ce run</div>
+      </div>
+      <div class="pl-card" data-color="teal">
+        <div class="pl-accent" style="background:#40a880"></div>
+        <div class="pl-name">Good Vibes</div>
+        <div class="pl-meta">133 tracks · jazz · organic · soul</div>
+        <div class="pl-new">+2 ce run</div>
+      </div>
+      <div class="pl-card" data-color="coral">
+        <div class="pl-accent" style="background:#e06040"></div>
+        <div class="pl-name">Maghreb United</div>
+        <div class="pl-meta">67 tracks · gnawa · raï · khaleeji</div>
+        <div class="pl-new">0 ce run</div>
+      </div>
+      <div class="pl-card" data-color="blue">
+        <div class="pl-accent" style="background:#4080e0"></div>
+        <div class="pl-name">Good Afro</div>
+        <div class="pl-meta">44 tracks · afrobeats · afropop</div>
+        <div class="pl-new">0 ce run</div>
+      </div>
+      <div class="pl-card" data-color="green">
+        <div class="pl-accent" style="background:#60c060"></div>
+        <div class="pl-name">Rap FR</div>
+        <div class="pl-meta">38 tracks · &lt; 3 ans uniquement</div>
+        <div class="pl-new">0 ce run</div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

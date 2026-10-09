@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sortify — Brutalist System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f2ede4;
+    --ink: #111009;
+    --ink-dim: #888070;
+    --ink-dimmer: #ccc5b5;
+    --yellow: #f5c400;
+    --red: #e83020;
+    --surface: #fffef9;
+    --border: #111009;
+    --border-light: #d0c8b8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+  }
+
+  /* top bar */
+  .topbar {
+    height: 44px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 0;
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-right: 32px;
+  }
+  .topbar-nav { display: flex; }
+  .topbar-nav a {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #888070;
+    padding: 0 16px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .topbar-nav a.active { color: var(--yellow); background: rgba(245,196,0,0.08); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .topbar-badge {
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
+    letter-spacing: 1px;
+  }
+  .topbar-user { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888070; }
+
+  /* layout */
+  .layout { display: grid; grid-template-columns: 1fr 340px; min-height: calc(100vh - 44px); }
+
+  .main { padding: 32px 32px; border-right: 2px solid var(--border); }
+  .aside { padding: 28px 24px; background: var(--surface); }
+
+  /* section header brutalist */
+  .s-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .s-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .s-count {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  /* stats strip */
+  .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 28px; border: 2px solid var(--border); }
+  .stat {
+    padding: 14px 16px;
+    border-right: 2px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-label { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 6px; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .stat-val.yellow { background: var(--yellow); display: inline-block; padding: 0 4px; }
+  .stat-val.red { background: var(--red); color: white; display: inline-block; padding: 0 4px; }
+
+  /* inbox list */
+  .inbox-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 80px 90px 110px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 11px;
+  }
+  .inbox-row.header {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    padding: 6px 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 2px;
+  }
+  .track-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: -0.3px; }
+  .track-artist { font-size: 10px; color: var(--ink-dim); margin-top: 2px; letter-spacing: 0.5px; }
+  .pill {
+    display: inline-block;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1.5px solid var(--border);
+    cursor: default;
+  }
+  .pill.yellow { background: var(--yellow); border-color: var(--yellow); }
+  .confidence { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+  .confidence.lo { color: var(--red); }
+  .confidence.hi { color: var(--ink); }
+  .level-tag { font-size: 8px; color: var(--ink-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .action-row { display: flex; gap: 4px; }
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .btn:hover { background: var(--ink); color: var(--bg); }
+  .btn.primary { background: var(--yellow); border-color: var(--yellow); }
+  .btn.primary:hover { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  /* aside playlists */
+  .aside-title {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  .pl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .pl-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink-dimmer);
+    width: 18px;
+    flex-shrink: 0;
+  }
+  .pl-info { flex: 1; }
+  .pl-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: -0.3px; }
+  .pl-desc { font-size: 9px; color: var(--ink-dim); letter-spacing: 0.5px; margin-top: 2px; text-transform: uppercase; }
+  .pl-count { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--ink-dim); }
+  .new-tag {
+    font-size: 8px;
+    background: var(--yellow);
+    padding: 1px 6px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* cron block */
+  .cron-block {
+    margin-top: 24px;
+    border: 2px solid var(--border);
+    padding: 12px 14px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    line-height: 2;
+  }
+  .cron-block strong { color: var(--ink); font-weight: 700; font-family: 'Syne', sans-serif; font-size: 11px; letter-spacing: 0; text-transform: none; }
+  .status-dot { display: inline-block; width: 7px; height: 7px; background: #22aa44; margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">SORTIFY_</div>
+  <nav class="topbar-nav">
+    <a class="active">Dashboard</a>
+    <a>Inbox</a>
+    <a>Playlists</a>
+    <a>Archive</a>
+    <a>Logs</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="topbar-badge">14 INBOX</span>
+    <span class="topbar-user">// Walid</span>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="main">
+
+    <div class="stats-strip">
+      <div class="stat">
+        <div class="stat-label">Inbox</div>
+        <div class="stat-val red">14</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Classifiés</div>
+        <div class="stat-val">539</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Ce run</div>
+        <div class="stat-val yellow">6</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Taux auto</div>
+        <div class="stat-val">81%</div>
+      </div>
+    </div>
+
+    <div class="s-head">
+      <div class="s-title">Inbox</div>
+      <div class="s-count">14 tracks · triés par confiance croissante</div>
+    </div>
+
+    <div class="inbox-row header">
+      <span>Track</span>
+      <span>Suggestion</span>
+      <span>Conf.</span>
+      <span>Méthode</span>
+      <span>Action</span>
+    </div>
+
+    <div class="inbox-row">
+      <div>
+        <div class="track-name">Souvenirs d'ailleurs</div>
+        <div class="track-artist">Acid Arab · 2024</div>
+      </div>
+      <span><div class="pill">Good Vibes</div></span>
+      <span><div class="confidence hi">71%</div></span>
+      <span><div class="level-tag">~ audio match</div></span>
+      <div class="action-row">
+        <button class="btn primary">Valider</button>
+        <button class="btn">Changer</button>
+      </div>
+    </div>
+
+    <div class="inbox-row">
+      <div>
+        <div class="track-name">Body Movin' (Fatboy Edit)</div>
+        <div class="track-artist">Various Artists · 2025</div>
+      </div>
+      <span><div class="pill yellow">Good Electro</div></span>
+      <span><div class="confidence lo">63%</div></span>
+      <span><div class="level-tag">⚙ Claude</div></span>
+      <div class="action-row">
+        <button class="btn primary">Valider</button>
+        <button class="btn">Changer</button>
+      </div>
+    </div>
+
+    <div class="inbox-row">
+      <div>
+        <div class="track-name">Gnawa Soul Vol.3</div>
+        <div class="track-artist">Hassan Hakmoun · 2023</div>
+      </div>
+      <span><div class="pill">Maghreb United</div></span>
+      <span><div class="confidence hi">88%</div></span>
+      <span><div class="level-tag">✓ genre match</div></span>
+      <div class="action-row">
+        <button class="btn primary">Valider</button>
+        <button class="btn">Changer</button>
+      </div>
+    </div>
+
+    <div class="inbox-row">
+      <div>
+        <div class="track-name">Purple Haze Disco Edit</div>
+        <div class="track-artist">DJ Koze · 2025</div>
+      </div>
+      <span><div class="pill">Good Electro</div></span>
+      <span><div class="confidence lo">58%</div></span>
+      <span><div class="level-tag">⚙ Claude</div></span>
+      <div class="action-row">
+        <button class="btn primary">Valider</button>
+        <button class="btn">Changer</button>
+      </div>
+    </div>
+
+  </main>
+
+  <aside class="aside">
+    <div class="aside-title">// Playlists actives</div>
+
+    <div class="pl-row">
+      <div class="pl-num">01</div>
+      <div class="pl-info">
+        <div class="pl-name">Good Electro</div>
+        <div class="pl-desc">afro house · tech house</div>
+      </div>
+      <div class="pl-count">248</div>
+      <div class="new-tag">+3</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-num">02</div>
+      <div class="pl-info">
+        <div class="pl-name">Good Techno</div>
+        <div class="pl-desc">techno · dnb · acid</div>
+      </div>
+      <div class="pl-count">91</div>
+      <div class="new-tag">+1</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-num">03</div>
+      <div class="pl-info">
+        <div class="pl-name">Good Vibes</div>
+        <div class="pl-desc">jazz · organic · soul</div>
+      </div>
+      <div class="pl-count">133</div>
+      <div class="new-tag">+2</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-num">04</div>
+      <div class="pl-info">
+        <div class="pl-name">Good Afro</div>
+        <div class="pl-desc">afrobeats · afropop</div>
+      </div>
+      <div class="pl-count">44</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-num">05</div>
+      <div class="pl-info">
+        <div class="pl-name">Maghreb United</div>
+        <div class="pl-desc">gnawa · raï · khaleeji</div>
+      </div>
+      <div class="pl-count">67</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-num">06</div>
+      <div class="pl-info">
+        <div class="pl-name">Rap FR</div>
+        <div class="pl-desc">&lt; 3 ans uniquement</div>
+      </div>
+      <div class="pl-count">38</div>
+    </div>
+
+    <div class="cron-block">
+      <span class="status-dot"></span> cron actif<br>
+      <strong>Prochain run : lundi 26 mai</strong><br>
+      08h00 UTC · toutes les semaines<br>
+      Dernier run : 19 mai 2026 · 6 placés
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>

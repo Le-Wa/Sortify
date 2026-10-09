@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Inbox — Sortify</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c0a;
+  --surface:#181512;
+  --surface2:#222019;
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+  --accent:#c8886a;
+  --accent-dim:rgba(200,136,106,.12);
+  --accent-border:rgba(200,136,106,.32);
+  --text:#f0ece6;
+  --text-muted:#8a8278;
+  --text-dim:#504a44;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+.app{max-width:430px;margin:0 auto;padding-bottom:88px;}
+
+/* Header */
+.inbox-header{padding:24px 16px 8px;}
+.inbox-section{font-size:12px;color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.inbox-hero{display:flex;align-items:baseline;gap:10px;margin-bottom:18px;}
+.hero-num{font-family:'Fraunces',serif;font-style:italic;font-size:60px;font-weight:700;color:var(--accent);line-height:1;transition:color .3s;}
+.hero-num.zero{color:var(--text-dim);}
+.hero-label{font-size:15px;color:var(--text-muted);}
+.validate-all-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#1a0a04;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:10px 20px;border-radius:99px;border:none;cursor:pointer;margin-bottom:16px;transition:opacity .15s;}
+.validate-all-btn:hover{opacity:.88;}
+.validate-all-btn.hidden{display:none;}
+
+/* Filters */
+.filters{display:flex;gap:7px;padding:0 16px 16px;overflow-x:auto;}
+.filters::-webkit-scrollbar{display:none;}
+.filter-pill{padding:7px 14px;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;border:1.5px solid var(--border2);background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all .15s;}
+.filter-pill.active{background:var(--accent-dim);border-color:var(--accent-border);color:var(--accent);}
+
+/* Playlist dropdown */
+.pl-dropdown-wrap{margin:0 12px 16px;position:relative;}
+.pl-dropdown-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 14px;cursor:pointer;font-size:13px;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+.pl-dropdown-btn:hover{border-color:var(--border2);}
+.pl-dropdown-arrow{transition:transform .2s;}
+.pl-dropdown-arrow.open{transform:rotate(180deg);}
+.pl-dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;z-index:20;display:none;}
+.pl-dropdown-menu.open{display:block;}
+.pl-dropdown-item{padding:11px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s;}
+.pl-dropdown-item:hover{background:rgba(255,255,255,.04);}
+.pl-dropdown-item.active{color:var(--accent);}
+.pl-dropdown-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* Cards */
+.tracks{padding:0 12px;display:flex;flex-direction:column;gap:8px;}
+.track-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:opacity .35s ease,transform .35s ease;animation:slideIn .3s ease both;}
+.track-card.dismissing{opacity:0;transform:translateX(48px) scale(.96);pointer-events:none;}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* Card main row */
+.card-main{padding:13px 13px 10px;display:flex;align-items:flex-start;gap:8px;}
+.card-info{flex:1;min-width:0;}
+.track-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-sub{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.conf-badge{font-size:11px;padding:3px 9px;border-radius:99px;white-space:nowrap;}
+.badge-none{background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);}
+.badge-low{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);}
+.badge-vlow{background:rgba(220,80,60,.1);color:#e07755;border:1px solid rgba(220,80,60,.22);}
+.play-btn{width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;}
+.play-btn:hover{background:rgba(255,255,255,.08);border-color:var(--border2);}
+.play-btn svg{margin-left:2px;}
+
+/* Tags */
+.tags{display:flex;flex-wrap:wrap;gap:5px;padding:0 13px 10px;}
+.tag{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);}
+
+/* Playlist row — pills compactes */
+.pl-row{display:flex;align-items:center;gap:6px;padding:0 13px 10px;flex-wrap:wrap;}
+.pl-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;cursor:pointer;border:1.5px solid var(--plb,#333);background:var(--plbg,#1a1a1a);transition:background .12s;}
+.pl-pill .pp-dot{width:7px;height:7px;border-radius:50%;background:var(--plb);flex-shrink:0;transition:background .12s;}
+.pl-pill .pp-name{font-size:11px;font-weight:500;color:var(--plt);line-height:1;white-space:nowrap;}
+.pl-pill .pp-ai{font-size:9px;padding:1px 4px;border-radius:99px;background:rgba(200,136,106,.18);color:var(--accent);border:1px solid rgba(200,136,106,.28);}
+.pl-pill.sel{background:var(--plb)!important;border-color:var(--plb)!important;}
+.pl-pill.sel .pp-dot{background:var(--plts);}
+.pl-pill.sel .pp-name{color:var(--plts);}
+.more-pl-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:99px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:11px;color:var(--text-dim);font-family:'DM Sans',sans-serif;transition:color .15s,border-color .15s;white-space:nowrap;}
+.more-pl-btn:hover{color:var(--text-muted);border-color:rgba(255,255,255,.2);}
+.more-pl-btn .mc{display:inline-block;transition:transform .2s;font-size:9px;margin-left:1px;}
+.more-pl-btn .mc.open{transform:rotate(180deg);}
+
+/* Expanded pl grid */
+.pl-expand{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;padding:0 13px;}
+.pl-expand.open{max-height:300px;padding:0 13px 10px;}
+.pl-card-sm{padding:8px 10px;border-radius:9px;cursor:pointer;border:1.5px solid var(--plb,#333);background:var(--plbg,#1a1a1a);display:flex;align-items:center;gap:7px;transition:background .12s;}
+.pl-card-sm .pc-dot{width:7px;height:7px;border-radius:50%;background:var(--plb);flex-shrink:0;}
+.pl-card-sm .pc-name{font-size:11px;font-weight:500;color:var(--plt);line-height:1.3;}
+.pl-card-sm.sel{background:var(--plb)!important;}
+.pl-card-sm.sel .pc-name{color:var(--plts);}
+.pl-card-sm.sel .pc-dot{background:var(--plts);}
+
+/* Reason */
+.reason-expand{max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;padding:0 13px;}
+.reason-expand.open{max-height:200px;padding:0 13px 10px;}
+.reason-text{font-size:12px;color:var(--text-muted);line-height:1.65;}
+
+/* Player expand */
+.player-expand{max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;padding:0 13px;}
+.player-expand.open{max-height:100px;padding:0 13px 10px;}
+.player-mock{border-radius:10px;display:flex;align-items:center;gap:9px;padding:9px 11px;}
+.player-art{width:36px;height:36px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.02em;}
+.player-meta{flex:1;min-width:0;}
+.player-t{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.player-a{font-size:11px;color:rgba(255,255,255,.5);}
+.player-play{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+
+/* Card sep */
+.card-sep{height:1px;background:var(--border);margin:0 13px;}
+
+/* Actions */
+.card-actions{display:flex;gap:7px;padding:9px 13px 12px;align-items:center;}
+.assign-btn{flex:1;padding:9px 12px;border-radius:9px;font-size:12px;font-weight:600;border:none;background:var(--surface2);color:var(--text-dim);cursor:default;font-family:'DM Sans',sans-serif;transition:background .15s,color .15s;white-space:nowrap;text-align:center;}
+.assign-btn.ready{background:var(--accent);color:#18090a;cursor:pointer;}
+.icon-btn{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:color .15s,border-color .15s;flex-shrink:0;}
+.icon-btn:hover{color:var(--text-muted);border-color:var(--border2);}
+
+/* Reason toggle row */
+.action-row{display:flex;align-items:center;gap:5px;padding:0 13px 9px;}
+.action-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:11px;color:var(--text-dim);font-family:'DM Sans',sans-serif;transition:color .15s,border-color .15s;}
+.action-chip:hover{color:var(--text-muted);border-color:var(--border2);}
+.action-chip.on{color:var(--accent);border-color:var(--accent-border);background:var(--accent-dim);}
+
+/* Toast */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border2);border-radius:99px;padding:9px 8px 9px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
+.toast-undo{font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;padding:4px 8px;}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(12,10,8,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;padding:8px 0 20px;z-index:100;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.35;transition:opacity .15s;min-width:64px;position:relative;}
+.nav-item.active{opacity:1;}
+.nav-item svg{width:22px;height:22px;}
+.nav-lbl{font-size:10px;color:var(--text);}
+.nav-item.active .nav-lbl{color:var(--accent);}
+.nav-badge{position:absolute;top:-2px;right:12px;background:var(--accent);color:#18090a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:99px;}
+
+/* Empty */
+.empty-state{text-align:center;padding:80px 24px;display:none;}
+.empty-num{font-family:'Fraunces',serif;font-style:italic;font-size:52px;color:var(--text-dim);margin-bottom:8px;}
+.empty-msg{font-size:15px;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="inbox-header">
+    <div class="inbox-section">Inbox</div>
+    <div class="inbox-hero">
+      <span class="hero-num" id="hero-count">34</span>
+      <span class="hero-label" id="hero-label">tracks à revoir</span>
+    </div>
+    <button class="validate-all-btn" id="validate-all-btn" onclick="validateAll()">Tout valider (+55%)</button>
+  </div>
+
+  <div class="filters">
+    <button class="filter-pill active" onclick="setFilter('all',this)">Tous</button>
+    <button class="filter-pill" onclick="setFilter('uncertain',this)">Incertains (&lt;55%)</button>
+    <button class="filter-pill" onclick="setFilter('very',this)">Très incertains (&lt;40%)</button>
+  </div>
+
+  <div class="pl-dropdown-wrap">
+    <button class="pl-dropdown-btn" onclick="toggleDropdown()" id="dropdown-btn">
+      <span id="dropdown-label">Toutes les playlists</span>
+      <svg class="pl-dropdown-arrow" id="dropdown-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 6 8 10 12 6"/></svg>
+    </button>
+    <div class="pl-dropdown-menu" id="dropdown-menu">
+      <div class="pl-dropdown-item active" onclick="filterByPlaylist(null,this)"><div class="pl-dropdown-dot" style="background:var(--text-dim)"></div>Toutes les playlists</div>
+      <div class="pl-dropdown-item" onclick="filterByPlaylist('electro',this)"><div class="pl-dropdown-dot" style="background:#378ADD"></div>Good Electro</div>
+      <div class="pl-dropdown-item" onclick="filterByPlaylist('techno',this)"><div class="pl-dropdown-dot" style="background:#888"></div>Good Techno</div>
+      <div class="pl-dropdown-item" onclick="filterByPlaylist('vibes',this)"><div class="pl-dropdown-dot" style="background:#1D9E75"></div>Good Vibes</div>
+      <div class="pl-dropdown-item" onclick="filterByPlaylist('afro',this)"><div class="pl-dropdown-dot" style="background:#EF9F27"></div>Good Afro</div>
+      <div class="pl-dropdown-item" onclick="filterByPlaylist('maghreb',this)"><div class="pl-dropdown-dot" style="background:#D85A30"></div>Maghreb United</div>
+      <div class="pl-dropdown-item" onclick="filterByPlaylist('rap',this)"><div class="pl-dropdown-dot" style="background:#7F77DD"></div>Rap FR</div>
+    </div>
+  </div>
+
+  <div class="tracks" id="tracks-container"></div>
+  <div class="empty-state" id="empty-state">
+    <div class="empty-num">✓</div>
+    <div class="empty-msg">Inbox vide — tout est classé.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toast-msg">Track archivé</span>
+  <button class="toast-undo" onclick="undo()">Annuler</button>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9M5 10v10h5v-5h4v5h5V10"/></svg><span class="nav-lbl">Accueil</span></div>
+  <div class="nav-item active">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span class="nav-badge" id="nav-badge">34</span>
+    <span class="nav-lbl" style="color:var(--accent)">Inbox</span>
+  </div>
+  <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="nav-lbl">Playlists</span></div>
+  <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span class="nav-lbl">Walid</span></div>
+</div>
+
+<script>
+const PL = {
+  electro:{name:'Good Electro', plbg:'#0b1e38',plb:'#185FA5',plt:'#85B7EB',plts:'#d4eaf9',dot:'#378ADD'},
+  techno: {name:'Good Techno',  plbg:'#1a1a1e',plb:'#5F5E5A',plt:'#B4B2A9',plts:'#eeecea',dot:'#888'},
+  vibes:  {name:'Good Vibes',   plbg:'#082018',plb:'#0F6E56',plt:'#5DCAA5',plts:'#cff0e5',dot:'#1D9E75'},
+  afro:   {name:'Good Afro',    plbg:'#271c07',plb:'#BA7517',plt:'#EF9F27',plts:'#fce8c0',dot:'#EF9F27'},
+  maghreb:{name:'Maghreb United',plbg:'#281009',plb:'#993C1D',plt:'#F0997B',plts:'#fde0d5',dot:'#D85A30'},
+  rap:    {name:'Rap FR',        plbg:'#161238',plb:'#534AB7',plt:'#AFA9EC',plts:'#e8e6fc',dot:'#7F77DD'},
+};
+const ALL_PL = ['electro','techno','vibes','afro','maghreb','rap'];
+
+const TRACKS_DATA = [
+  {id:1,title:'ليالي',artist:'U',album:'(ليالي)',confidence:null,genres:['rap/hip hop'],
+   reason:"Le titre en arabe 'ليالي' (Layali) et le genre rap/hip hop suggèrent un rap arabe qui correspond parfaitement à la collection culturelle MENA de Maghreb United.",
+   suggestions:['maghreb','rap'],art_bg:'#1e1030',art_color:'#9966cc',initials:'لي'},
+  {id:2,title:'Gotta Learn',artist:'Biga*Ranx',album:'St.Soleil – Tape',confidence:42,genres:['reggae','roots'],
+   reason:"Les influences reggae de Biga*Ranx et la production organique de St.Soleil – Tape s'alignent avec la chaleur soul de Good Vibes, mais le côté roots reggae crée une ambiguïté avec Good Afro.",
+   suggestions:['vibes','afro'],art_bg:'#2d1a4a',art_color:'#b88aee',initials:'BR'},
+  {id:3,title:'Émeraude',artist:'Laylow',album:'Trinity',confidence:38,genres:['rap fr','experimental'],
+   reason:"Laylow est clairement dans le rap FR, mais la production cinématique d'Émeraude hésite entre Rap FR et Good Vibes pour son ambiance introspective très marquée.",
+   suggestions:['rap','vibes'],art_bg:'#101010',art_color:'#666',initials:'LL'},
+  {id:4,title:'Burning Spear',artist:'Kalash',album:'Moroccan Gigolo',confidence:51,genres:['dancehall','afrobeats'],
+   reason:"Kalash oscille entre Good Afro et Maghreb United. Les influences afrobeats et la chaleur tropicale dominent ici.",
+   suggestions:['afro','maghreb'],art_bg:'#2a1205',art_color:'#e07030',initials:'KL'},
+  {id:5,title:'Joko',artist:'Guts',album:'Groove Education',confidence:45,genres:['jazz hip-hop','nu jazz'],
+   reason:"Le jazz hip-hop organique de Guts correspond bien à Good Vibes, mais le BPM dansant suggère également Good Electro.",
+   suggestions:['vibes','electro'],art_bg:'#0a1e24',art_color:'#3ab8a0',initials:'GU'},
+  {id:6,title:'Balti Ya Balti',artist:'Gnawa Diffusion',album:'Souk System',confidence:null,genres:['gnawa','world'],
+   reason:"Gnawa Diffusion est un cas évident pour Maghreb United. La fusion gnawa-rock et les thèmes culturels maghrébins correspondent exactement à l'identité de la playlist.",
+   suggestions:['maghreb'],art_bg:'#200a0a',art_color:'#cc4422',initials:'GD'},
+  {id:7,title:'Moleskine',artist:'FKJ',album:'French Kiwi Juice',confidence:48,genres:['future bass','neo soul'],
+   reason:"La production de FKJ mêle élégamment l'électronique et l'organique. Moleskine penche vers Good Vibes, mais la texture électro pourrait aussi convenir à Good Electro.",
+   suggestions:['vibes','electro'],art_bg:'#1a1020',art_color:'#8866cc',initials:'FK'},
+  {id:8,title:'Kilindi',artist:'Ninho',album:'JEFE',confidence:55,genres:['rap fr','trap fr'],
+   reason:"Ninho est clairement dans le rap FR. Kilindi respecte la contrainte d'âge. Confiance limite : style très commercial comparé aux autres artistes de la playlist.",
+   suggestions:['rap'],art_bg:'#0a0a18',art_color:'#4466cc',initials:'NI'},
+];
+
+let state = {
+  tracks: TRACKS_DATA.map(t => ({...t, selected:new Set([t.suggestions[0]]), archived:false, validated:false})),
+  filter:'all', plFilter:null, lastAction:null,
+};
+
+function plStyle(k){const p=PL[k];return `style="--plbg:${p.plbg};--plb:${p.plb};--plt:${p.plt};--plts:${p.plts}"`;}
+
+function renderPill(tid, k, isAI){
+  const t=state.tracks.find(x=>x.id===tid);
+  const sel=t.selected.has(k)?'sel':'';
+  const ai=isAI?'<span class="pp-ai">IA</span>':'';
+  return `<span class="pl-pill ${sel}" ${plStyle(k)} onclick="togglePl(${tid},'${k}')"><span class="pp-dot"></span><span class="pp-name">${PL[k].name}</span>${ai}</span>`;
+}
+
+function renderExpandCard(tid, k){
+  const t=state.tracks.find(x=>x.id===tid);
+  const sel=t.selected.has(k)?'sel':'';
+  return `<div class="pl-card-sm ${sel}" ${plStyle(k)} onclick="togglePl(${tid},'${k}')"><div class="pc-dot"></div><div class="pc-name">${PL[k].name}</div></div>`;
+}
+
+function renderCard(track, idx){
+  const conf=track.confidence;
+  let bcls='badge-none', blbl='Aucun signal';
+  if(conf!==null){bcls=conf<40?'badge-vlow':'badge-low';blbl=conf+'%';}
+  const others=ALL_PL.filter(k=>!track.suggestions.includes(k));
+  const selCount=track.selected.size;
+
+  return `
+<div class="track-card" id="card-${track.id}" style="animation-delay:${idx*.06}s">
+  <div class="card-main">
+    <div class="card-info">
+      <div class="track-title">${track.title}</div>
+      <div class="track-sub">${track.artist} · ${track.album}</div>
+    </div>
+    <div class="card-right">
+      <div class="conf-badge ${bcls}">${blbl}</div>
+      <button class="play-btn" onclick="togglePlayer(${track.id})" id="playbtn-${track.id}" title="Écouter">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="color:var(--text-muted);margin-left:2px"><path d="M2 2l8 4-8 4V2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="player-expand" id="player-${track.id}">
+    <div class="player-mock" style="background:${track.art_bg}">
+      <div class="player-art" style="background:${track.art_color}22;color:${track.art_color}">${track.initials}</div>
+      <div class="player-meta"><div class="player-t">${track.title}</div><div class="player-a">${track.artist}</div></div>
+      <div class="player-play" onclick="alert('Preview désactivé en dev mode Spotify')">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="#111"><path d="M2 2l8 4-8 4V2z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="tags">${track.genres.map(g=>`<span class="tag">${g}</span>`).join('')}</div>
+
+  <div class="pl-row" id="pl-row-${track.id}">
+    ${track.suggestions.map(k=>renderPill(track.id,k,true)).join('')}
+    ${others.length>0?`<button class="more-pl-btn" id="more-btn-${track.id}" onclick="toggleExpand(${track.id})">+${others.length} <span class="mc" id="mc-${track.id}">▾</span></button>`:''}
+  </div>
+
+  <div class="pl-expand" id="pl-expand-${track.id}">
+    ${others.map(k=>renderExpandCard(track.id,k)).join('')}
+  </div>
+
+  <div class="action-row">
+    <button class="action-chip" id="reason-btn-${track.id}" onclick="toggleReason(${track.id})">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      Raison IA
+    </button>
+  </div>
+
+  <div class="reason-expand" id="reason-${track.id}">
+    <div class="reason-text">${track.reason}</div>
+  </div>
+
+  <div class="card-sep"></div>
+  <div class="card-actions">
+    <button class="assign-btn ${selCount>0?'ready':''}" id="abtn-${track.id}" onclick="assign(${track.id})">
+      ${selCount===0?'Assigner':`Assigner (${selCount} playlist${selCount>1?'s':''})`}
+    </button>
+    <button class="icon-btn" onclick="archive(${track.id})" title="Archiver" style="font-size:15px;font-family:serif;color:var(--text-dim)">∅</button>
+  </div>
+</div>`;
+}
+
+function renderAll(){
+  const visible=visibleTracks();
+  document.getElementById('tracks-container').innerHTML=visible.map((t,i)=>renderCard(t,i)).join('');
+  updateHeader();
+  document.getElementById('empty-state').style.display=visible.length===0?'block':'none';
+}
+
+function visibleTracks(){
+  return state.tracks.filter(t=>{
+    if(t.archived||t.validated) return false;
+    if(state.filter==='uncertain'&&t.confidence!==null&&t.confidence>=55) return false;
+    if(state.filter==='very'&&(t.confidence===null||t.confidence>=40)) return false;
+    if(state.plFilter&&!t.suggestions.includes(state.plFilter)) return false;
+    return true;
+  });
+}
+
+function updateHeader(){
+  const n=visibleTracks().length;
+  const total=state.tracks.filter(t=>!t.archived&&!t.validated).length;
+  document.getElementById('hero-count').textContent=n;
+  document.getElementById('hero-count').className='hero-num'+(n===0?' zero':'');
+  document.getElementById('hero-label').textContent=n<=1?'track à revoir':'tracks à revoir';
+  document.getElementById('nav-badge').textContent=total;
+  document.getElementById('validate-all-btn').classList.toggle('hidden',total===0);
+}
+
+function togglePl(tid, k){
+  const t=state.tracks.find(x=>x.id===tid);
+  if(t.selected.has(k)) t.selected.delete(k); else t.selected.add(k);
+  // Update pills in row
+  const row=document.getElementById('pl-row-'+tid);
+  if(row) row.querySelectorAll('.pl-pill').forEach(p=>{
+    if(p.getAttribute('onclick').includes(`'${k}'`)) p.classList.toggle('sel',t.selected.has(k));
+  });
+  // Update expand cards
+  const exp=document.getElementById('pl-expand-'+tid);
+  if(exp) exp.querySelectorAll('.pl-card-sm').forEach(c=>{
+    if(c.getAttribute('onclick').includes(`'${k}'`)) c.classList.toggle('sel',t.selected.has(k));
+  });
+  const n=t.selected.size;
+  const btn=document.getElementById('abtn-'+tid);
+  btn.className='assign-btn'+(n>0?' ready':'');
+  btn.textContent=n===0?'Assigner':`Assigner (${n} playlist${n>1?'s':''})`;
+}
+
+function toggleExpand(tid){
+  const exp=document.getElementById('pl-expand-'+tid);
+  const mc=document.getElementById('mc-'+tid);
+  const isOpen=exp.classList.toggle('open');
+  if(mc) mc.classList.toggle('open',isOpen);
+  // Rebuild expanded cards (in case selection changed)
+  const t=state.tracks.find(x=>x.id===tid);
+  const others=ALL_PL.filter(k=>!t.suggestions.includes(k));
+  exp.innerHTML=others.map(k=>renderExpandCard(tid,k)).join('');
+}
+
+function togglePlayer(tid){
+  const el=document.getElementById('player-'+tid);
+  el.classList.toggle('open');
+}
+
+function toggleReason(tid){
+  const el=document.getElementById('reason-'+tid);
+  const btn=document.getElementById('reason-btn-'+tid);
+  const open=el.classList.toggle('open');
+  btn.classList.toggle('on',open);
+}
+
+function assign(tid){
+  const t=state.tracks.find(x=>x.id===tid);
+  if(t.selected.size===0) return;
+  const names=[...t.selected].map(k=>PL[k].name).join(', ');
+  state.lastAction={type:'assign',tid,prev:{selected:new Set(t.selected),validated:false}};
+  t.validated=true;
+  dismissCard(tid,()=>renderAll());
+  showToast(`"${t.title}" → ${names}`,true);
+}
+
+function archive(tid){
+  const t=state.tracks.find(x=>x.id===tid);
+  state.lastAction={type:'archive',tid,prev:{archived:false}};
+  t.archived=true;
+  dismissCard(tid,()=>renderAll());
+  showToast(`"${t.title}" archivé`,true);
+}
+
+function validateAll(){
+  const visible=visibleTracks();
+  if(!visible.length) return;
+  visible.forEach(t=>{ t.validated=true; });
+  renderAll();
+  showToast(`${visible.length} track${visible.length>1?'s':''} validé${visible.length>1?'s':''}`,false);
+}
+
+function dismissCard(tid, cb){
+  const card=document.getElementById('card-'+tid);
+  if(card){card.classList.add('dismissing');setTimeout(cb,350);}else cb();
+}
+
+function undo(){
+  if(!state.lastAction) return;
+  const{type,tid,prev}=state.lastAction;
+  const t=state.tracks.find(x=>x.id===tid);
+  if(type==='assign'){t.validated=prev.validated;t.selected=prev.selected;}
+  else if(type==='archive'){t.archived=prev.archived;}
+  state.lastAction=null;
+  hideToast();
+  renderAll();
+}
+
+function setFilter(f,btn){
+  state.filter=f;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function filterByPlaylist(plKey,item){
+  state.plFilter=plKey;
+  document.querySelectorAll('.pl-dropdown-item').forEach(i=>i.classList.remove('active'));
+  item.classList.add('active');
+  document.getElementById('dropdown-label').textContent=plKey?PL[plKey].name:'Toutes les playlists';
+  toggleDropdown();
+  renderAll();
+}
+
+function toggleDropdown(){
+  const menu=document.getElementById('dropdown-menu');
+  const arrow=document.getElementById('dropdown-arrow');
+  const open=menu.classList.toggle('open');
+  arrow.classList.toggle('open',open);
+  if(open) setTimeout(()=>document.addEventListener('click',closeDropdown,{once:true}),10);
+}
+function closeDropdown(e){
+  const menu=document.getElementById('dropdown-menu');
+  const btn=document.getElementById('dropdown-btn');
+  if(!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.classList.remove('open');
+    document.getElementById('dropdown-arrow').classList.remove('open');
+  }
+}
+
+let toastTimer;
+function showToast(msg,showUndo){
+  clearTimeout(toastTimer);
+  const toast=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  toast.querySelector('.toast-undo').style.display=showUndo?'inline':'none';
+  toast.classList.add('show');
+  toastTimer=setTimeout(hideToast,4000);
+}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+
+renderAll();
+</script>
+</body>
+</html>

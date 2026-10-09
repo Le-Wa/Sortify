@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Profil — Sortify</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300;1,9..144,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c0a;
+  --surface:#181512;
+  --surface2:#201d19;
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.12);
+  --accent:#c8886a;
+  --text:#f0ece6;
+  --text-muted:#8a8278;
+  --text-dim:#504a44;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;min-height:100%;}
+.app{max-width:430px;margin:0 auto;padding-bottom:88px;}
+
+/* ── HERO ─────────────────────────────── */
+.hero{position:relative;padding:48px 20px 32px;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.hero-blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.18;}
+.b1{width:280px;height:280px;background:#c8886a;top:-80px;left:-60px;}
+.b2{width:200px;height:200px;background:#185FA5;top:20px;right:-40px;}
+.b3{width:180px;height:180px;background:#0F6E56;bottom:-60px;left:40px;}
+.hero-inner{position:relative;z-index:1;}
+.hero-eyebrow{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.hero-name{font-family:'Fraunces',serif;font-size:42px;font-weight:700;line-height:1;color:var(--text);margin-bottom:4px;}
+.hero-sub{font-size:14px;color:var(--text-muted);margin-bottom:24px;}
+.hero-signature{background:rgba(200,136,106,.07);border:1px solid rgba(200,136,106,.25);border-radius:14px;padding:14px 16px;}
+.sig-label{font-size:10px;color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+.sig-text{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--accent);line-height:1.5;}
+
+/* ── DNA BAR ──────────────────────────── */
+.dna-section{padding:20px 16px 0;}
+.sec-label{font-size:11px;color:var(--text-dim);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;}
+.dna-bar{display:flex;border-radius:10px;overflow:hidden;height:36px;gap:2px;}
+.dna-seg{display:flex;align-items:center;justify-content:center;cursor:pointer;transition:flex .4s cubic-bezier(.4,0,.2,1),opacity .15s;position:relative;overflow:hidden;min-width:0;}
+.dna-seg:first-child{border-radius:10px 0 0 10px;}
+.dna-seg:last-child{border-radius:0 10px 10px 0;}
+.dna-seg span{font-size:10px;font-weight:600;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;}
+.dna-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;}
+.legend-item{display:flex;align-items:center;gap:6px;cursor:pointer;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.legend-name{font-size:12px;color:var(--text-muted);}
+.legend-pct{font-size:12px;color:var(--text-dim);}
+
+/* ── VIBES GRID ───────────────────────── */
+.vibes-section{padding:24px 16px 0;}
+.vibes-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.vibe-card{border-radius:16px;padding:16px 14px;position:relative;overflow:hidden;cursor:pointer;border:1px solid transparent;transition:box-shadow .2s;}
+.vibe-card:hover{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 8px 24px rgba(0,0,0,.3);}
+.vibe-num{font-family:'Fraunces',serif;font-style:italic;font-size:36px;font-weight:700;line-height:1;margin-bottom:4px;}
+.vibe-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:2px;}
+.vibe-desc{font-size:11px;color:rgba(255,255,255,.4);line-height:1.4;}
+.vibe-bar{position:absolute;bottom:0;left:0;right:0;height:3px;}
+.vibe-artists{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap;}
+.vibe-artist{font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);}
+
+/* ── LISTENING HEATMAP ────────────────── */
+.heat-section{padding:24px 16px 0;}
+.heat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;}
+.heat-col{display:flex;flex-direction:column;gap:4px;align-items:center;}
+.heat-day{font-size:10px;color:var(--text-dim);margin-bottom:2px;text-align:center;}
+.heat-slot{width:100%;aspect-ratio:1;border-radius:4px;background:var(--surface2);transition:opacity .15s;}
+.heat-slot:hover{opacity:.7;cursor:pointer;}
+.heat-legend{display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end;}
+.heat-legend-label{font-size:11px;color:var(--text-dim);}
+.heat-legend-dots{display:flex;gap:3px;}
+.heat-legend-dot{width:12px;height:12px;border-radius:3px;}
+
+/* ── PATTERN PILLS ────────────────────── */
+.patterns-section{padding:24px 16px 0;}
+.pattern-list{display:flex;flex-direction:column;gap:8px;}
+.pattern-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:12px 14px;}
+.pattern-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center;}
+.pattern-info{flex:1;min-width:0;}
+.pattern-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.pattern-sub{font-size:11px;color:var(--text-muted);}
+.pattern-val{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--accent);flex-shrink:0;}
+
+/* ── TASTE EVOLUTION ──────────────────── */
+.evo-section{padding:24px 16px 0;}
+.evo-chart{position:relative;height:80px;margin-top:4px;}
+.evo-svg{width:100%;height:80px;}
+.evo-label{display:flex;justify-content:space-between;margin-top:6px;}
+.evo-lbl{font-size:10px;color:var(--text-dim);}
+
+/* ── TOP DISCOVERY ────────────────────── */
+.disco-section{padding:24px 16px 0;}
+.disco-list{display:flex;flex-direction:column;gap:1px;border-radius:14px;overflow:hidden;border:1px solid var(--border);}
+.disco-row{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface);transition:background .1s;}
+.disco-row:hover{background:var(--surface2);}
+.disco-rank{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--text-dim);width:22px;flex-shrink:0;text-align:center;}
+.disco-art{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.disco-meta{flex:1;min-width:0;}
+.disco-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.disco-artist{font-size:11px;color:var(--text-muted);}
+.disco-pl{font-size:10px;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap;}
+
+/* ── SHARE ────────────────────────────── */
+.share-section{padding:24px 16px 0;}
+.share-btn{width:100%;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--border2);font-size:14px;font-weight:600;color:var(--text-muted);font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color .15s,color .15s;}
+.share-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── NAV ──────────────────────────────── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(12,10,8,.95);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;padding:8px 0 20px;z-index:100;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.35;min-width:64px;position:relative;}
+.nav-item.active{opacity:1;}
+.nav-item svg{width:22px;height:22px;}
+.nav-lbl{font-size:10px;color:var(--text);}
+.nav-item.active .nav-lbl{color:var(--accent);}
+.nav-badge{position:absolute;top:-2px;right:12px;background:var(--accent);color:#18090a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:99px;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.fade-up{animation:fadeUp .5s ease both;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HERO -->
+  <div class="hero fade-up">
+    <div class="hero-bg">
+      <div class="hero-blob b1"></div>
+      <div class="hero-blob b2"></div>
+      <div class="hero-blob b3"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">Sonic portrait</div>
+      <div class="hero-name">Walid</div>
+      <div class="hero-sub">1 247 tracks · 6 vibes · actif depuis mars 2021</div>
+      <div class="hero-signature">
+        <div class="sig-label">Ta signature sonore</div>
+        <div class="sig-text">"Un explorateur du groove — des rythmes africains aux nuits techno, avec une âme jazz qui ne s'éteint pas."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DNA BAR -->
+  <div class="dna-section fade-up" style="animation-delay:.1s">
+    <div class="sec-label">ADN musical</div>
+    <div class="dna-bar" id="dna-bar"></div>
+    <div class="dna-legend" id="dna-legend"></div>
+  </div>
+
+  <!-- VIBES -->
+  <div class="vibes-section fade-up" style="animation-delay:.15s">
+    <div class="sec-label">Tes 4 vibes dominantes</div>
+    <div class="vibes-grid" id="vibes-grid"></div>
+  </div>
+
+  <!-- HEATMAP -->
+  <div class="heat-section fade-up" style="animation-delay:.2s">
+    <div class="sec-label">Quand tu écoutes</div>
+    <div class="heat-grid" id="heat-grid"></div>
+    <div class="heat-legend">
+      <span class="heat-legend-label">Moins</span>
+      <div class="heat-legend-dots">
+        <div class="heat-legend-dot" style="background:#1e1b18"></div>
+        <div class="heat-legend-dot" style="background:#3d2e20"></div>
+        <div class="heat-legend-dot" style="background:#7a5435"></div>
+        <div class="heat-legend-dot" style="background:#c8886a"></div>
+      </div>
+      <span class="heat-legend-label">Plus</span>
+    </div>
+  </div>
+
+  <!-- PATTERNS -->
+  <div class="patterns-section fade-up" style="animation-delay:.25s">
+    <div class="sec-label">Habitudes d'écoute</div>
+    <div class="pattern-list">
+      <div class="pattern-row">
+        <div class="pattern-icon">🌙</div>
+        <div class="pattern-info">
+          <div class="pattern-title">Écoute nocturne</div>
+          <div class="pattern-sub">Tu likes surtout entre 22h et 2h</div>
+        </div>
+        <div class="pattern-val">68%</div>
+      </div>
+      <div class="pattern-row">
+        <div class="pattern-icon">📅</div>
+        <div class="pattern-info">
+          <div class="pattern-title">Binge hebdo</div>
+          <div class="pattern-sub">12 nouveaux likes en moyenne le vendredi</div>
+        </div>
+        <div class="pattern-val">×3</div>
+      </div>
+      <div class="pattern-row">
+        <div class="pattern-icon">🌍</div>
+        <div class="pattern-info">
+          <div class="pattern-title">Diversité culturelle</div>
+          <div class="pattern-sub">Tracks en 8 langues différentes</div>
+        </div>
+        <div class="pattern-val">8</div>
+      </div>
+      <div class="pattern-row">
+        <div class="pattern-icon">🕰️</div>
+        <div class="pattern-info">
+          <div class="pattern-title">Âge moyen des tracks</div>
+          <div class="pattern-sub">Tu penches récent mais gardes des classiques</div>
+        </div>
+        <div class="pattern-val">2.4 ans</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASTE EVOLUTION -->
+  <div class="evo-section fade-up" style="animation-delay:.3s">
+    <div class="sec-label">Évolution du goût — 6 derniers mois</div>
+    <div class="evo-chart">
+      <svg class="evo-svg" id="evo-svg" viewBox="0 0 360 80" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="evo-label">
+      <span class="evo-lbl">Déc</span>
+      <span class="evo-lbl">Jan</span>
+      <span class="evo-lbl">Fév</span>
+      <span class="evo-lbl">Mar</span>
+      <span class="evo-lbl">Avr</span>
+      <span class="evo-lbl">Mai</span>
+    </div>
+  </div>
+
+  <!-- TOP DISCOVERIES -->
+  <div class="disco-section fade-up" style="animation-delay:.35s">
+    <div class="sec-label">Découvertes récentes notables</div>
+    <div class="disco-list" id="disco-list"></div>
+  </div>
+
+  <!-- SHARE -->
+  <div class="share-section fade-up" style="animation-delay:.4s">
+    <button class="share-btn" onclick="alert('Partage à venir')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Partager mon sonic portrait
+    </button>
+  </div>
+
+</div>
+
+<!-- NAV -->
+<div class="bottom-nav">
+  <div class="nav-item" onclick="window.location='sortify-home.html'">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9M5 10v10h5v-5h4v5h5V10"/></svg>
+    <span class="nav-lbl">Accueil</span>
+  </div>
+  <div class="nav-item" onclick="window.location='sortify-inbox.html'">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span class="nav-badge">34</span>
+    <span class="nav-lbl">Inbox</span>
+  </div>
+  <div class="nav-item active">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    <span class="nav-lbl" style="color:var(--accent)">Walid</span>
+  </div>
+</div>
+
+<script>
+// ── DNA DATA ────────────────────────────
+const DNA = [
+  {key:'electro', label:'Électro',    pct:26, color:'#185FA5'},
+  {key:'vibes',   label:'Vibes',      pct:25, color:'#0F6E56'},
+  {key:'maghreb', label:'Maghreb',    pct:13, color:'#993C1D'},
+  {key:'afro',    label:'Afro',       pct:14, color:'#BA7517'},
+  {key:'rap',     label:'Rap FR',     pct:14, color:'#534AB7'},
+  {key:'techno',  label:'Techno',     pct:8,  color:'#5F5E5A'},
+];
+
+function buildDNA() {
+  const bar = document.getElementById('dna-bar');
+  const legend = document.getElementById('dna-legend');
+  bar.innerHTML = DNA.map(d => `
+    <div class="dna-seg" style="flex:${d.pct};background:${d.color}" title="${d.label} ${d.pct}%">
+      ${d.pct >= 12 ? `<span>${d.label}</span>` : ''}
+    </div>`).join('');
+  legend.innerHTML = DNA.map(d => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${d.color}"></div>
+      <span class="legend-name">${d.label}</span>
+      <span class="legend-pct">${d.pct}%</span>
+    </div>`).join('');
+}
+
+// ── VIBES ───────────────────────────────
+const VIBES = [
+  {name:'Good Vibes',  num:312, desc:'Jazz · Organic · Soul', color:'#0F6E56', bg:'rgba(15,110,86,.15)',
+   artists:['Guts','FKJ','Erykah Badu']},
+  {name:'Good Electro',num:234, desc:'Afro house · Bass', color:'#185FA5', bg:'rgba(24,95,165,.15)',
+   artists:['DJ Koze','Mall Grab']},
+  {name:'Good Afro',   num:156, desc:'Afrobeats · Swing', color:'#BA7517', bg:'rgba(186,117,23,.15)',
+   artists:['Wizkid','Burna Boy']},
+  {name:'Rap FR',      num:166, desc:'<3 ans · boom bap', color:'#534AB7', bg:'rgba(83,74,183,.15)',
+   artists:['Laylow','Ninho','Nekfeu']},
+];
+
+function buildVibes() {
+  document.getElementById('vibes-grid').innerHTML = VIBES.map(v => `
+    <div class="vibe-card" style="background:${v.bg};border-color:${v.color}55">
+      <div class="vibe-num" style="color:${v.color}">${v.num}</div>
+      <div class="vibe-name">${v.name}</div>
+      <div class="vibe-desc">${v.desc}</div>
+      <div class="vibe-artists">${v.artists.map(a=>`<span class="vibe-artist">${a}</span>`).join('')}</div>
+      <div class="vibe-bar" style="background:${v.color}"></div>
+    </div>`).join('');
+}
+
+// ── HEATMAP ─────────────────────────────
+const DAYS = ['L','M','M','J','V','S','D'];
+const SLOTS = ['Mat','Apr','Soir','Nuit'];
+// intensities 0-3, pattern: nocturne + vendredi pic
+const HEAT = [
+  [0,0,1,2],[0,0,1,2],[0,0,1,2],[0,0,1,3],[1,1,2,3],[1,1,2,2],[0,0,1,1]
+];
+const HEAT_COLORS = ['#1e1b18','#3d2e20','#7a5435','#c8886a'];
+
+function buildHeatmap() {
+  const grid = document.getElementById('heat-grid');
+  grid.innerHTML = DAYS.map((day, i) => `
+    <div class="heat-col">
+      <div class="heat-day">${day}</div>
+      ${HEAT[i].map((v,j) => `<div class="heat-slot" style="background:${HEAT_COLORS[v]}" title="${day} ${SLOTS[j]} — intensité ${v}"></div>`).join('')}
+    </div>`).join('');
+}
+
+// ── TASTE EVOLUTION SVG ─────────────────
+const EVO_DATA = {
+  electro: [30, 28, 32, 26, 24, 26],
+  vibes:   [20, 22, 24, 26, 28, 25],
+  afro:    [12, 14, 12, 14, 16, 14],
+  maghreb: [18, 16, 14, 13, 12, 13],
+  rap:     [12, 12, 10, 13, 12, 14],
+  techno:  [8,  8,  8,  8,  8,  8],
+};
+const EVO_COLORS = {
+  electro:'#185FA5', vibes:'#0F6E56', afro:'#BA7517',
+  maghreb:'#993C1D', rap:'#534AB7', techno:'#5F5E5A'
+};
+
+function buildEvo() {
+  const svg = document.getElementById('evo-svg');
+  const W = 360, H = 80, pts = 6;
+  const xStep = W / (pts - 1);
+  let paths = '';
+  Object.entries(EVO_DATA).forEach(([key, vals]) => {
+    const points = vals.map((v, i) => {
+      const x = i * xStep;
+      const y = H - (v / 40) * H;
+      return [x, y];
+    });
+    let d = `M${points[0][0]},${points[0][1]}`;
+    for (let i = 1; i < points.length; i++) {
+      const [px, py] = points[i - 1], [cx, cy] = points[i];
+      d += ` C${px + xStep / 2},${py} ${cx - xStep / 2},${cy} ${cx},${cy}`;
+    }
+    paths += `<path d="${d}" fill="none" stroke="${EVO_COLORS[key]}" stroke-width="2" opacity="0.7"/>`;
+  });
+  svg.innerHTML = paths;
+}
+
+// ── DISCOVERIES ─────────────────────────
+const DISCO = [
+  {title:'ليالي',         artist:'U',              pl:'Maghreb',  plColor:'#993C1D', plBg:'rgba(153,60,29,.18)', art:'#1e1030', init:'لي'},
+  {title:'Gotta Learn',   artist:'Biga*Ranx',       pl:'Vibes',    plColor:'#0F6E56', plBg:'rgba(15,110,86,.18)', art:'#2d1a4a', init:'BR'},
+  {title:'Émeraude',      artist:'Laylow',           pl:'Rap FR',   plColor:'#534AB7', plBg:'rgba(83,74,183,.18)', art:'#101010', init:'LL'},
+  {title:'Burning Spear', artist:'Kalash',           pl:'Afro',     plColor:'#BA7517', plBg:'rgba(186,117,23,.18)',art:'#2a1205', init:'KL'},
+  {title:'Moleskine',     artist:'FKJ',              pl:'Vibes',    plColor:'#0F6E56', plBg:'rgba(15,110,86,.18)', art:'#1a1020', init:'FK'},
+];
+
+function buildDisco() {
+  document.getElementById('disco-list').innerHTML = DISCO.map((d, i) => `
+    <div class="disco-row" style="border-left:3px solid ${d.plColor}88">
+      <div class="disco-rank">${i + 1}</div>
+      <div class="disco-art" style="background:${d.art}33;color:${d.art}">${d.init}</div>
+      <div class="disco-meta">
+        <div class="disco-title">${d.title}</div>
+        <div class="disco-artist">${d.artist}</div>
+      </div>
+      <div class="disco-pl" style="background:${d.plBg};color:${d.plColor};border:1px solid ${d.plColor}44">${d.pl}</div>
+    </div>`).join('');
+}
+
+buildDNA();
+buildVibes();
+buildHeatmap();
+buildEvo();
+buildDisco();
+</script>
+</body>
+</html>

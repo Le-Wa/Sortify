@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sortify v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400;1,600&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:              oklch(97.5% 0.007 75);
+    --surface:         oklch(99.5% 0.004 78);
+    --surface2:        oklch(94.5% 0.012 80);
+    --ink:             oklch(22% 0.014 55);
+    --ink-mid:         oklch(47% 0.018 60);
+    --ink-dim:         oklch(69% 0.014 65);
+    --terra:           oklch(59% 0.118 44);
+    --terra-light:     oklch(94% 0.022 48);
+    --border:          oklch(22% 0.014 55 / 0.08);
+    --border-strong:   oklch(22% 0.014 55 / 0.15);
+    --shadow:          0 2px 12px oklch(22% 0.014 55 / 0.05);
+    --shadow-md:       0 4px 24px oklch(22% 0.014 55 / 0.08);
+    --sidebar-bg:      oklch(20% 0.022 52);
+    --sidebar-surface: oklch(27% 0.022 52);
+    --sidebar-ink:     oklch(80% 0.014 68);
+    --sidebar-dim:     oklch(50% 0.016 65);
+    --sidebar-border:  oklch(80% 0.014 68 / 0.1);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Geist', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* ── sidebar ── */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo { margin-bottom: 40px; padding: 0 8px; }
+  .logo-word {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 26px;
+    font-weight: 600;
+    color: oklch(93% 0.01 75);
+    letter-spacing: -0.5px;
+  }
+  .logo-dot { color: var(--terra); }
+  .logo-sub { font-size: 11px; color: var(--sidebar-dim); margin-top: 3px; letter-spacing: 0.3px; }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    color: var(--sidebar-dim);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-item:hover { background: var(--sidebar-surface); color: var(--sidebar-ink); }
+  .nav-item.active {
+    background: oklch(59% 0.118 44 / 0.18);
+    color: oklch(88% 0.055 55);
+    font-weight: 500;
+  }
+  .nav-item:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; border-radius: 9px; }
+  .nav-icon { width: 16px; height: 16px; opacity: 0.5; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--terra);
+    color: oklch(20% 0.022 52);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 20px;
+  }
+
+  .sidebar-footer {
+    padding-top: 20px;
+    margin-top: auto;
+    border-top: 1px solid var(--sidebar-border);
+  }
+  .cron-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 12px;
+  }
+  .dot-green {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: oklch(65% 0.14 145);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .cron-label { font-size: 10px; color: var(--sidebar-dim); margin-bottom: 3px; letter-spacing: 0.3px; }
+  .cron-val { font-size: 12px; color: var(--sidebar-ink); font-weight: 500; }
+  .cron-next { font-size: 10px; color: var(--sidebar-dim); margin-top: 2px; }
+
+  /* ── main ── */
+  .main { flex: 1; padding: 36px 40px 60px; max-width: 900px; }
+
+  .page-header { margin-bottom: 36px; }
+  .page-greeting { font-size: 12px; color: var(--ink-dim); margin-bottom: 4px; }
+  .page-title {
+    font-family: 'Fraunces', serif;
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .page-title em { font-style: italic; color: var(--terra); }
+
+  /* stats — inline, no cards */
+  .stats-row {
+    display: flex;
+    margin-bottom: 36px;
+    padding: 18px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-item { flex: 1; padding: 0 28px; position: relative; }
+  .stat-item:first-child { padding-left: 0; }
+  .stat-item + .stat-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 6px; bottom: 6px;
+    width: 1px;
+    background: var(--border);
+  }
+  .stat-label { font-size: 10px; color: var(--ink-dim); margin-bottom: 6px; letter-spacing: 0.3px; }
+  .stat-val { font-size: 30px; font-weight: 500; color: var(--ink); letter-spacing: -1px; line-height: 1; }
+  .stat-val.terra { color: var(--terra); }
+  .stat-sub { font-size: 10px; color: var(--ink-dim); margin-top: 4px; }
+
+  /* section */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--ink);
+  }
+  .section-link { font-size: 12px; color: var(--ink-dim); cursor: pointer; }
+  .section-link:hover { color: var(--ink); }
+
+  /* inbox */
+  .inbox-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 36px; }
+  .inbox-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: box-shadow 0.15s;
+  }
+  .inbox-card:hover { box-shadow: var(--shadow-md); }
+  .inbox-card.low-conf {
+    border-color: oklch(59% 0.118 44 / 0.3);
+    background: oklch(59% 0.118 44 / 0.03);
+  }
+  .inbox-track { flex: 1; min-width: 0; }
+  .inbox-name { font-size: 13.5px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inbox-artist { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+  .inbox-method {
+    font-size: 10px;
+    color: var(--ink-dim);
+    background: var(--surface2);
+    padding: 3px 8px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .inbox-pl {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    background: var(--surface2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .inbox-conf {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    flex-shrink: 0;
+    width: 44px;
+    text-align: right;
+    letter-spacing: -0.5px;
+  }
+  .inbox-conf.lo { color: var(--terra); }
+  .inbox-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn {
+    font-family: 'Geist', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 6px 13px;
+    border-radius: 7px;
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    background: transparent;
+    color: var(--ink-mid);
+  }
+  .btn:hover { background: var(--surface2); color: var(--ink); }
+  .btn:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; }
+  .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 500; }
+  .btn.primary:hover { background: var(--terra); border-color: var(--terra); }
+
+  /* playlists — table + fill bars */
+  .pl-table { display: flex; flex-direction: column; gap: 2px; }
+  .pl-row {
+    display: grid;
+    grid-template-columns: 8px 1fr 140px 44px 36px;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: background 0.12s;
+    cursor: default;
+  }
+  .pl-row:hover { background: var(--surface); }
+  .pl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pl-row-name {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+  .pl-row-tags { font-size: 11px; color: var(--ink-dim); line-height: 1.4; }
+  .pl-bar-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pl-bar-fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    border-radius: 2px;
+  }
+  .pl-row-count { font-size: 13px; font-weight: 500; color: var(--ink); text-align: right; letter-spacing: -0.3px; }
+  .pl-new {
+    font-size: 10px;
+    color: var(--terra);
+    background: var(--terra-light);
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .pl-new:empty { visibility: hidden; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-word">Sortify<span class="logo-dot">.</span></div>
+      <div class="logo-sub">Playlist automation</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-item active" tabindex="0">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" tabindex="0">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+        Inbox
+        <span class="nav-badge">14</span>
+      </div>
+      <div class="nav-item" tabindex="0">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Playlists
+      </div>
+      <div class="nav-item" tabindex="0">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10v8a2 2 0 01-2 2H5a2 2 0 01-2-2V3z"/></svg>
+        Archive
+      </div>
+      <div class="nav-item" tabindex="0">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12L6 4l4 5 2-3 2 6"/></svg>
+        Logs admin
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="cron-row">
+        <span class="dot-green"></span>
+        <div>
+          <div class="cron-label">Cron actif</div>
+          <div class="cron-val">Chaque lundi · 08h00</div>
+          <div class="cron-next">Prochain run : 26 mai 2026</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-greeting">Bonjour, Walid</div>
+      <div class="page-title">Tout va <em>bien</em> tourner.</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-label">Inbox</div>
+        <div class="stat-val terra">14</div>
+        <div class="stat-sub">à valider</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Classifiés</div>
+        <div class="stat-val">539</div>
+        <div class="stat-sub">au total</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Ce run</div>
+        <div class="stat-val">6</div>
+        <div class="stat-sub">nouveaux placés</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Taux auto</div>
+        <div class="stat-val">81%</div>
+        <div class="stat-sub">sans review</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Inbox — à valider</div>
+      <span class="section-link">Tout voir</span>
+    </div>
+    <div class="inbox-list">
+      <div class="inbox-card">
+        <div class="inbox-track">
+          <div class="inbox-name">Souvenirs d'ailleurs</div>
+          <div class="inbox-artist">Acid Arab · 2024</div>
+        </div>
+        <span class="inbox-method">~ audio match</span>
+        <span class="inbox-pl">Good Vibes</span>
+        <div class="inbox-conf">71%</div>
+        <div class="inbox-actions">
+          <button class="btn primary">Valider</button>
+          <button class="btn">Changer</button>
+        </div>
+      </div>
+
+      <div class="inbox-card low-conf">
+        <div class="inbox-track">
+          <div class="inbox-name">Body Movin' (Fatboy Edit)</div>
+          <div class="inbox-artist">Various Artists · 2025</div>
+        </div>
+        <span class="inbox-method">⚙ Claude</span>
+        <span class="inbox-pl">Good Electro</span>
+        <div class="inbox-conf lo">63%</div>
+        <div class="inbox-actions">
+          <button class="btn primary">Valider</button>
+          <button class="btn">Changer</button>
+        </div>
+      </div>
+
+      <div class="inbox-card">
+        <div class="inbox-track">
+          <div class="inbox-name">Gnawa Soul Vol.3</div>
+          <div class="inbox-artist">Hassan Hakmoun · 2023</div>
+        </div>
+        <span class="inbox-method">✓ genre match</span>
+        <span class="inbox-pl">Maghreb United</span>
+        <div class="inbox-conf">88%</div>
+        <div class="inbox-actions">
+          <button class="btn primary">Valider</button>
+          <button class="btn">Changer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Playlists</div>
+      <span class="section-link">Gérer</span>
+    </div>
+    <div class="pl-table">
+      <div class="pl-row">
+        <span class="pl-dot" style="background: oklch(72% 0.16 62)"></span>
+        <div>
+          <div class="pl-row-name">Good Electro</div>
+          <div class="pl-row-tags">afro house · tech house · bass house · UK garage</div>
+        </div>
+        <div class="pl-bar-track">
+          <div class="pl-bar-fill" style="width: 100%; background: oklch(72% 0.16 62)"></div>
+        </div>
+        <div class="pl-row-count">248</div>
+        <span class="pl-new">+3</span>
+      </div>
+      <div class="pl-row">
+        <span class="pl-dot" style="background: oklch(62% 0.068 148)"></span>
+        <div>
+          <div class="pl-row-name">Good Vibes</div>
+          <div class="pl-row-tags">jazz · organic · soul · French indie</div>
+        </div>
+        <div class="pl-bar-track">
+          <div class="pl-bar-fill" style="width: 54%; background: oklch(62% 0.068 148)"></div>
+        </div>
+        <div class="pl-row-count">133</div>
+        <span class="pl-new">+2</span>
+      </div>
+      <div class="pl-row">
+        <span class="pl-dot" style="background: oklch(60% 0.14 292)"></span>
+        <div>
+          <div class="pl-row-name">Good Techno</div>
+          <div class="pl-row-tags">techno · dnb · acid · melodic</div>
+        </div>
+        <div class="pl-bar-track">
+          <div class="pl-bar-fill" style="width: 37%; background: oklch(60% 0.14 292)"></div>
+        </div>
+        <div class="pl-row-count">91</div>
+        <span class="pl-new">+1</span>
+      </div>
+      <div class="pl-row">
+        <span class="pl-dot" style="background: oklch(59% 0.118 44)"></span>
+        <div>
+          <div class="pl-row-name">Maghreb United</div>
+          <div class="pl-row-tags">gnawa · raï · khaleeji · moroccan pop</div>
+        </div>
+        <div class="pl-bar-track">
+          <div class="pl-bar-fill" style="width: 27%; background: oklch(59% 0.118 44)"></div>
+        </div>
+        <div class="pl-row-count">67</div>
+        <span class="pl-new"></span>
+      </div>
+      <div class="pl-row">
+        <span class="pl-dot" style="background: oklch(59% 0.15 34)"></span>
+        <div>
+          <div class="pl-row-name">Good Afro</div>
+          <div class="pl-row-tags">afrobeats · afropop · afroswing</div>
+        </div>
+        <div class="pl-bar-track">
+          <div class="pl-bar-fill" style="width: 18%; background: oklch(59% 0.15 34)"></div>
+        </div>
+        <div class="pl-row-count">44</div>
+        <span class="pl-new"></span>
+      </div>
+      <div class="pl-row">
+        <span class="pl-dot" style="background: oklch(66% 0.10 155)"></span>
+        <div>
+          <div class="pl-row-name">Rap FR</div>
+          <div class="pl-row-tags">rap FR uniquement · moins de 3 ans</div>
+        </div>
+        <div class="pl-bar-track">
+          <div class="pl-bar-fill" style="width: 15%; background: oklch(66% 0.10 155)"></div>
+        </div>
+        <div class="pl-row-count">38</div>
+        <span class="pl-new"></span>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
