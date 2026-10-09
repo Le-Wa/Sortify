@@ -1,0 +1,422 @@
+<title>Sortify V2 Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: plan d'écrans à gauche, téléphone cliquable au centre, annotations à droite. Volontairement sans style : niveaux de gris + une couleur "annotation". */
+:root{
+  --bg:#eeeeec; --paper:#ffffff; --ink:#1d1d1b; --mid:#62625e; --dim:#9a9a95;
+  --line:#d4d4d0; --fill:#e6e6e3; --fill2:#f4f4f2; --note:#2f5bd3; --note-bg:#e8eefc;
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#161615; --paper:#212120; --ink:#ececea; --mid:#a6a6a1; --dim:#74746f;
+  --line:#3a3a38; --fill:#2e2e2c; --fill2:#272725; --note:#8fa9f5; --note-bg:#1f2840; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161615; --paper:#212120; --ink:#ececea; --mid:#a6a6a1; --dim:#74746f;
+  --line:#3a3a38; --fill:#2e2e2c; --fill2:#272725; --note:#8fa9f5; --note-bg:#1f2840; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:24px 48px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--note);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px 380px minmax(0,1fr);gap:32px;align-items:start}
+header.top{max-width:1180px;margin:0 auto 24px;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;justify-content:space-between}
+header.top h1{font-size:22px;margin:0;letter-spacing:-.2px;text-wrap:balance}
+header.top p{margin:0;color:var(--mid);max-width:60ch}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--note)}
+
+/* Plan des écrans */
+nav.flow{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:14px}
+.flow-group{display:flex;flex-direction:column;gap:2px}
+.flow-group h3{margin:0 0 4px;font-size:11px;font-family:var(--mono);font-weight:500;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+.flow button{display:flex;justify-content:space-between;gap:8px;text-align:left;background:none;border:0;border-radius:6px;padding:7px 10px;color:var(--mid);min-height:36px;align-items:center}
+.flow button:hover{background:var(--fill)}
+.flow button[aria-current="true"]{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.flow .k{font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:400}
+
+/* Téléphone */
+.phone{width:100%;max-width:380px;height:760px;background:var(--paper);border:1.5px solid var(--ink);border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.status{height:34px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-family:var(--mono);font-size:11px;color:var(--mid)}
+.screen{flex:1;overflow-y:auto;padding:8px 20px 20px;display:flex;flex-direction:column;gap:16px}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);padding-bottom:10px}
+.tabs button{background:none;border:0;padding:10px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--dim);min-height:52px}
+.tabs button[aria-current="true"]{color:var(--ink);font-weight:600}
+.tabs .ico{width:22px;height:22px;border:1.5px solid currentColor;border-radius:6px;position:relative}
+.badge{position:absolute;top:-7px;right:-11px;background:var(--ink);color:var(--paper);font-size:10px;font-weight:600;border-radius:10px;padding:0 5px;line-height:16px}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;background:var(--ink);color:var(--paper);border-radius:10px;padding:11px 14px;font-size:13px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.on{opacity:1;transform:none}
+
+/* Primitives wireframe */
+.h1{font-size:24px;font-weight:700;line-height:1.15;letter-spacing:-.3px;margin:0;text-wrap:balance}
+.h2{font-size:15px;font-weight:600;margin:0}
+.sub{color:var(--mid);margin:0}
+.meta{font-size:12px;color:var(--dim);margin:0}
+.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:12px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);font-weight:600;padding:0 16px;width:100%}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.quiet{border-color:var(--line);background:transparent;color:var(--mid);font-weight:500}
+.btn-sm{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:0 12px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center}
+.stack{display:flex;flex-direction:column;gap:8px}
+.box{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.box.off{opacity:.45}
+.cover{flex:none;width:44px;height:44px;border-radius:6px;background:repeating-linear-gradient(135deg,var(--fill) 0 6px,var(--fill2) 6px 12px);border:1px solid var(--line)}
+.cover.xl{width:100%;height:auto;aspect-ratio:1;border-radius:14px;max-width:100%}
+.track{display:flex;gap:12px;align-items:center;min-width:0}
+.track .t{min-width:0;flex:1}
+.track .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track .t span{display:block;font-size:12px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--mid);background:var(--fill2)}
+.pick{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:52px;border:1.5px solid var(--line);border-radius:12px;padding:8px 14px;background:var(--paper);text-align:left;width:100%}
+.pick[aria-pressed="true"]{border-color:var(--ink);background:var(--fill2)}
+.pick .pct{font-family:var(--mono);font-size:12px;color:var(--mid);font-variant-numeric:tabular-nums}
+.check{width:20px;height:20px;border:1.5px solid var(--dim);border-radius:6px;flex:none;display:grid;place-items:center;font-size:13px;line-height:1}
+.pick[aria-pressed="true"] .check{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.list{display:flex;flex-direction:column}
+.list>*{border-bottom:1px solid var(--line);padding:12px 0}
+.list>*:last-child{border-bottom:0}
+.prog{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--ink);width:0;transition:width .4s}
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{display:flex;gap:12px;align-items:flex-start;color:var(--dim)}
+.step.done,.step.now{color:var(--ink)}
+.step .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;flex:none;margin-top:1px;display:grid;place-items:center;font-size:11px}
+.step.done .dot{background:var(--ink);color:var(--paper)}
+.toggle{width:44px;height:26px;border-radius:13px;background:var(--fill);border:1px solid var(--line);position:relative;flex:none;padding:0}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--paper);border:1px solid var(--line);transition:.15s}
+.toggle[aria-pressed="true"]{background:var(--ink);border-color:var(--ink)}
+.toggle[aria-pressed="true"]::after{left:20px}
+.back{background:none;border:0;padding:8px 0;color:var(--mid);text-align:left;min-height:44px;align-self:flex-start}
+textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--fill2);color:var(--ink);resize:vertical}
+select{font:inherit;color:inherit;background:var(--fill2);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:40px}
+.spacer{flex:1}
+.wm{font-weight:700;font-size:15px;letter-spacing:.5px;font-family:var(--mono)}
+.mark{font-family:var(--mono);font-size:10px;color:var(--note);border:1px dashed var(--note);border-radius:4px;padding:1px 5px;white-space:nowrap}
+
+/* Annotations */
+aside.notes{display:flex;flex-direction:column;gap:18px;min-width:0}
+.note-head h2{font-size:20px;margin:4px 0 6px;text-wrap:balance}
+.note-head p{margin:0;color:var(--mid);max-width:60ch}
+.nb{background:var(--note-bg);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.nb h4{margin:0;font-size:11px;font-family:var(--mono);font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--note)}
+.nb ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;max-width:62ch}
+.legend{font-size:12px;color:var(--dim);max-width:60ch}
+
+@media (max-width:1100px){.wrap{grid-template-columns:200px 380px;}.notes{grid-column:1/-1}}
+@media (max-width:680px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:20px}
+  nav.flow{position:static;flex-direction:row;overflow-x:auto;gap:16px;padding-bottom:4px}
+  .flow-group{flex:none}
+  .flow-group>div{display:flex;gap:2px}
+  .flow button{white-space:nowrap}
+  .phone{margin:0 auto;height:700px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div>
+    <div class="tag">Sortify · V2 · wireframes basse fidélité</div>
+    <h1>Le parcours en 6 écrans</h1>
+  </div>
+  <p>Aucun choix visuel ici : on valide l'enchaînement, le contenu et les actions. Tout est cliquable. Les titres et chiffres sont des exemples.</p>
+</header>
+
+<div class="wrap">
+  <nav class="flow" id="flow" aria-label="Écrans"></nav>
+  <div>
+    <div class="phone" id="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="screen" id="screen"></div>
+      <div class="tabs" id="tabs" hidden></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+  <aside class="notes" id="notes"></aside>
+</div>
+
+<script>
+const PL = [
+  {id:"soiree",  name:"Soirée potes",      axe:"moment",   n:212, pitch:"Énergie haute, refrains à crier, pour lancer la soirée.", brief:"Titres dansants et fédérateurs, tempo 115–128, voix présentes. Pop, house vocale, afro, rap festif. Pas de morceaux lents ni de techno instrumentale sombre.", ex:["Fred again.. — Delilah","Kaytranada — 10%","Polo & Pan — Canopée"]},
+  {id:"dimanche",name:"Dimanche lent",     axe:"ambiance", n:168, pitch:"Acoustique, chaud, rien ne presse.", brief:"Guitares, voix douces, soul et folk feutrés, psyché tranquille. Énergie basse, beaucoup d'acoustique. Frontière : le jazz instrumental va plutôt dans Focus.", ex:["Khruangbin — Time (You and I)","Men I Trust — Show Me How","Nick Hakim — Bet She Looks Like You"]},
+  {id:"club",    name:"Club 2h du mat'",   axe:"scène",    n:241, pitch:"House et techno qui tapent, peu de paroles.", brief:"House, techno, UK garage, breaks. Kick 4/4 dominant, longues montées. Exclure les remixes pop radio.", ex:["Bicep — Glue","Floating Points — LesAlpx","Peggy Gou — Starry Night"]},
+  {id:"rap",     name:"Rap introspectif",  axe:"scène",    n:139, pitch:"Le texte avant tout, des prods posées.", brief:"Rap FR et UK/US conscient ou mélancolique, prods minimalistes ou soul. Exclure les morceaux de club/drill très énergiques.", ex:["Little Simz — Introvert","Damso — Θ. Macarena","Kendrick Lamar — FEAR."]},
+  {id:"soul",    name:"Soul nocturne",     axe:"scène",    n:187, pitch:"R&B et soul pour la nuit, voix au premier plan.", brief:"R&B moderne, néo-soul, slow jams. Ambiance nuit, sensuelle. Frontière avec Dimanche lent : ici plus de basses et de production.", ex:["SZA — Good Days","Daniel Caesar — Get You","Cleo Sol — Why Don't You"]},
+  {id:"solaire", name:"Électro solaire",   axe:"ambiance", n:176, pitch:"Électro mélodique et lumineuse.", brief:"Électro-pop, nu-disco, house mélodique. Valence haute, synthés brillants. Moins frontal que Club 2h du mat'.", ex:["Polo & Pan — Ani Kuni","Parcels — Tieduprightnow","Jungle — Back On 74"]},
+  {id:"afro",    name:"Afro & groove",     axe:"scène",    n:124, pitch:"Afrobeats, amapiano, ça balance.", brief:"Afrobeats, amapiano, afro-house, highlife moderne. Groove avant la puissance.", ex:["Burna Boy — Last Last","Tems — Free Mind","Uncle Waffles — Tanzania"]},
+  {id:"route",   name:"Route",             axe:"moment",   n:151, pitch:"Pour rouler longtemps, grands espaces.", brief:"Rock psyché, synth-pop, indie ample. Tempo régulier, morceaux longs qui montent.", ex:["Tame Impala — Let It Happen","M83 — Midnight City","The War On Drugs — Red Eyes"]},
+  {id:"focus",   name:"Focus",             axe:"moment",   n:138, pitch:"Instrumental et calme, pour bosser.", brief:"Instrumental uniquement : ambient, néo-classique, downtempo, jazz calme. Pas de voix lead.", ex:["Nils Frahm — Says","Bonobo — Kerala","Tycho — Awake"]},
+];
+const DIVERS = {id:"divers", name:"Divers", n:61, pitch:"Les titres qui n'ont trouvé leur place nulle part.", brief:"Sortify y repasse à chaque nouvelle analyse : si une playlist apparaît qui leur correspond, ils déménagent.", ex:["Nina Simone — Sinnerman","Daft Punk — Contact","Ennio Morricone — L'estasi dell'oro"]};
+const QUEUE0 = [
+  {t:"Can I Call You Rose?", a:"Thee Sacred Souls", sug:[["soul",54],["dimanche",48]]},
+  {t:"So U Kno", a:"Overmono", sug:[["club",52],["soiree",46],["solaire",31]]},
+  {t:"River", a:"Ibeyi", sug:[["dimanche",41],["afro",38]]},
+];
+const RECENT0 = [
+  {t:"Witchy", a:"Kaytranada, Childish Gambino", to:["soiree","solaire"]},
+  {t:"Gorilla", a:"Little Simz", to:["rap"]},
+  {t:"Space 1.8", a:"Nala Sinephro", to:["focus","dimanche"]},
+  {t:"Baby again..", a:"Fred again.., Skrillex, Four Tet", to:["club","soiree"]},
+];
+
+const S = {
+  screen:"login", keep:Object.fromEntries(PL.map(p=>[p.id,true])), names:{}, regen:{},
+  queue:QUEUE0.map(q=>({...q,sel:new Set([q.sug[0][0]])})), qi:0,
+  recent:RECENT0.map(r=>({...r,undone:false})), plId:"soiree", editBrief:false, auto:{}, hour:"08:00",
+  sorting:false, timer:null,
+};
+const byId = id => id==="divers" ? DIVERS : PL.find(p=>p.id===id);
+const nameOf = id => S.names[id] || byId(id).name;
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pending = () => S.queue.length - S.qi;
+
+const SCREENS = [
+  {g:"Entrée", items:[["login","Connexion","1"]]},
+  {g:"Révélation · une fois", items:[["analyse","Analyse en cours","2a"],["propose","Proposition","2b"],["create","Création","2c"]]},
+  {g:"Au quotidien", items:[["home","Accueil","3"],["triage","À trier","4"],["playlists","Playlists","5"],["playlist","Détail playlist","5b"],["settings","Réglages","6"]]},
+];
+
+const NOTES = {
+  login:{t:"Connexion", p:"Un seul geste. On dit ce que fait l'app et ce qu'elle ne fait pas.", v:["Une phrase de promesse suffit-elle, ou faut-il montrer un exemple de playlist ?","La rassurance « on ne touche pas à tes likes » est au bon endroit."], q:["Les potes arrivent-ils via un lien d'invitation, ou un simple lien vers l'app ? (Spotify en mode dev : il faut ajouter chaque compte à la main.)"]},
+  analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. L'attente doit raconter ce qui se passe, avec de vrais chiffres de ta bibliothèque.", v:["Les étapes affichées sont parlantes.","On peut quitter et revenir : l'analyse continue côté serveur."], q:["Montrer quelques pochettes qui défilent pendant l'attente ? (moment « wow » vs. complexité)"]},
+  propose:{t:"Proposition", p:"Le moment clé de l'app : « voici l'âme de ta bibliothèque ». On ajuste sans jamais éditer de règles.", v:["Par playlist : garder ou retirer, renommer, « autre idée » (régénère juste celle-là).","Le nombre de playlists est choisi par l'IA (ici 9), plus Divers.","Les chiffres se chevauchent : un titre peut être dans 3 playlists max."], q:["Faut-il pouvoir demander « ajoute une playlist pour… » en texte libre ? (je propose : hors V1)","Afficher l'axe (scène / ambiance / moment) ou c'est du bruit ?"]},
+  create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Les playlists sont créées dans ton compte Spotify, préfixées ou non ?","À la fin : écran d'accueil directement."], q:["Préfixer les noms dans Spotify (« Soirée potes · Sortify ») pour les repérer, ou noms nus ?"]},
+  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","« Trier maintenant » à côté de l'heure du prochain tri auto.","Les derniers rangements, avec annulation par titre."], q:["Garder un accès direct aux playlists ici, ou l'onglet suffit ?"]},
+  triage:{t:"À trier", p:"Un titre à la fois. Sortify pré-coche sa meilleure idée ; tu confirmes en un tap ou tu corriges.", v:["Jusqu'à 3 playlists cochables.","« Divers » et « Passer » restent toujours accessibles.","Ta correction devient un exemple pour la playlist : l'IA apprend."], q:["Extrait audio : lecteur Spotify intégré (30 s) suffisant ?","Montrer la raison de l'IA (« voix soul, tempo lent ») ou pas ?"]},
+  playlists:{t:"Playlists", p:"La liste des playlists gérées par Sortify, Divers en dernier.", v:["Le compteur et les ajouts récents donnent la vie de chaque playlist.","Pas de réordonnancement ni de couleurs en V1."], q:["Divers : la mettre à part visuellement (c'est un choix qui t'agace, on peut en faire un objet à part, type « bac de sortie »)."]},
+  playlist:{t:"Détail playlist", p:"Ce que Sortify cherche ici, en clair, modifiable. Plus les titres exemples qui servent d'ancres.", v:["Le « brief » est lisible et modifiable en texte libre.","Désactiver le remplissage auto sans supprimer.","« Retirer de Sortify » laisse la playlist dans Spotify."], q:["Pouvoir retirer un titre de la playlist depuis ici ? (= correction, l'IA apprend)"]},
+  settings:{t:"Réglages", p:"Le strict minimum.", v:["Heure du tri quotidien.","Déconnexion."], q:["« Relancer l'analyse » : utile dès la V1 si ta biblio évolue, ou plus tard ?"]},
+};
+
+function go(s){ S.screen=s; if(S.timer){clearInterval(S.timer);S.timer=null;} render(); document.getElementById("screen").scrollTop=0; }
+let toastT;
+function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),2200); }
+
+function renderFlow(){
+  document.getElementById("flow").innerHTML = SCREENS.map(g=>`<div class="flow-group"><h3>${g.g}</h3><div>${g.items.map(([id,l,k])=>`<button data-go="${id}" aria-current="${S.screen===id}"><span>${l}</span><span class="k">${k}</span></button>`).join("")}</div></div>`).join("");
+}
+function renderNotes(){
+  const n = NOTES[S.screen];
+  document.getElementById("notes").innerHTML = `
+    <div class="note-head"><div class="tag">Écran</div><h2>${n.t}</h2><p>${n.p}</p></div>
+    <div class="nb"><h4>À valider</h4><ul>${n.v.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+    <div class="nb"><h4>Question pour toi</h4><ul>${n.q.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+    <p class="legend">Les étiquettes <span class="mark">hors V1</span> marquent ce qui est montré pour discussion mais pas prévu dans la V1.</p>`;
+}
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  const show = ["home","triage","playlists","playlist","settings"].includes(S.screen);
+  tabs.hidden = !show; if(!show) return;
+  const cur = S.screen==="playlist"?"playlists":S.screen==="settings"?"home":S.screen;
+  const p = pending();
+  tabs.innerHTML = [["home","Accueil"],["triage","À trier"],["playlists","Playlists"]].map(([id,l])=>
+    `<button data-go="${id}" aria-current="${cur===id}"><span class="ico">${id==="triage"&&p?`<span class="badge">${p}</span>`:""}</span>${l}</button>`).join("");
+}
+
+const V = {
+  login:()=>`
+    <div class="spacer"></div>
+    <div class="cover xl" style="max-width:180px;align-self:center" aria-hidden="true"></div>
+    <div class="stack" style="text-align:center;align-items:center">
+      <div class="wm">SORTIFY</div>
+      <p class="h1">Tu likes,<br>Sortify range.</p>
+      <p class="sub" style="max-width:28ch">L'IA lit tes likes, imagine les playlists qui te ressemblent, puis y range chaque nouveau titre.</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="stack">
+      <button class="btn" data-go="analyse">Se connecter avec Spotify</button>
+      <p class="meta" style="text-align:center">Tes titres likés ne sont jamais modifiés.</p>
+    </div>`,
+
+  analyse:()=>`
+    <div class="lbl">Première analyse</div>
+    <p class="h1">On écoute ta bibliothèque.</p>
+    <p class="sub">1 248 titres likés depuis octobre 2024.</p>
+    <div class="prog"><i id="pbar"></i></div>
+    <div class="steps" id="steps"></div>
+    <div class="spacer"></div>
+    <p class="meta">Tu peux fermer l'app, on te prévient quand c'est prêt.</p>
+    <button class="btn ghost" data-go="propose">Passer l'attente (maquette)</button>`,
+
+  propose:()=>{
+    const kept = PL.filter(p=>S.keep[p.id]).length;
+    return `
+    <div class="lbl">Ta bibliothèque en ${PL.length} playlists</div>
+    <p class="h1">Voici l'âme de ta bibliothèque.</p>
+    <p class="sub">Garde, renomme ou demande une autre idée. Un titre peut vivre dans 3 playlists.</p>
+    <div class="stack">
+      ${PL.map(p=>{
+        const on=S.keep[p.id], nm=nameOf(p.id), rg=S.regen[p.id];
+        return `<div class="box ${on?"":"off"}">
+          <div class="row" style="justify-content:space-between;align-items:flex-start">
+            <div style="min-width:0">
+              <div class="h2">${esc(nm)}${rg?` <span class="mark">nouvelle idée</span>`:""}</div>
+              <p class="meta">${p.n} titres · ${p.axe}</p>
+            </div>
+            <button class="toggle" aria-label="Garder ${esc(nm)}" aria-pressed="${on}" data-keep="${p.id}"></button>
+          </div>
+          <p class="sub" style="font-size:13px">${p.pitch}</p>
+          <div class="chips">${p.ex.map(e=>`<span class="chip">${esc(e)}</span>`).join("")}</div>
+          ${on?`<div class="row"><button class="btn-sm" data-rename="${p.id}">Renommer</button><button class="btn-sm" data-regen="${p.id}">Autre idée</button></div>`:""}
+        </div>`;}).join("")}
+      <div class="box" style="border-style:dashed">
+        <div class="h2">Divers</div>
+        <p class="meta">${DIVERS.n} titres sans maison pour l'instant</p>
+        <p class="sub" style="font-size:13px">${DIVERS.pitch}</p>
+      </div>
+    </div>
+    <button class="btn" data-go="create" ${kept?"":"disabled"}>Créer ${kept} playlists dans Spotify</button>`;
+  },
+
+  create:()=>`
+    <div class="spacer"></div>
+    <div class="lbl">Création</div>
+    <p class="h1" id="ctitle">On remplit tes playlists…</p>
+    <div class="prog"><i id="cbar"></i></div>
+    <p class="sub" id="cline">0 / 1 248 titres rangés</p>
+    <div class="spacer"></div>
+    <button class="btn" data-go="home" id="cbtn" hidden>Voir mes playlists</button>`,
+
+  home:()=>{
+    const p=pending();
+    return `
+    <div class="row" style="justify-content:space-between">
+      <div class="wm">SORTIFY</div>
+      <button class="btn-sm" data-go="settings" aria-label="Réglages">Réglages</button>
+    </div>
+    <p class="h1">${p?`${p} titre${p>1?"s":""} à trier.`:"Tout est rangé."}</p>
+    ${p?`<button class="btn" data-go="triage">Trier maintenant (${p})</button>`:`<p class="sub">Rien à faire. Le prochain tri passe demain à ${S.hour}.</p>`}
+    <div class="box">
+      <div class="row" style="justify-content:space-between">
+        <div><p class="lbl">Tri automatique</p><p class="meta">Dernier : aujourd'hui ${S.hour} · prochain : demain ${S.hour}</p></div>
+      </div>
+      <button class="btn ghost" id="sortnow" ${S.sorting?"disabled":""}>${S.sorting?"Tri en cours…":"Chercher les nouveaux likes"}</button>
+    </div>
+    <div class="stack">
+      <p class="lbl">Rangés aujourd'hui</p>
+      <div class="list">
+        ${S.recent.map((r,i)=>`<div class="track" style="${r.undone?"opacity:.45":""}">
+          <div class="cover"></div>
+          <div class="t"><b>${esc(r.t)}</b><span>${esc(r.a)}</span>
+            <div class="chips" style="margin-top:6px">${r.undone?`<span class="chip">Remis à trier</span>`:r.to.map(id=>`<span class="chip">→ ${esc(nameOf(id))}</span>`).join("")}</div></div>
+          ${r.undone?"":`<button class="btn-sm" data-undo="${i}">Annuler</button>`}
+        </div>`).join("")}
+      </div>
+    </div>`;
+  },
+
+  triage:()=>{
+    if(!pending()) return `
+      <div class="spacer"></div>
+      <div class="stack" style="text-align:center;align-items:center">
+        <p class="h1">Tout est rangé.</p>
+        <p class="sub">Tes choix servent d'exemples : Sortify hésitera moins la prochaine fois.</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="resetq">Recharger des exemples (maquette)</button>`;
+    const q=S.queue[S.qi], n=q.sel.size;
+    return `
+    <div class="row" style="justify-content:space-between"><p class="lbl">À trier</p><p class="meta" style="font-variant-numeric:tabular-nums">${S.qi+1} / ${S.queue.length}</p></div>
+    <div class="cover xl" aria-hidden="true"></div>
+    <div><p class="h1" style="font-size:22px">${esc(q.t)}</p><p class="sub">${esc(q.a)}</p></div>
+    <button class="btn ghost">▶ Écouter un extrait</button>
+    <div class="stack">
+      <p class="lbl">Sortify hésite entre</p>
+      ${q.sug.map(([id,pc])=>`<button class="pick" aria-pressed="${q.sel.has(id)}" data-pick="${id}"><span class="row"><span class="check">${q.sel.has(id)?"✓":""}</span>${esc(nameOf(id))}</span><span class="pct">${pc}%</span></button>`).join("")}
+      <button class="btn-sm" id="other">Autre playlist…</button>
+    </div>
+    <button class="btn" id="validate" ${n?"":"disabled"}>${n?`Ranger dans ${n} playlist${n>1?"s":""}`:"Choisis au moins une playlist"}</button>
+    <div class="row"><button class="btn quiet" id="todivers">Divers</button><button class="btn quiet" id="skip">Passer</button></div>`;
+  },
+
+  playlists:()=>`
+    <p class="lbl">${PL.filter(p=>S.keep[p.id]).length} playlists gérées</p>
+    <p class="h1">Playlists</p>
+    <div class="list">
+      ${PL.filter(p=>S.keep[p.id]).map(p=>`<button class="track" style="background:none;border:0;border-bottom:1px solid var(--line);text-align:left;width:100%;min-height:64px" data-pl="${p.id}">
+        <div class="cover"></div><div class="t"><b>${esc(nameOf(p.id))}</b><span>${p.n} titres · +${(p.n%7)+1} cette semaine</span></div><span class="meta">›</span></button>`).join("")}
+    </div>
+    <button class="track box" style="text-align:left;border-style:dashed;flex-direction:row" data-pl="divers">
+      <div class="t"><b>Divers</b><span>${DIVERS.n} titres en attente d'une maison</span></div><span class="meta">›</span></button>`,
+
+  playlist:()=>{
+    const p=byId(S.plId), isD=p.id==="divers", auto=S.auto[p.id]!==false;
+    return `
+    <button class="back" data-go="playlists">‹ Playlists</button>
+    <div class="cover xl" style="max-width:140px" aria-hidden="true"></div>
+    <div><p class="h1">${esc(nameOf(p.id))}</p><p class="sub">${p.pitch}</p><p class="meta" style="margin-top:4px">${p.n} titres${isD?"":` · +${(p.n%7)+1} cette semaine`}</p></div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between"><p class="lbl">Ce que Sortify cherche ici</p>${isD?"":`<button class="btn-sm" id="editb">${S.editBrief?"Enregistrer":"Modifier"}</button>`}</div>
+      ${S.editBrief&&!isD?`<textarea id="brief" aria-label="Brief de la playlist">${esc(p.brief)}</textarea>`:`<p class="sub" style="font-size:13px">${p.brief}</p>`}
+    </div>
+    <div class="stack">
+      <p class="lbl">${isD?"Quelques titres":"Titres exemples"}</p>
+      <div class="list">${p.ex.map(e=>{const [a,t]=e.split(" — ");return `<div class="track"><div class="cover"></div><div class="t"><b>${esc(t)}</b><span>${esc(a)}</span></div></div>`;}).join("")}</div>
+    </div>
+    ${isD?"":`
+    <div class="row" style="justify-content:space-between;min-height:44px"><span>Remplissage automatique</span><button class="toggle" aria-label="Remplissage automatique" aria-pressed="${auto}" data-auto="${p.id}"></button></div>
+    <button class="btn quiet">Retirer de Sortify</button>
+    <p class="meta">La playlist reste dans ton Spotify.</p>`}`;
+  },
+
+  settings:()=>`
+    <button class="back" data-go="home">‹ Accueil</button>
+    <p class="h1">Réglages</p>
+    <div class="list">
+      <div class="row" style="justify-content:space-between"><span>Tri automatique, chaque jour à</span>
+        <select id="hour" aria-label="Heure du tri">${["06:00","08:00","12:00","20:00"].map(h=>`<option ${h===S.hour?"selected":""}>${h}</option>`).join("")}</select></div>
+      <div class="row" style="justify-content:space-between"><span>Relancer l'analyse</span><span class="mark">hors V1 ?</span></div>
+      <div class="row" style="justify-content:space-between"><span>Compte</span><span class="meta">Connecté à Spotify</span></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost" data-go="login">Se déconnecter</button>`,
+};
+
+function afterRender(){
+  if(S.screen==="analyse"){
+    const steps=["Lecture de 1 248 likes","Genres, époques, artistes","Énergie et ambiances","Regroupement en playlists"];
+    let i=0; const draw=()=>{
+      document.getElementById("steps").innerHTML=steps.map((s,k)=>`<div class="step ${k<i?"done":k===i?"now":""}"><span class="dot">${k<i?"✓":""}</span><span>${s}${k===i?" …":""}</span></div>`).join("");
+      document.getElementById("pbar").style.width=(i/steps.length*100)+"%";
+    }; draw();
+    S.timer=setInterval(()=>{ i++; if(i>steps.length){clearInterval(S.timer);S.timer=null;go("propose");return;} draw(); },1100);
+  }
+  if(S.screen==="create"){
+    let n=0; S.timer=setInterval(()=>{ n=Math.min(1248,n+156);
+      document.getElementById("cbar").style.width=(n/1248*100)+"%";
+      document.getElementById("cline").textContent=`${n.toLocaleString("fr-FR")} / 1 248 titres rangés`;
+      if(n>=1248){clearInterval(S.timer);S.timer=null;document.getElementById("ctitle").textContent=`${PL.filter(p=>S.keep[p.id]).length} playlists prêtes dans Spotify.`;document.getElementById("cbtn").hidden=false;}
+    },300);
+  }
+}
+
+function render(){ renderFlow(); renderNotes(); document.getElementById("screen").innerHTML=V[S.screen](); renderTabs(); afterRender(); }
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  const d=b.dataset;
+  if(d.go) return go(d.go);
+  if(d.keep){ S.keep[d.keep]=!S.keep[d.keep]; return render(); }
+  if(d.rename){ const alt={soiree:"Apéro qui déborde",dimanche:"Café crème",club:"Sous-sol",rap:"Carnet de notes",soul:"Minuit soul",solaire:"Plein soleil",afro:"Pas chassés",route:"Autoroute du Sud",focus:"Tête dans le guidon"}; S.names[d.rename]=S.names[d.rename]?null:alt[d.rename]; if(!S.names[d.rename]) delete S.names[d.rename]; toast("Dans l'app : champ texte. Ici : nom d'exemple."); return render(); }
+  if(d.regen){ S.regen[d.regen]=true; toast("Nouvelle proposition pour cette playlist"); return render(); }
+  if(d.undo){ S.recent[+d.undo].undone=true; S.queue.push({t:S.recent[+d.undo].t,a:S.recent[+d.undo].a,sug:S.recent[+d.undo].to.map((id,k)=>[id,70-k*12]),sel:new Set()}); toast("Remis dans « À trier »"); return render(); }
+  if(d.pick){ const q=S.queue[S.qi]; if(q.sel.has(d.pick)) q.sel.delete(d.pick); else if(q.sel.size<3) q.sel.add(d.pick); else toast("3 playlists maximum"); return render(); }
+  if(d.pl){ S.plId=d.pl; S.editBrief=false; return go("playlist"); }
+  if(d.auto){ S.auto[d.auto]=S.auto[d.auto]===false; return render(); }
+  switch(b.id){
+    case "validate": { const q=S.queue[S.qi]; toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; return render(); }
+    case "todivers": toast("Rangé dans Divers"); S.qi++; return render();
+    case "skip": toast("Passé, il reviendra plus tard"); S.qi++; return render();
+    case "other": toast("Ouvre la liste de toutes les playlists (bottom sheet)"); return;
+    case "resetq": S.queue=QUEUE0.map(q=>({...q,sel:new Set([q.sug[0][0]])})); S.qi=0; return render();
+    case "editb": S.editBrief=!S.editBrief; if(!S.editBrief) toast("Brief enregistré, utilisé dès le prochain tri"); return render();
+    case "sortnow": S.sorting=true; render(); setTimeout(()=>{S.sorting=false; S.recent.unshift({t:"Selfless",a:"The Strokes",to:["route"],undone:false}); toast("1 nouveau titre rangé"); if(S.screen==="home") render();},1400); return;
+  }
+});
+document.addEventListener("change",e=>{ if(e.target.id==="hour"){ S.hour=e.target.value; toast(`Tri quotidien à ${S.hour}`);} });
+try{ const h=location.hash.slice(1); if(NOTES[h]) S.screen=h; }catch(_){}
+render();
+</script>
