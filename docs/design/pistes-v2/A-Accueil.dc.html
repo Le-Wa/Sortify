@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Risographie — Accueil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F4F3EF; color: #1B1B3A; font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="padding: 24px 20px 0; display: flex; justify-content: space-between; align-items: center">
+    <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.6px">sortify</div>
+    <button aria-label="Réglages" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #1B1B3A; background: transparent; display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B1B3A" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg></button>
+  </div>
+
+  <div style="margin: 22px 20px 0; position: relative; background: #FFFFFF; border-radius: 6px; overflow: hidden; padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px">
+    <div style="position: absolute; width: 190px; height: 190px; border-radius: 50%; background: #FF48B0; right: -60px; top: -70px; mix-blend-mode: multiply"></div>
+    <div style="position: absolute; width: 110px; height: 110px; border-radius: 50%; background: #FFE800; right: 30px; top: 40px; mix-blend-mode: multiply"></div>
+    <div style="position: relative; font-family: 'DM Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em">À trier</div>
+    <div style="position: relative; font-size: 64px; line-height: 0.9; font-weight: 800; letter-spacing: -2px">3 titres<br>t'attendent.</div>
+    <button style="position: relative; align-self: flex-start; height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: #1B1B3A; color: #F4F3EF; font-family: 'Bricolage Grotesque', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer">Trier maintenant →</button>
+  </div>
+
+  <div style="margin: 14px 20px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+    <div style="font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.5">Tri auto · chaque jour 08:00<br>Prochain : demain</div>
+    <button style="height: 44px; padding: 0 16px; border-radius: 999px; border: 2px solid #1B1B3A; background: transparent; color: #1B1B3A; font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer">Chercher les nouveaux likes</button>
+  </div>
+
+  <div style="margin: 26px 20px 0; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1B1B3A; padding-bottom: 8px">
+    <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px">Rangés aujourd'hui</div>
+    <div style="font-family: 'DM Mono', monospace; font-size: 11px">12</div>
+  </div>
+
+  <div style="padding: 0 20px; display: flex; flex-direction: column">
+    <div style="display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #D9D7D0">
+      <div style="width: 48px; height: 48px; flex: none; background: #C9B8A6; border-radius: 3px"></div>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Witchy <span style="font-weight: 400">· Kaytranada</span></div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <span style="font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #FFC9E6">Soirée potes</span>
+          <span style="font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #FFF59E">Électro solaire</span>
+        </div>
+      </div>
+      <button aria-label="Annuler ce rangement" style="width: 44px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B1B3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 010 12h-3"></path></svg></button>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #D9D7D0">
+      <div style="width: 48px; height: 48px; flex: none; background: #8A9BB0; border-radius: 3px"></div>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Gorilla <span style="font-weight: 400">· Little Simz</span></div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <span style="font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #BCDDF2">Rap introspectif</span>
+        </div>
+      </div>
+      <button aria-label="Annuler ce rangement" style="width: 44px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B1B3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 010 12h-3"></path></svg></button>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #D9D7D0">
+      <div style="width: 48px; height: 48px; flex: none; background: #A9B79C; border-radius: 3px"></div>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Space 1.8 <span style="font-weight: 400">· Nala Sinephro</span></div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <span style="font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #E3E1DA">Focus</span>
+          <span style="font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #FFF59E">Dimanche lent</span>
+        </div>
+      </div>
+      <button aria-label="Annuler ce rangement" style="width: 44px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B1B3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 010 12h-3"></path></svg></button>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <nav style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 2px solid #1B1B3A; padding: 8px 8px 22px; background: #F4F3EF">
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #1B1B3A; text-decoration: none; font-size: 12px; font-weight: 800"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FF48B0"></span>Accueil</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #1B1B3A; text-decoration: none; font-size: 12px; font-weight: 400"><span style="font-family: 'DM Mono', monospace; font-size: 10px; background: #1B1B3A; color: #F4F3EF; border-radius: 999px; padding: 0 6px; line-height: 16px">3</span>À trier</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #1B1B3A; text-decoration: none; font-size: 12px; font-weight: 400"><span style="width: 8px; height: 8px"></span>Playlists</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
