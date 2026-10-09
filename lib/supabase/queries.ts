@@ -133,6 +133,8 @@ export async function getUserWithOnboarding(spotifyId: string): Promise<{
   onboarding_status: string;
   onboarding_step: number;
   onboarding_mode: string | null;
+  proposal_ready: boolean;
+  onboarding_config: Record<string, unknown> | null;
   spotify_client_id: string | null;
   spotify_client_secret_enc: string | null;
   invited_by: string | null;
@@ -141,7 +143,7 @@ export async function getUserWithOnboarding(spotifyId: string): Promise<{
   const { data } = await supabase
     .from("users")
     .select(
-      "id, spotify_id, email, onboarding_status, onboarding_step, onboarding_mode, spotify_client_id, spotify_client_secret_enc, invited_by"
+      "id, spotify_id, email, onboarding_status, onboarding_step, onboarding_mode, proposal_ready, onboarding_config, spotify_client_id, spotify_client_secret_enc, invited_by"
     )
     .eq("spotify_id", spotifyId)
     .single();
@@ -495,7 +497,7 @@ export async function getUserOnboarding(
 
 export async function updateOnboardingData(
   userId: string,
-  data: { onboarding_completed?: boolean; import_since?: number | null; cron_enabled?: boolean }
+  data: { onboarding_completed?: boolean; import_since?: number | null; cron_enabled?: boolean; onboarding_mode?: string | null }
 ): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("users").update(data).eq("id", userId);

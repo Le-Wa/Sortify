@@ -17,15 +17,12 @@ export default async function OnboardingPage() {
   // v1 compat: onboarding_completed = true but no v2 status yet
   if (!dbUser) redirect("/dashboard");
 
-  // Already done
+  // Already in app
   if (dbUser.onboarding_status === "complete") redirect("/dashboard");
+  if (dbUser.onboarding_status === "in_progress") redirect("/dashboard");
 
-  // In progress or pending — resume
+  // pending — show landing
   return (
-    <OnboardingV2Client
-      initialStep={dbUser.onboarding_step}
-      initialMode={dbUser.onboarding_mode}
-      initialStatus={dbUser.onboarding_status}
-    />
+    <OnboardingV2Client />
   );
 }

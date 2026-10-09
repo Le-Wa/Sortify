@@ -11,19 +11,19 @@ interface Persona {
   onboarding_status: string;
   onboarding_step: number;
   onboarding_mode: string | null;
+  proposal_ready: boolean;
 }
 
 const STATUS_OPTIONS = [
   { value: "pending",     label: "🆕 Pending — landing page" },
-  { value: "in_progress", label: "🔄 In progress — step S3+" },
+  { value: "in_progress", label: "🔄 In progress — dans l'app" },
   { value: "complete",    label: "✅ Complete — dans l'app" },
 ];
 
 const MODE_OPTIONS = [
-  { value: null,       label: "— (non défini)" },
-  { value: "analyse",  label: "Analyse" },
-  { value: "import",   label: "Import" },
-  { value: "scratch",  label: "Scratch" },
+  { value: null,     label: "— (non défini) → hero card orientation" },
+  { value: "auto",   label: "Auto — analyse + proposition" },
+  { value: "manual", label: "Manuel — playlists existantes" },
 ];
 
 export default function PersonasClient() {
@@ -38,6 +38,7 @@ export default function PersonasClient() {
   const [label, setLabel] = useState("");
   const [status, setStatus] = useState("pending");
   const [mode, setMode] = useState<string | null>(null);
+  const [proposalReady, setProposalReady] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
@@ -81,7 +82,7 @@ export default function PersonasClient() {
       const res = await fetch("/api/dev/personas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: label.trim(), status, mode }),
+        body: JSON.stringify({ label: label.trim(), status, mode, proposal_ready: proposalReady }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -114,7 +115,7 @@ export default function PersonasClient() {
 
         <input
           className="ob-input"
-          placeholder="Nom (ex: Fresh BYOK, Mode scratch, Done)"
+          placeholder="Nom (ex: Fresh, Auto ready, Manual)"
           value={label}
           onChange={e => setLabel(e.target.value)}
           required
@@ -143,6 +144,15 @@ export default function PersonasClient() {
             ))}
           </select>
         </div>
+
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-dim)", cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={proposalReady}
+            onChange={e => setProposalReady(e.target.checked)}
+          />
+          proposal_ready — tester S-Propose directement
+        </label>
 
         <button className="s-btn s-btn-primary" disabled={!label.trim() || creating}>
           {creating ? "Création…" : status === "pending" ? "Créer et tester le flow →" : "Créer"}
@@ -184,6 +194,7 @@ export default function PersonasClient() {
                     <span>{p.onboarding_status}</span>
                     {p.onboarding_mode && <span>· {p.onboarding_mode}</span>}
                     {p.onboarding_step > 0 && <span>· step {p.onboarding_step}</span>}
+                    {p.proposal_ready && <span style={{ color: "var(--sage)" }}>· proposal ✓</span>}
                     <span style={{ opacity: .5 }}>{p.spotify_id}</span>
                   </div>
                 </div>

@@ -440,7 +440,7 @@ function PlaylistDropdown({
 
 // ── InboxClient ───────────────────────────────────────────────────────────────
 
-export default function InboxClient() {
+export default function InboxClient({ onboardingDone = true }: { onboardingDone?: boolean }) {
   const [tracks, setTracks] = useState<InboxTrack[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -704,8 +704,16 @@ export default function InboxClient() {
         </div>
       ) : tracks.length === 0 ? (
         <div style={{ display: "flex", minHeight: 200, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, textAlign: "center" }}>
-          <p style={{ fontFamily: "var(--font-fraunces), serif", fontStyle: "italic", fontSize: 52, color: "var(--ink-dimmer)", margin: 0 }}>✓</p>
-          <p style={{ fontSize: 15, color: "var(--ink-mid)", margin: 0 }}>Inbox vide — tout est classé.</p>
+          {onboardingDone ? (
+            <>
+              <p style={{ fontFamily: "var(--font-fraunces), serif", fontStyle: "italic", fontSize: 52, color: "var(--ink-dimmer)", margin: 0 }}>✓</p>
+              <p style={{ fontSize: 15, color: "var(--ink-mid)", margin: 0 }}>Inbox vide — tout est classé.</p>
+            </>
+          ) : (
+            <p style={{ fontSize: 14, color: "var(--ink-dim)", maxWidth: 280, lineHeight: 1.5, margin: 0 }}>
+              Les tracks que Sortify hésite à classer arrivent ici. Tu pourras les affecter manuellement.
+            </p>
+          )}
         </div>
       ) : (
         <>

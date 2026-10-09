@@ -7,6 +7,7 @@ const Body = z.object({
   completed: z.boolean().optional(),
   import_since: z.number().nullable().optional(),
   cron_enabled: z.boolean().optional(),
+  mode: z.enum(["import", "analyse", "scratch"]).nullable().optional(),
 });
 
 export async function PATCH(req: Request): Promise<Response> {
@@ -24,6 +25,7 @@ export async function PATCH(req: Request): Promise<Response> {
     onboarding_completed: body.completed ?? true,
     import_since: body.import_since ?? null,
     cron_enabled: body.cron_enabled ?? true,
+    ...(body.mode !== undefined && { onboarding_mode: body.mode }),
   });
 
   return Response.json({ ok: true });

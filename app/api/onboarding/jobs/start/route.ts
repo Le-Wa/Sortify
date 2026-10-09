@@ -26,8 +26,7 @@ export async function POST(req: NextRequest) {
   const result = await runOnboardingJob(session.userId, user.id, startStep);
 
   if (!result.done && !result.error) {
-    // If job was interrupted (budget exhausted), client should call again
-    return NextResponse.json({ ok: true, done: false, step: result.step });
+    return NextResponse.json({ ok: true, done: false, step: result.step, proposalReady: result.proposalReady ?? false });
   }
 
   if (result.error) {

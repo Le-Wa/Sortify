@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getUserBySpotifyId, getAllPlaylists, getPlaylistsStats } from "@/lib/supabase/queries";
+import { getUserBySpotifyId, getAllPlaylists, getPlaylistsStats, getUserWithOnboarding } from "@/lib/supabase/queries";
 import PlaylistsClient from "./PlaylistsClient";
 
 export default async function PlaylistsPage() {
@@ -11,9 +11,10 @@ export default async function PlaylistsPage() {
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) redirect("/login");
 
-  const [playlists, stats] = await Promise.all([
+  const [playlists, stats, onboarding] = await Promise.all([
     getAllPlaylists(dbUser.id),
     getPlaylistsStats(dbUser.id),
+    getUserWithOnboarding(session.userId),
   ]);
 
   const data = playlists.map((p) => ({
@@ -29,5 +30,8 @@ export default async function PlaylistsPage() {
     ...(stats[p.id] ?? { total: 0, synced: 0, not_synced: 0 }),
   }));
 
-  return <PlaylistsClient playlists={data} />;
+  const onboardingMode = onboarding?.onboarding_mode ?? null;
+  const onboardingDone = onboarding?.onboarding_status === "complete";
+
+  return <PlaylistsClient playlists={data} onboardingMode={onboardingMode} onboardingDone={onboardingDone} />;
 }

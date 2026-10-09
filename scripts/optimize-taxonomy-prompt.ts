@@ -7,7 +7,7 @@
  *
  * Options:
  *   --user-id <id>        Supabase user UUID (required)
- *   --target-count <n>    Test with exactly N playlists (default: all variants use their own count)
+ *   --segmentation <s>    fine|medium|coarse — sets target playlist range (default: medium)
  *   --variants <n>        Number of prompt variants to test (default: 8)
  *   --sample <n>          Limit to first N enriched tracks (default: 200)
  */
@@ -44,6 +44,8 @@ interface TrackRow {
 interface ProposedPlaylist {
   name: string;
   genres_include: string[];
+  description?: string;
+  llm_help_text?: string;
 }
 
 interface PromptVariant {
@@ -57,55 +59,75 @@ interface VariantResult {
   coverage_pct: number;
   matched: number;
   total: number;
+  multi_assigned: number;
   prompt_tokens: number;
   output_tokens: number;
   cost_usd: number;
 }
 
-// Claude Sonnet 4.6 pricing (approximate, per 1M tokens)
+// Claude Sonnet 4.6 pricing per 1M tokens
 const COST_PER_M_INPUT = 3.0;
 const COST_PER_M_OUTPUT = 15.0;
 
-function buildVariants(targetCount: number | null): PromptVariant[] {
-  const n = targetCount ?? 4;
+const SEGMENTATION_RANGES: Record<string, string> = {
+  coarse: "entre 2 et 4",
+  medium: "entre 3 et 6",
+  fine:   "entre 5 et 8",
+};
+
+function buildVariants(range: string): PromptVariant[] {
+  const catalogRule = `Pour genres_include, utilise exclusivement des genres présents dans le CATALOGUE. Une track peut appartenir à plusieurs playlists.`;
   return [
     {
       label: "Genre-based",
-      instruction: `Regroupe les tracks par genre musical dominant. Propose exactement ${n} playlists couvrant les genres les plus représentés dans la bibliothèque.`,
+      instruction: `Regroupe les tracks par genre musical dominant. Propose ${range} playlists couvrant les familles de genres les plus représentées dans le catalogue. ${catalogRule}`,
     },
     {
       label: "Energy-based",
-      instruction: `Regroupe les tracks par niveau d'énergie et de tempo (calme, medium, énergique). Propose exactement ${n} playlists ordonnées par intensité.`,
+      instruction: `Regroupe les tracks par niveau d'énergie et de tempo en t'appuyant sur les valeurs energy/valence. Propose ${range} playlists ordonnées par intensité (calme → énergique). ${catalogRule}`,
     },
     {
       label: "Mood-based",
-      instruction: `Regroupe les tracks par mood et valence émotionnelle (mélancolique, neutre, positif). Propose exactement ${n} playlists distinctes par feeling.`,
+      instruction: `Regroupe les tracks par mood et valence émotionnelle. Propose ${range} playlists distinctes par feeling. ${catalogRule}`,
     },
     {
       label: "Listening-moment",
-      instruction: `Regroupe les tracks par moment d'écoute (matin, concentration, soirée, fête, sport). Propose exactement ${n} playlists orientées usage.`,
+      instruction: `Regroupe les tracks par moment d'écoute (concentration, soirée, voyage, sport, fête). Propose ${range} playlists orientées usage. ${catalogRule}`,
     },
     {
       label: "Subculture",
-      instruction: `Regroupe les tracks par sous-culture ou scène musicale (underground, mainstream, indie, classique, électro, etc). Propose exactement ${n} playlists avec une identité forte.`,
+      instruction: `Regroupe les tracks par scène ou sous-culture musicale visible dans le catalogue. Propose ${range} playlists avec une identité forte. ${catalogRule}`,
     },
     {
       label: "Artist-cluster",
-      instruction: `Identifie les clusters d'artistes qui ont des styles similaires et regroupe les tracks autour d'eux. Propose exactement ${n} playlists basées sur ces clusters d'influence.`,
+      instruction: `Identifie des clusters d'artistes au style similaire à partir des tracks et de leurs genres. Propose ${range} playlists par cluster d'influence. ${catalogRule}`,
     },
     {
-      label: "Diversity-maximized",
-      instruction: `Propose exactement ${n} playlists en maximisant la diversité des styles couverts. Assure-toi que chaque playlist a un périmètre clairement distinct et que la couverture globale est maximale.`,
+      label: "Coverage-maximized",
+      instruction: `Identifie les familles de genres qui couvrent le plus de tracks. Propose ${range} playlists en maximisant la couverture totale — les chevauchements sont autorisés et bienvenus. ${catalogRule}`,
     },
     {
       label: "Hybrid-comprehensive",
-      instruction: `Analyse les genres, l'énergie, le mood et les moments d'écoute. Propose exactement ${n} playlists polyvalentes qui couvrent le maximum de la bibliothèque sans chevauchements. Pour chaque playlist, définis des genres_include précis.`,
+      instruction: `Analyse les genres du catalogue, l'énergie, le mood et les moments d'écoute. Propose ${range} playlists polyvalentes. Les chevauchements entre playlists sont autorisés : une track de soul électronique peut apparaître dans une playlist Soul ET dans une playlist Électro. ${catalogRule}`,
     },
   ];
 }
 
-function buildPrompt(variant: PromptVariant, tracks: TrackRow[], n: number): string {
-  const sample = tracks.slice(0, 200).map((t) => ({
+function buildGenreCatalog(tracks: TrackRow[]): string {
+  const counts: Record<string, number> = {};
+  for (const t of tracks) {
+    for (const g of t.genres ?? []) {
+      counts[g] = (counts[g] ?? 0) + 1;
+    }
+  }
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([g, n]) => `${g} (${n})`)
+    .join(", ");
+}
+
+function buildPrompt(variant: PromptVariant, tracks: TrackRow[]): string {
+  const sample = tracks.map((t) => ({
     name: t.name,
     artist: t.artists?.[0] ?? "",
     genres: t.genres ?? [],
@@ -113,41 +135,65 @@ function buildPrompt(variant: PromptVariant, tracks: TrackRow[], n: number): str
     valence: t.audio_features?.valence ?? null,
   }));
 
-  return `Tu es un expert en organisation musicale. Voici un échantillon de ${sample.length} tracks d'un utilisateur Spotify :
+  const genreCatalog = buildGenreCatalog(tracks);
 
+  return `Tu es un expert en organisation musicale.
+
+CATALOGUE DE GENRES (genres présents dans la bibliothèque, par fréquence décroissante) :
+${genreCatalog}
+
+TRACKS DE LA BIBLIOTHÈQUE (${sample.length} tracks) :
 ${JSON.stringify(sample)}
 
-${variant.instruction}
+MISSION : ${variant.instruction}
 
 Pour chaque playlist, génère :
 - name : nom court en français (2-4 mots max)
 - description : une phrase user-facing décrivant le vibe
-- llm_help_text : texte de guidage pour le classifier automatique (concrèt, avec cas limites et exemples)
-- genres_include : liste de genres musicaux cibles (3-8 genres)
-- genres_exclude : liste de genres à exclure (0-3)
+- llm_help_text : texte de guidage pour le classifier automatique (concret, cas limites, exemples d'artistes)
+- genres_include : genres tirés du CATALOGUE CI-DESSUS qui définissent cette playlist (3-10 genres)
+- genres_exclude : genres du catalogue à exclure pour éviter les chevauchements (0-4)
 - example_artists : 4-6 artistes présents dans les tracks
 
 Réponds UNIQUEMENT avec un JSON valide, sans markdown :
 {"playlists": [...]}`;
 }
 
+function stripMarkdown(raw: string): string {
+  // Strip ```json ... ``` or ``` ... ``` wrappers
+  return raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+}
+
 function computeCoverage(
   tracks: TrackRow[],
   playlists: ProposedPlaylist[]
-): { matched: number; total: number; pct: number } {
+): { matched: number; total: number; pct: number; multi_assigned: number } {
   const total = tracks.length;
   const covered = new Set<number>();
-  for (const pl of playlists) {
-    const include = (pl.genres_include ?? []).map((g) => g.toLowerCase());
-    tracks.forEach((t, i) => {
-      if ((t.genres ?? []).some((g) => include.includes(g.toLowerCase()))) {
-        covered.add(i);
-      }
-    });
-  }
+  let multiAssigned = 0;
+  tracks.forEach((t, i) => {
+    const matchCount = playlists.filter((pl) => {
+      const include = (pl.genres_include ?? []).map((g) => g.toLowerCase());
+      return (t.genres ?? []).some((g) => include.includes(g.toLowerCase()));
+    }).length;
+    if (matchCount > 0) covered.add(i);
+    if (matchCount > 1) multiAssigned++;
+  });
   const matched = covered.size;
   const pct = total > 0 ? Math.round((matched / total) * 100) : 0;
-  return { matched, total, pct };
+  return { matched, total, pct, multi_assigned: multiAssigned };
+}
+
+function printAllResults(results: VariantResult[]) {
+  const sorted = [...results].sort((a, b) => b.coverage_pct - a.coverage_pct);
+  for (const r of sorted) {
+    console.log(`\n┌─ ${r.variant.label.toUpperCase()} — ${r.coverage_pct}% (${r.matched}/${r.total}) · ${r.playlists.length} playlists · ${r.multi_assigned} multi-assignées · $${r.cost_usd.toFixed(4)}`);
+    for (const p of r.playlists) {
+      const genres = (p.genres_include ?? []).join(", ");
+      console.log(`│  • ${p.name.padEnd(28)} [${genres}]`);
+    }
+    console.log("└" + "─".repeat(70));
+  }
 }
 
 async function main() {
@@ -159,18 +205,19 @@ async function main() {
 
   const userId = get("--user-id");
   if (!userId) {
-    console.error("Usage: npx tsx scripts/optimize-taxonomy-prompt.ts --user-id <uuid>");
+    console.error("Usage: npx tsx scripts/optimize-taxonomy-prompt.ts --user-id <uuid> [--segmentation fine|medium|coarse] [--variants N] [--sample N]");
     process.exit(1);
   }
 
-  const targetCountArg = get("--target-count");
-  const targetCount = targetCountArg ? parseInt(targetCountArg, 10) : null;
+  const segmentation = get("--segmentation") ?? "medium";
+  const range = SEGMENTATION_RANGES[segmentation] ?? SEGMENTATION_RANGES.medium;
   const maxVariants = parseInt(get("--variants") ?? "8", 10);
   const sampleSize = parseInt(get("--sample") ?? "200", 10);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const { data: tracks, error: tracksError } = await supabase
     .from("tracks")
@@ -184,36 +231,36 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\n${tracks.length} tracks enrichies chargées pour user ${userId}`);
-  console.log(`Test de ${Math.min(maxVariants, 8)} variantes de prompt\n`);
+  const genreCatalog = buildGenreCatalog(tracks as TrackRow[]);
+  console.log(`\n${tracks.length} tracks enrichies — segmentation : ${segmentation} (${range} playlists)`);
+  console.log(`\nCatalogue de genres :\n${genreCatalog}\n`);
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const variants = buildVariants(targetCount).slice(0, maxVariants);
+  const variants = buildVariants(range).slice(0, maxVariants);
   const results: VariantResult[] = [];
 
   for (let i = 0; i < variants.length; i++) {
     const v = variants[i];
-    const n = targetCount ?? 4;
     console.log(`[${i + 1}/${variants.length}] ${v.label}…`);
 
     try {
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 3000,
-        messages: [{ role: "user", content: buildPrompt(v, tracks as TrackRow[], n) }],
+        messages: [{ role: "user", content: buildPrompt(v, tracks as TrackRow[]) }],
       });
 
-      const raw = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+      const raw = msg.content[0].type === "text" ? stripMarkdown(msg.content[0].text.trim()) : "";
       const parsed = JSON.parse(raw) as { playlists: ProposedPlaylist[] };
       const playlists = parsed.playlists;
 
-      const { matched, total, pct } = computeCoverage(tracks as TrackRow[], playlists);
+      const { matched, total, pct, multi_assigned } = computeCoverage(tracks as TrackRow[], playlists);
       const inputTokens = msg.usage.input_tokens;
       const outputTokens = msg.usage.output_tokens;
       const cost = (inputTokens / 1_000_000) * COST_PER_M_INPUT + (outputTokens / 1_000_000) * COST_PER_M_OUTPUT;
 
-      results.push({ variant: v, playlists, coverage_pct: pct, matched, total, prompt_tokens: inputTokens, output_tokens: outputTokens, cost_usd: cost });
-      console.log(`   → ${playlists.length} playlists · ${pct}% couverture · $${cost.toFixed(4)}`);
+      results.push({ variant: v, playlists, coverage_pct: pct, matched, total, multi_assigned, prompt_tokens: inputTokens, output_tokens: outputTokens, cost_usd: cost });
+      console.log(`   → ${playlists.length} playlists · ${pct}% couverture · ${multi_assigned} multi-assignées · $${cost.toFixed(4)}`);
     } catch (e) {
       console.error(`   ✗ Erreur: ${e}`);
     }
@@ -223,29 +270,28 @@ async function main() {
     }
   }
 
-  // Classement par couverture
-  results.sort((a, b) => b.coverage_pct - a.coverage_pct);
+  // Affichage complet
+  console.log("\n\n══════════════════════════════════════════════════════════════════════");
+  console.log("RÉSULTATS COMPLETS — toutes les playlists par variante");
+  console.log("══════════════════════════════════════════════════════════════════════");
+  printAllResults(results);
 
+  // Classement
+  const sorted = [...results].sort((a, b) => b.coverage_pct - a.coverage_pct);
   console.log("\n══════════════════════════════════════");
   console.log("CLASSEMENT PAR COUVERTURE");
   console.log("══════════════════════════════════════");
-  results.forEach((r, i) => {
-    console.log(`${i + 1}. ${r.variant.label.padEnd(25)} ${String(r.coverage_pct).padStart(3)}%  (${r.matched}/${r.total} tracks)  $${r.cost_usd.toFixed(4)}`);
+  sorted.forEach((r, i) => {
+    console.log(`${i + 1}. ${r.variant.label.padEnd(25)} ${String(r.coverage_pct).padStart(3)}%  (${r.matched}/${r.total})  ${r.playlists.length} playlists  ${String(r.multi_assigned).padStart(3)} multi  $${r.cost_usd.toFixed(4)}`);
   });
 
-  const winner = results[0];
-  if (!winner) { console.log("\nAucun résultat."); return; }
-
+  const winner = sorted[0];
+  if (!winner) return;
   console.log("\n══════════════════════════════════════");
   console.log(`PROMPT GAGNANT : ${winner.variant.label}`);
   console.log("══════════════════════════════════════");
   console.log("\nInstruction :");
   console.log(winner.variant.instruction);
-  console.log("\nPlaylists proposées :");
-  winner.playlists.forEach((p) => {
-    console.log(`  - ${p.name} [${(p.genres_include ?? []).join(", ")}]`);
-  });
-  console.log(`\nCouverture : ${winner.coverage_pct}% (${winner.matched}/${winner.total} tracks)`);
   console.log("\nCopier l'instruction dans lib/onboarding/prompts/taxonomy.ts");
 }
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import {
   getUserBySpotifyId,
+  getUserWithOnboarding,
   getUserPlaylists,
   getDashboardTracks,
   getDashboardCounts,
@@ -11,6 +12,7 @@ import {
 import Link from "next/link";
 import DashboardActions from "./DashboardActions";
 import DashboardInboxPreview from "./DashboardInboxPreview";
+import OnboardingHeroCard from "./OnboardingHeroCard";
 import { playlistSwatch } from "@/lib/playlist-swatch";
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -58,10 +60,11 @@ export default async function DashboardPage() {
   const dbUser = await getUserBySpotifyId(session.userId);
   if (!dbUser) redirect("/login");
 
-  const [playlists, tracks, counts] = await Promise.all([
+  const [playlists, tracks, counts, onboarding] = await Promise.all([
     getUserPlaylists(dbUser.id),
     getDashboardTracks(dbUser.id),
     getDashboardCounts(dbUser.id),
+    getUserWithOnboarding(session.userId),
   ]);
 
   const now = Date.now();
@@ -89,8 +92,22 @@ export default async function DashboardPage() {
   const needsReview = counts.needs_review;
   const isNew = counts.imported === 0;
 
+  const onboardingStatus = onboarding?.onboarding_status ?? "complete";
+  const onboardingDone = onboardingStatus === "complete";
+
   return (
     <main className="s-page">
+      {/* Onboarding hero card */}
+      {!onboardingDone && (
+        <OnboardingHeroCard
+          initialStatus={onboardingStatus}
+          initialMode={onboarding?.onboarding_mode ?? null}
+          initialStep={onboarding?.onboarding_step ?? 0}
+          initialProposalReady={onboarding?.proposal_ready ?? false}
+          hasPlaylists={playlists.length > 0}
+        />
+      )}
+
       {/* Header narratif */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-dim)", marginBottom: 8, letterSpacing: "0.02em" }}>
@@ -136,15 +153,17 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats + actions */}
-      <DashboardActions
-        initialCounts={{
-          needs_review: counts.needs_review,
-          imported: counts.imported,
-          in_playlists: counts.in_playlists,
-          last_sync_at: counts.last_sync_at,
-        }}
-      />
+      {/* Stats + actions — masquées tant que l'onboarding n'est pas complet */}
+      {(onboardingDone || counts.imported > 0) && (
+        <DashboardActions
+          initialCounts={{
+            needs_review: counts.needs_review,
+            imported: counts.imported,
+            in_playlists: counts.in_playlists,
+            last_sync_at: counts.last_sync_at,
+          }}
+        />
+      )}
 
       {/* Inbox preview */}
       <DashboardInboxPreview />

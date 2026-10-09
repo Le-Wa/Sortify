@@ -15,7 +15,7 @@ export async function GET() {
   const supabase = createClient();
   const { data } = await supabase
     .from("users")
-    .select("id, spotify_id, email, onboarding_status, onboarding_step, onboarding_mode")
+    .select("id, spotify_id, email, onboarding_status, onboarding_step, onboarding_mode, proposal_ready")
     .like("spotify_id", `${DEV_PREFIX}%`)
     .order("email");
   return NextResponse.json(data ?? []);
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
   const initialStatus: string = body.status ?? "pending";
   const initialStep: number = body.step ?? 0;
   const initialMode: string | null = body.mode ?? null;
+  const initialProposalReady: boolean = body.proposal_ready ?? false;
 
   const suffix = randomBytes(4).toString("hex");
   const spotifyId = `${DEV_PREFIX}${label.toLowerCase().replace(/\s+/g, "_")}_${suffix}`;
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
       onboarding_status: initialStatus,
       onboarding_step: initialStep,
       onboarding_mode: initialMode,
+      proposal_ready: initialProposalReady,
       // Required fields with safe defaults
       access_token: "dev_token",
       refresh_token: "dev_refresh",
