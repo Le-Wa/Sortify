@@ -55,7 +55,7 @@ like sur Spotify ─► Sortify détecte ─► classe
 ### Hors V1
 - Onboarding élaboré (chemins multiples, BYOK, import de playlists existantes, mode « from scratch » manuel)
 - Stats, profil émotionnel, dashboards KPI
-- Couleurs perso, réordonnancement, admin, personas, logs détaillés
+- Couleurs perso, admin, personas, logs détaillés
 - Landing page publique
 
 ## 7. Écrans (premier jet, sans design)
@@ -64,7 +64,7 @@ like sur Spotify ─► Sortify détecte ─► classe
 2. **Révélation** (une seule fois) — analyse en cours (avec du feedback, ça prend du temps) → « Voici l'âme de ta bibliothèque » : les playlists proposées → ajuster → créer.
 3. **Accueil** — l'état en une phrase (+ rangée d'intercalaires vers les bacs) (« 3 titres à trier » / « Tout est rangé ») + les derniers rangements + accès aux playlists.
 4. **À trier** — un titre à la fois (ou liste), extrait audio, suggestion + alternatives.
-5. **Bacs** — liste des bacs gérés, Divers est un objet à part, « la caisse » (« 61 titres attendent leur bac »). Détail : la fiche IA d'abord (modifiable en texte libre ou « demande à l'IA »), puis les ajouts récents avec « Retirer » (exemple négatif pour l'IA ; s'il n'est dans aucun autre bac, il part dans Divers), les titres exemples, activer/désactiver.
+5. **Bacs** — liste des bacs gérés, dans un ordre réglable (↑↓) qui est aussi celui de la rangée de bacs sur l'Accueil. Divers est un objet à part, « la caisse » (« 61 titres attendent leur bac ») ; on peut y ranger un titre à la main dans un bac. Détail : la fiche IA d'abord (modifiable en texte libre ou « demande à l'IA »), puis les ajouts récents avec « Retirer » (exemple négatif pour l'IA ; s'il n'est dans aucun autre bac, il part dans Divers), les titres exemples, activer/désactiver.
 6. **Réglages** — heure du tri quotidien, pause du tri, suggestions de nouveaux bacs, relancer l'analyse, inviter un pote (code), supprimer mes données (les playlists restent dans Spotify), déconnexion.
 
 Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
@@ -78,6 +78,8 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 - ✅ **Connexion** : mini-explication en 3 étapes ; rassurance « Tes playlists actuelles ne sont pas touchées » ; accès des potes par code d'invitation.
 - ✅ **Analyse** : on feuillette les vraies pochettes pendant l'attente ; on peut quitter et revenir.
 - ✅ **Erreurs Spotify** à la création : réessai silencieux, signalé seulement si ça échoue encore au tri suivant.
+- ✅ **Relancer l'analyse** (Réglages) : l'IA peut proposer d'ajouter, supprimer ou fusionner des bacs ; chaque changement est validé.
+- ✅ **Invitation** : pas de saisie d'email ; le code est suivi de la connexion Spotify. ⚠️ À vérifier au code : le comportement de Spotify pour un compte pas encore autorisé (mode dev).
 - ✅ **Noms dans Spotify** : nom seul (« Soirée potes »), sans suffixe. Sortify garde la liste de ses playlists de son côté.
 - ✅ **Raison de l'IA** dans « À trier » : sur demande (« Pourquoi ? » qui se déplie).
 - ✅ **Ré-analyse** : automatique dès la V1 (voir point 9).

@@ -66,7 +66,7 @@ Quand je corrige dans « À trier », le titre rejoint les `exemples` de la play
 
 ### 2.5 Ré-analyse automatique
 
-Après chaque tri quotidien, si Divers contient assez de titres proches (seuil à calibrer, ex. ≥ 15 titres cohérents), le LLM propose une nouvelle fiche playlist à partir de ces titres. Elle apparaît sur l'Accueil ; si je l'accepte, elle est créée dans Spotify et les titres concernés quittent Divers. Même logique, plus rare, si les likes récents ne collent plus bien aux playlists existantes.
+Après chaque tri quotidien, si Divers contient assez de titres proches (seuil à calibrer, ex. ≥ 15 titres cohérents), le LLM propose une nouvelle fiche playlist à partir de ces titres. Elle apparaît sur l'Accueil ; si je l'accepte, elle est créée dans Spotify et les titres concernés quittent Divers. Même logique, plus rare, si les likes récents ne collent plus bien aux playlists existantes. **Relancer l'analyse** (manuel, Réglages) refait l'analyse complète en tenant compte des bacs existants : l'IA peut proposer d'ajouter, supprimer ou fusionner des bacs, chaque changement validé par l'utilisateur.
 
 ## 3. Ce qu'on garde / jette du code V0
 
