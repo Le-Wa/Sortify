@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Connexion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#111111}a:hover{color:#5E5F5A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #ECEDE8; color: #111111; font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; padding: 26px 20px 24px; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; font-family: 'DM Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase">
+    <span style="font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 900; font-stretch: 62%; letter-spacing: 0.02em">Sortify</span>
+    <span>Disquaire perso · bac 00</span>
+  </div>
+
+  <div aria-hidden="true" style="position: relative; height: 256px; margin-top: 18px">
+    <div style="position: absolute; left: 6px; top: 26px; width: 196px; height: 196px; background: #FF6A13; border-radius: 4px; transform: rotate(-9deg); box-shadow: 0 10px 24px rgba(17,17,17,0.18); padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between">
+      <div style="font-family: 'DM Mono', monospace; font-size: 10px">SRT·01</div>
+      <div style="font-size: 44px; line-height: 0.84; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Soirée<br>potes</div>
+    </div>
+    <div style="position: absolute; right: 4px; top: 6px; width: 196px; height: 196px; background: #2448D8; color: #FFFFFF; border-radius: 4px; transform: rotate(6deg); box-shadow: 0 10px 24px rgba(17,17,17,0.18); padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden">
+      <div style="position: absolute; right: -60px; top: -60px; width: 150px; height: 150px; border-radius: 50%; border: 22px solid rgba(255,255,255,0.14)"></div>
+      <div style="font-family: 'DM Mono', monospace; font-size: 10px">SRT·03</div>
+      <div style="font-size: 44px; line-height: 0.84; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Club 2h<br>du mat'</div>
+    </div>
+    <div style="position: absolute; left: 92px; top: 62px; width: 196px; height: 196px; background: #FF9FCB; border-radius: 4px; transform: rotate(-1.5deg); box-shadow: 0 14px 30px rgba(17,17,17,0.22); padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between">
+      <div style="display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 10px"><span>SRT·02</span><span>168 titres</span></div>
+      <div style="font-size: 44px; line-height: 0.84; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Dimanche<br>lent</div>
+    </div>
+  </div>
+
+  <h1 style="margin: 22px 0 0; font-size: 62px; line-height: 0.86; font-weight: 900; font-stretch: 62%; text-transform: uppercase; letter-spacing: -0.5px">Tu likes.<br>Sortify range.</h1>
+
+  <ol style="list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.35">
+    <li style="display: flex; gap: 12px"><span style="font-family: 'DM Mono', monospace; font-size: 12px; padding-top: 1px">01</span><span><b>Tu likes sur Spotify</b>, comme d'habitude.</span></li>
+    <li style="display: flex; gap: 12px"><span style="font-family: 'DM Mono', monospace; font-size: 12px; padding-top: 1px">02</span><span><b>L'IA imagine tes bacs</b> à partir de 2 ans de likes.</span></li>
+    <li style="display: flex; gap: 12px"><span style="font-family: 'DM Mono', monospace; font-size: 12px; padding-top: 1px">03</span><span><b>Elle range chaque nouveau like</b>, tous les jours.</span></li>
+  </ol>
+
+  <div style="flex: 1"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <button style="height: 58px; border: 0; border-radius: 10px; background: #111111; color: #ECEDE8; font-family: 'Archivo', sans-serif; font-size: 20px; font-weight: 900; font-stretch: 75%; text-transform: uppercase; letter-spacing: 0.02em; cursor: pointer">Se connecter avec Spotify</button>
+    <div style="text-align: center; font-size: 12px; color: #5E5F5A">Tes playlists actuelles ne sont pas touchées.</div>
+    <a href="#" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Première fois ? J'ai un code d'invitation</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

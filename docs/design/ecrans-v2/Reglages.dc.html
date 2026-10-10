@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Réglages</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #ECEDE8; color: #111111; font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; padding: 12px 16px 24px; overflow: hidden">
+
+  <a href="#" style="align-self: flex-start; min-height: 44px; display: flex; align-items: center; padding: 0 4px; color: #111111; text-decoration: none; font-size: 14px; font-weight: 700">‹ Accueil</a>
+  <h1 style="margin: 4px 4px 0; font-size: 50px; line-height: 0.86; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Réglages</h1>
+
+  <div style="margin-top: 18px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 4px">Le tri</div>
+  <div style="margin-top: 6px; background: #FFFFFF; border-radius: 12px; display: flex; flex-direction: column">
+    <div style="display: flex; justify-content: space-between; align-items: center; min-height: 56px; padding: 0 14px; border-bottom: 1px solid #ECEDE8"><label for="heure" style="font-size: 15px; font-weight: 600">Chaque jour à</label><select id="heure" style="height: 40px; border: 1.5px solid #D3D4CE; border-radius: 8px; padding: 0 10px; font-family: 'DM Mono', monospace; font-size: 14px; background: #ECEDE8; color: #111111"><option>08:00</option><option>12:00</option><option>20:00</option></select></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; min-height: 56px; padding: 0 14px; border-bottom: 1px solid #ECEDE8"><span style="font-size: 15px; font-weight: 600">Mettre en pause</span><button aria-label="Mettre le tri en pause" aria-pressed="false" style="width: 48px; height: 28px; border-radius: 14px; border: 0; background: #D3D4CE; position: relative; cursor: pointer"><span style="position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF"></span></button></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; min-height: 56px; padding: 0 14px"><span style="font-size: 15px; font-weight: 600">Suggérer de nouveaux bacs</span><button aria-label="Suggérer de nouveaux bacs" aria-pressed="true" style="width: 48px; height: 28px; border-radius: 14px; border: 0; background: #111111; position: relative; cursor: pointer"><span style="position: absolute; right: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FF6A13"></span></button></div>
+  </div>
+
+  <div style="margin-top: 18px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 4px">Tes bacs</div>
+  <div style="margin-top: 6px; background: #FFFFFF; border-radius: 12px; padding: 14px; display: flex; gap: 12px; align-items: center">
+    <div style="flex: 1; min-width: 0"><div style="font-size: 15px; font-weight: 600">Relancer l'analyse</div><div style="margin-top: 2px; font-size: 12px; line-height: 1.35; color: #5E5F5A">L'IA peut proposer d'ajouter, supprimer ou fusionner des bacs. Tu valides chaque changement.</div></div>
+    <button style="height: 44px; padding: 0 14px; border: 1.5px solid #111111; border-radius: 8px; background: transparent; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer">Relancer</button>
+  </div>
+
+  <div style="margin-top: 18px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 4px">Les potes</div>
+  <div style="margin-top: 6px; background: #111111; color: #ECEDE8; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">Inviter un pote</span><span style="font-family: 'DM Mono', monospace; font-size: 11px; color: #A9AAA4">4 / 25 places</span></div>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <span style="flex: 1; height: 48px; border: 1.5px dashed #6E6F69; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 20px; letter-spacing: 0.12em">DISQ-7K2P</span>
+      <button style="height: 48px; padding: 0 14px; border: 0; border-radius: 8px; background: #FF6A13; color: #111111; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer">Copier</button>
+    </div>
+    <div style="font-size: 12px; line-height: 1.35; color: #A9AAA4">Pense aussi à ajouter son compte dans ton dashboard Spotify.</div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <button style="height: 52px; border: 1.5px solid #111111; border-radius: 10px; background: transparent; font-family: 'Archivo', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Se déconnecter</button>
+    <button style="height: 44px; border: 0; background: none; font-family: 'Archivo', sans-serif; font-size: 14px; font-weight: 600; color: #A3341A; cursor: pointer">Supprimer mes données Sortify</button>
+    <div style="text-align: center; font-size: 11px; color: #5E5F5A">Tes playlists restent dans Spotify.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
