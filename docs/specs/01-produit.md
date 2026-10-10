@@ -42,7 +42,7 @@ like sur Spotify ─► Sortify détecte ─► classe
 **Je ne définis pas mes playlists : l'IA le fait.** Elle analyse ma bibliothèque et me dit « voici les ~10 playlists qui représentent l'âme de ta bibliothèque » — un mix de genres, de thèmes, d'ambiances et de moments (ex. « Soirée potes, énergique », « Dimanche décontracté », « Rap introspectif »). Moteur détaillé : [02-moteur-ia.md](02-moteur-ia.md).
 
 ### Dans la V1
-1. **Connexion Spotify** (un bouton, c'est tout).
+1. **Connexion Spotify** — 3 étapes d'explication + un bouton. Les nouveaux entrent un **code d'invitation** (généré par toi dans Réglages ; l'ajout du compte dans le dashboard Spotify reste manuel en mode dev).
 2. **Analyse IA de la bibliothèque** — lit mes likes des 2 dernières années, propose les playlists qui la résument — nombre libre selon sa taille et ses directions (nom + description en une phrase + quelques titres exemples).
 3. **Ajuster la proposition** — garder / retirer / renommer / « régénérer celle-ci ». Pas d'éditeur de règles.
 4. **Création dans Spotify** — Sortify crée les playlists validées et les remplit avec mes likes existants.
@@ -53,7 +53,7 @@ like sur Spotify ─► Sortify détecte ─► classe
 9. **Ré-analyse automatique** — quand Divers grossit autour d'une même direction (ou que tes likes dérivent), Sortify propose une nouvelle playlist sur l'Accueil : accepter / refuser.
 
 ### Hors V1
-- Onboarding élaboré (chemins multiples, codes d'invitation, BYOK, import de playlists existantes, mode « from scratch » manuel)
+- Onboarding élaboré (chemins multiples, BYOK, import de playlists existantes, mode « from scratch » manuel)
 - Stats, profil émotionnel, dashboards KPI
 - Couleurs perso, réordonnancement, admin, personas, logs détaillés
 - Landing page publique
@@ -75,6 +75,7 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 - ✅ **Multi-playlists** : oui, c'est la différence clé — 3 playlists max par titre.
 - ✅ **Like original** : reste dans « Titres likés » (non destructif).
 - 🟡 **Autonomie** : par défaut, Sortify range seul quand il est sûr et ne demande que pour les vrais doutes (cible : < 1 titre sur 5 en « À trier »). Réglable plus tard si besoin.
+- ✅ **Connexion** : mini-explication en 3 étapes ; rassurance « Tes playlists actuelles ne sont pas touchées » ; accès des potes par code d'invitation.
 - ✅ **Noms dans Spotify** : nom seul (« Soirée potes »), sans suffixe. Sortify garde la liste de ses playlists de son côté.
 - ✅ **Raison de l'IA** dans « À trier » : sur demande (« Pourquoi ? » qui se déplie).
 - ✅ **Ré-analyse** : automatique dès la V1 (voir point 9).

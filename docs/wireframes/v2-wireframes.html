@@ -175,13 +175,14 @@ const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const pending = () => S.queue.length - S.qi;
 
 const SCREENS = [
-  {g:"Entrée", items:[["login","Connexion","1"]]},
+  {g:"Entrée", items:[["login","Connexion","1"],["invite","Code d'invitation","1b"]]},
   {g:"Révélation · une fois", items:[["analyse","Analyse en cours","2a"],["propose","Proposition","2b"],["create","Création","2c"]]},
   {g:"Au quotidien", items:[["home","Accueil","3"],["triage","À trier","4"],["playlists","Playlists","5"],["playlist","Détail playlist","5b"],["settings","Réglages","6"]]},
 ];
 
 const NOTES = {
-  login:{t:"Connexion", p:"Un seul geste. On dit ce que fait l'app et ce qu'elle ne fait pas.", v:["Une phrase de promesse suffit-elle, ou faut-il montrer un exemple de playlist ?","La rassurance « on ne touche pas à tes likes » est au bon endroit."], q:["Les potes arrivent-ils via un lien d'invitation, ou un simple lien vers l'app ? (Spotify en mode dev : il faut ajouter chaque compte à la main.)"]},
+  login:{t:"Connexion", p:"Ce que fait l'app en 3 étapes, puis un seul bouton.", v:["Les 3 étapes (décidé).","Rassurance : « Tes playlists actuelles ne sont pas touchées » (décidé).","Les nouveaux passent par « J'ai un code d'invitation »."], q:["Le wording des 3 étapes te va ?"]},
+  invite:{t:"Code d'invitation", p:"Pour un pote qui arrive pour la première fois. Tu génères le code depuis tes Réglages.", v:["Un code = une personne, utilisable une fois.","Contrainte Spotify (mode dev) : tu dois aussi ajouter son compte dans ton dashboard Spotify. Sortify te le rappelle et te donne son email."], q:["Faut-il que le pote saisisse son email Spotify ici pour que tu l'ajoutes, ou tu gères en direct avec lui ?"]},
   analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. L'attente doit raconter ce qui se passe, avec de vrais chiffres de ta bibliothèque.", v:["Les étapes affichées sont parlantes.","On peut quitter et revenir : l'analyse continue côté serveur."], q:["Montrer quelques pochettes qui défilent pendant l'attente ? (moment « wow » vs. complexité)"]},
   propose:{t:"Proposition", p:"Le moment clé de l'app : « voici l'âme de ta bibliothèque ». On ajuste sans jamais éditer de règles.", v:["Par playlist : garder ou retirer, renommer, « autre idée » (régénère juste celle-là).","Le nombre de playlists est choisi par l'IA (ici 9), plus Divers.","Les chiffres se chevauchent : un titre peut être dans 3 playlists max."], q:["Faut-il pouvoir demander « ajoute une playlist pour… » en texte libre ? (je propose : hors V1)","Afficher l'axe (scène / ambiance / moment) ou c'est du bruit ?"]},
   create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Noms seuls dans Spotify, sans suffixe (décidé).","À la fin : écran d'accueil directement."], q:["Pendant la création, montrer les playlists qui se remplissent une à une, ou une simple barre ?"]},
@@ -220,17 +221,31 @@ function renderTabs(){
 const V = {
   login:()=>`
     <div class="spacer"></div>
-    <div class="cover xl" style="max-width:180px;align-self:center" aria-hidden="true"></div>
-    <div class="stack" style="text-align:center;align-items:center">
+    <div class="stack">
       <div class="wm">SORTIFY</div>
       <p class="h1">Tu likes,<br>Sortify range.</p>
-      <p class="sub" style="max-width:28ch">L'IA lit tes likes, imagine les playlists qui te ressemblent, puis y range chaque nouveau titre.</p>
+    </div>
+    <div class="steps">
+      <div class="step done"><span class="dot">1</span><span><b>Tu likes sur Spotify</b>, comme d'habitude.</span></div>
+      <div class="step done"><span class="dot">2</span><span><b>L'IA imagine tes playlists</b> à partir de tes 2 dernières années de likes.</span></div>
+      <div class="step done"><span class="dot">3</span><span><b>Elle range chaque nouveau like</b>, tous les jours, toute seule.</span></div>
     </div>
     <div class="spacer"></div>
     <div class="stack">
       <button class="btn" data-go="analyse">Se connecter avec Spotify</button>
-      <p class="meta" style="text-align:center">Tes titres likés ne sont jamais modifiés.</p>
+      <p class="meta" style="text-align:center">Tes playlists actuelles ne sont pas touchées.</p>
+      <button class="btn quiet" data-go="invite">Première fois ? J'ai un code d'invitation</button>
     </div>`,
+
+  invite:()=>`
+    <button class="back" data-go="login">‹ Retour</button>
+    <p class="h1">Ton code d'invitation</p>
+    <p class="sub">Demande-le à la personne qui t'a parlé de Sortify.</p>
+    <label class="lbl" for="code">Code</label>
+    <input id="code" value="DISQ-7K2P" style="font:inherit;font-family:var(--mono);font-size:20px;letter-spacing:.1em;text-transform:uppercase;min-height:52px;border:1.5px solid var(--ink);border-radius:12px;padding:0 14px;background:var(--fill2);color:var(--ink)">
+    <p class="meta">Le code est valable une fois. Ton compte Spotify doit aussi être autorisé : on s'en occupe dès que tu valides.</p>
+    <div class="spacer"></div>
+    <button class="btn" data-go="analyse">Continuer avec Spotify</button>`,
 
   analyse:()=>`
     <div class="lbl">Première analyse</div>
@@ -380,6 +395,7 @@ const V = {
         <select id="hour" aria-label="Heure du tri">${["06:00","08:00","12:00","20:00"].map(h=>`<option ${h===S.hour?"selected":""}>${h}</option>`).join("")}</select></div>
       <div class="row" style="justify-content:space-between"><span>Suggérer de nouvelles playlists</span><button class="toggle" aria-label="Suggérer de nouvelles playlists" aria-pressed="true"></button></div>
       <div class="row" style="justify-content:space-between"><span>Compte</span><span class="meta">Connecté à Spotify</span></div>
+      <div class="row" style="justify-content:space-between"><span>Inviter un pote <span class="meta">(toi seulement)</span></span><button class="btn-sm" id="mkcode">Créer un code</button></div>
     </div>
     <div class="spacer"></div>
     <button class="btn ghost" data-go="login">Se déconnecter</button>`,
@@ -419,6 +435,7 @@ document.addEventListener("click",e=>{
   switch(b.id){
     case "validate": { S.why=false; const q=S.queue[S.qi]; toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; return render(); }
     case "todivers": toast("Rangé dans Divers"); S.qi++; return render();
+    case "mkcode": toast("Code DISQ-7K2P créé. Pense à ajouter son compte dans ton dashboard Spotify."); return;
     case "why": S.why=!S.why; return render();
     case "sugyes": S.sugg="done"; PL.push({id:"jazz",name:"Jazz du soir",axe:"ambiance",n:18,pitch:"Jazz vocal, contrebasse, ambiance feutrée.",brief:"Jazz vocal et instrumental feutré, tempo lent à moyen. Frontière : le jazz très calme sans voix va dans Focus.",ex:["Nina Simone — Sinnerman","Gregory Porter — Liquid Spirit","Melody Gardot — Baby I'm a Fool"]}); S.keep.jazz=true; DIVERS.n-=18; toast("« Jazz du soir » créée dans Spotify, 18 titres quittent Divers"); return render();
     case "sugno": S.sugg="done"; toast("Suggestion écartée"); return render();
