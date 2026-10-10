@@ -60,7 +60,7 @@ export function NewLikesButton({ paused }: { paused: boolean }) {
     <>
       <button
         type="button"
-        className="btn btn--ghost btn--sm"
+        className="btn btn--ghost btn--sm nowrap"
         disabled={running}
         aria-label="Chercher les nouveaux likes maintenant"
         onClick={() => {
@@ -79,7 +79,13 @@ export function NewLikesButton({ paused }: { paused: boolean }) {
           <path d="M21 12a9 9 0 11-3-6.7" />
           <path d="M21 4v5h-5" />
         </svg>
-        {running ? "On cherche…" : "Nouveaux likes ?"}
+        {running ? (
+          "On cherche…"
+        ) : (
+          <>
+            Nouveaux<span className="wide-only"> likes</span> ?
+          </>
+        )}
       </button>
       {message ? (
         <p className="toast" role="status">

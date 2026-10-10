@@ -46,11 +46,14 @@ export function BacList({ bacs }: { bacs: Item[] }) {
         {bacs.map((b, i) => {
           const body = (
             <span className="card bin__card">
-              <span className="grow stack" style={{ gap: 2 }}>
-                <span className="bins__name">{b.name}</span>
-                <span className="mono small muted">
-                  {b.total} titres · {b.week > 0 ? `+${b.week}` : "0"} cette semaine{b.autoFill ? "" : " · en pause"}
-                </span>
+              <span className="grow stack" style={{ gap: 2, minWidth: 0 }}>
+                <span className={`bins__name ${reordering ? "bins__name--one-line" : ""}`}>{b.name}</span>
+                {/* En mode Réordonner, place aux flèches : le nom seul suffit. */}
+                {reordering ? null : (
+                  <span className="mono small muted">
+                    {b.total} titres · {b.week > 0 ? `+${b.week}` : "0"} cette semaine{b.autoFill ? "" : " · en pause"}
+                  </span>
+                )}
               </span>
               {reordering ? (
                 <span className="row" style={{ gap: 4 }}>
