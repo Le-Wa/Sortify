@@ -75,7 +75,7 @@ Juge l'ensemble (artiste, titre, époque, énergie, tags) et respecte les fronti
 « raison » : 12 mots au plus, en français, pour expliquer ton choix principal (ou l'absence de bac).
 « bac » est le numéro du bac (1 à ${fiches.length}), « id » le numéro du titre.
 
-Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique).`;
+Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique). Les tags « deezer: » sont des genres d'album Deezer, plus grossiers que les autres.`;
 }
 
 async function sortBatch(
@@ -86,8 +86,11 @@ async function sortBatch(
   opts: SortOptions,
 ): Promise<Sorted[]> {
   const lines = tracks.map((t, i) => trackLine(t, offset + i)).join("\n");
-  const message = await claude().messages.create({
+  const message = await claude().beta.messages.create({
     model: opts.model ?? SORT_MODEL,
+    // Repli serveur si le modèle refuse (recommandé pour Sonnet 5.5 sur l'API Claude).
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
     max_tokens: 8000,
     output_config: { effort: opts.effort ?? "low", format: zodOutputFormat(sortSchema) },
     // Les fiches sont identiques pour tous les lots : on les met en cache.
@@ -190,7 +193,7 @@ ${fichesBlock([fiche])}
 Les autres bacs de la personne (pour situer les frontières) : ${neighbours.join(", ") || "aucun"}.
 
 Parmi les titres donnés, renvoie ceux qui ont leur place dans ce bac, avec une confiance entre 0 et 1 (0.9 : évident ; 0.6 à 0.9 : bonne place ; 0.3 à 0.6 : plausible). N'indique pas les autres. Un titre peut aussi aller dans d'autres bacs : juge seulement s'il est à sa place dans celui-ci.
-Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique).`;
+Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique). Les tags « deezer: » sont des genres d'album Deezer, plus grossiers que les autres.`;
 
   const batches: { tracks: CorpusTrack[]; offset: number }[] = [];
   for (let i = 0; i < tracks.length; i += FILL_BATCH) batches.push({ tracks: tracks.slice(i, i + FILL_BATCH), offset: i });
@@ -200,8 +203,10 @@ Format des titres : numéro | artistes — titre | année | tags | én(ergie) da
   async function worker() {
     while (next < batches.length) {
       const { tracks: batch, offset } = batches[next++];
-      const message = await claude().messages.create({
+      const message = await claude().beta.messages.create({
         model: SORT_MODEL,
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
         max_tokens: 8000,
         output_config: { effort: "low", format: zodOutputFormat(fillSchema) },
         system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],

@@ -5,8 +5,11 @@ import Anthropic from "@anthropic-ai/sdk";
 export const ANALYSIS_MODEL = "claude-fable-5-1";
 /** Retouches de la proposition (autre idée, fusion, bac sur mesure) : l'utilisateur attend la réponse. */
 export const EDIT_MODEL = "claude-opus-5-5";
-/** Rangement des titres : nombreux petits lots, modèle rapide et économique (spec 02). */
-export const SORT_MODEL = "claude-haiku-5-5";
+/**
+ * Rangement des titres. Sonnet plutôt que Haiku depuis le banc d'essai du 10/10/2026
+ * (docs/bench/2026-10-10-banc-essai.md) : +10 points de justesse, décisions stables, ~0,15 centime par titre.
+ */
+export const SORT_MODEL = "claude-sonnet-5-5";
 
 let client: Anthropic | null = null;
 

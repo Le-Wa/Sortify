@@ -104,13 +104,13 @@ interface Variant {
 }
 const strip = (t: CorpusTrack): CorpusTrack => ({ ...t, genres: [], audio: null });
 const variants: Variant[] = [
-  { name: "A. Haiku low, lots de 20 (actuel)", tracks: sample, opts: {} },
-  { name: "A'. idem, 2e passage (stabilité)", tracks: sample, opts: {} },
-  { name: "B. Haiku medium", tracks: sample, opts: { effort: "medium" } },
-  { name: "C. Sonnet 5.5 low", tracks: sample, opts: { model: "claude-sonnet-5-5" } },
-  { name: "D. Haiku low, lots de 5", tracks: sample, opts: { batch: 5 } },
-  { name: "E. Haiku low, sans tags ni audio", tracks: sample.map(strip), opts: {} },
-  { name: "F. Haiku low + Deezer si sans tag", tracks: withDeezer, opts: {} },
+  { name: "A. Haiku low, lots de 20", tracks: sample, opts: { model: "claude-haiku-5-5" } },
+  { name: "A'. idem, 2e passage (stabilité)", tracks: sample, opts: { model: "claude-haiku-5-5" } },
+  { name: "B. Haiku medium", tracks: sample, opts: { model: "claude-haiku-5-5", effort: "medium" } },
+  { name: "C. Sonnet 5.5 low (défaut depuis le banc)", tracks: sample, opts: { model: "claude-sonnet-5-5" } },
+  { name: "D. Haiku low, lots de 5", tracks: sample, opts: { model: "claude-haiku-5-5", batch: 5 } },
+  { name: "E. Haiku low, sans tags ni audio", tracks: sample.map(strip), opts: { model: "claude-haiku-5-5" } },
+  { name: "F. Haiku low + Deezer si sans tag", tracks: withDeezer, opts: { model: "claude-haiku-5-5" } },
 ];
 
 interface Scores {
@@ -175,7 +175,7 @@ for (const v of variants) {
   t0 = Date.now();
   const sorted = await sortTracks(fiches, v.tracks, undefined, { ...v.opts, usage });
   const seconds = (Date.now() - t0) / 1000;
-  const [pin, pout] = PRICE[v.opts.model ?? "claude-haiku-5-5"];
+  const [pin, pout] = PRICE[v.opts.model ?? "claude-sonnet-5-5"];
   const cost = (usage.input * pin + usage.output * pout) / 1e6;
   decisions[v.name] = sorted;
   scores.push(score(v.name, sorted, seconds, cost));

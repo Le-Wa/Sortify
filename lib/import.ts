@@ -1,5 +1,6 @@
 import "server-only";
 import { check, db } from "./db";
+import { deezerGenres } from "./enrichment/deezer";
 import { artistTags, trackTags } from "./enrichment/lastfm";
 import { audioFeatures, RECCOBEATS_BATCH, type AudioFeatures } from "./enrichment/reccobeats";
 import { saveProgress, type Job } from "./jobs";
@@ -122,6 +123,7 @@ interface PendingLike {
   title: string;
   artists: string[];
   cover_url: string | null;
+  isrc: string | null;
   liked_at: string;
 }
 
@@ -142,7 +144,7 @@ export async function enrichNext(memberId: string): Promise<{ count: number; las
   const likes = check(
     await db()
       .from("likes")
-      .select("track_id, title, artists, cover_url, liked_at")
+      .select("track_id, title, artists, cover_url, isrc, liked_at")
       .eq("member_id", memberId)
       .is("enriched_at", null)
       .order("liked_at", { ascending: false })
@@ -178,7 +180,7 @@ export async function enrichNext(memberId: string): Promise<{ count: number; las
 
 /**
  * Genres d'un lot : tags Last.fm de l'artiste principal (en cache, partagés entre membres),
- * et ceux du titre quand l'artiste n'en a pas.
+ * ceux du titre quand l'artiste n'en a pas, puis les genres d'album Deezer en dernier recours.
  */
 async function genresFor(likes: PendingLike[]): Promise<Map<string, string[]>> {
   const artists = [...new Set(likes.map((l) => l.artists[0]).filter((a): a is string => Boolean(a)))];
@@ -208,11 +210,13 @@ async function genresFor(likes: PendingLike[]): Promise<Map<string, string[]>> {
     likes.map(async (like) => {
       const artist = like.artists[0] ?? "";
       const tags = byArtist.get(artist) ?? [];
-      if (tags.length > 0 || !artist) {
+      if (tags.length > 0) {
         result.set(like.track_id, tags);
         return;
       }
-      result.set(like.track_id, (await trackTags(artist, like.title)) ?? []);
+      const fromTrack = artist ? ((await trackTags(artist, like.title)) ?? []) : [];
+      // Repli : genres d'album Deezer quand Last.fm ne connaît ni l'artiste ni le titre.
+      result.set(like.track_id, fromTrack.length > 0 ? fromTrack : await deezerGenres(like.isrc));
     }),
   );
   return result;

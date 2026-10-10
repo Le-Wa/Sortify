@@ -59,7 +59,7 @@ Ta mission :
 - Ordonne les bacs du plus central au plus marginal dans cette bibliothèque.
 - Tout le texte est en français, tutoiement.
 
-Format du corpus, un titre par ligne : numéro | artistes — titre | année de sortie | tags de genre | én(ergie) da(nsabilité) va(lence) ac(oustique) entre 0 et 1 quand on les connaît.`,
+Format du corpus, un titre par ligne : numéro | artistes — titre | année de sortie | tags de genre | én(ergie) da(nsabilité) va(lence) ac(oustique) entre 0 et 1 quand on les connaît. Les tags « deezer: » sont des genres d'album Deezer, plus grossiers.`,
     messages: [{ role: "user", content: `Corpus (${corpus.length} titres) :\n${lines}` }],
   });
   const message = await stream.finalMessage();

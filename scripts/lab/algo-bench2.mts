@@ -33,7 +33,7 @@ const variants: { name: string; tracks: CorpusTrack[]; opts: SortOptions }[] = [
   { name: "C'. Sonnet low, 2e passage", tracks: sample, opts: { model: "claude-sonnet-5-5" } },
   { name: "G. Sonnet low + Deezer", tracks: withDeezer, opts: { model: "claude-sonnet-5-5" } },
   { name: "H. Sonnet medium + Deezer", tracks: withDeezer, opts: { model: "claude-sonnet-5-5", effort: "medium" } },
-  { name: "I. Haiku medium + Deezer", tracks: withDeezer, opts: { effort: "medium" } },
+  { name: "I. Haiku medium + Deezer", tracks: withDeezer, opts: { model: "claude-haiku-5-5", effort: "medium" } },
 ];
 
 const pct = (a: number, b: number) => (b ? Math.round((100 * a) / b) : 0);
@@ -79,7 +79,7 @@ for (const v of variants) {
   const usage = { input: 0, output: 0 };
   const t0 = Date.now();
   const sorted = await sortTracks(fiches, v.tracks, undefined, { ...v.opts, usage });
-  const [pin, pout] = PRICE[v.opts.model ?? "claude-haiku-5-5"];
+  const [pin, pout] = PRICE[v.opts.model ?? "claude-sonnet-5-5"];
   decisions[v.name] = sorted;
   for (const high of [0.6, 0.7]) {
     rows.push({ variante: v.name, seuil: high, s: Math.round((Date.now() - t0) / 1000), "$": Math.round(((usage.input * pin + usage.output * pout) / 1e6) * 1000) / 1000, ...score(sorted, high) });
