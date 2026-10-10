@@ -34,6 +34,8 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(bacs[0]?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null); // id du bac (ou « create », « custom ») en cours
+  // Travail de l'IA en cours : bacs concernés et message, montrés sur les fiches et en bas de l'écran.
+  const [working, setWorking] = useState<{ ids: string[]; label: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [mergeFrom, setMergeFrom] = useState<string | null>(null);
@@ -53,15 +55,22 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
 
   const kept = bacs.filter((b) => b.kept);
 
-  function act(key: string, action: () => Promise<ActionResult>, after?: () => void) {
+  function act(
+    key: string,
+    action: () => Promise<ActionResult>,
+    after?: () => void,
+    feedback?: { ids: string[]; label: string },
+  ) {
     setBusy(key);
     setError(null);
+    if (feedback) setWorking(feedback);
     startTransition(async () => {
       const result = await action().catch((e: unknown) => ({
         ok: false as const,
         message: e instanceof Error ? e.message : "Erreur inconnue.",
       }));
       setBusy(null);
+      setWorking(null);
       if (!result.ok) setError(result.message);
       else after?.();
     });
@@ -96,11 +105,13 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
       <div className="proposal">
         {bacs.map((bac, i) => {
           const expanded = open === bac.id;
-          const working = busy === bac.id;
+          const cardBusy = busy === bac.id;
+          const aiHere = working?.ids.includes(bac.id) ? working.label : null;
           return (
             <section key={bac.id} className={`bin ${expanded ? "bin--open" : ""}`} style={{ zIndex: i + 1 }}>
-              <div className={`card bin__card ${bac.kept ? "" : "bin__card--off"}`}>
-                <div className="row" style={{ alignItems: "flex-start", gap: 12 }}>
+              <div className={`card bin__card ${bac.kept ? "" : "bin__card--off"} ${aiHere ? "is-working" : ""}`} aria-busy={Boolean(aiHere)}>
+                {aiHere ? <div className="bin__working">{aiHere}</div> : null}
+                <div className="row bin__top" style={{ alignItems: "flex-start", gap: 12 }}>
                   <button
                     type="button"
                     className="bin__head"
@@ -125,7 +136,7 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
                     className="switch"
                     aria-label={`Garder ${bac.name}`}
                     aria-checked={bac.kept}
-                    disabled={working}
+                    disabled={cardBusy || busy !== null}
                     onClick={() => act(bac.id, () => setKept(bac.id, !bac.kept))}
                   />
                 </div>
@@ -155,27 +166,32 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
                     {renaming === bac.id ? (
                       <RenameForm
                         initial={bac.name}
-                        busy={working}
+                        busy={cardBusy}
                         onCancel={() => setRenaming(null)}
                         onSave={(name) => act(bac.id, () => renameBac(bac.id, name), () => setRenaming(null))}
                       />
                     ) : (
                       <div className="row" style={{ gap: 6 }}>
-                        <button type="button" className="btn btn--ghost btn--sm grow" disabled={working} onClick={() => setRenaming(bac.id)}>
+                        <button type="button" className="btn btn--ghost btn--sm grow" disabled={cardBusy || busy !== null} onClick={() => setRenaming(bac.id)}>
                           Renommer
                         </button>
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm grow"
-                          disabled={working || stillFilling}
-                          onClick={() => act(bac.id, () => otherIdea(bac.id))}
+                          disabled={busy !== null || stillFilling}
+                          onClick={() =>
+                            act(bac.id, () => otherIdea(bac.id), undefined, {
+                              ids: [bac.id],
+                              label: `L'IA cherche une autre idée que « ${bac.name} »…`,
+                            })
+                          }
                         >
-                          {working ? "L'IA cherche…" : "Autre idée"}
+                          Autre idée
                         </button>
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm grow"
-                          disabled={working || kept.length < 2}
+                          disabled={busy !== null || kept.length < 2}
                           onClick={() => setMergeFrom(bac.id)}
                         >
                           Fusionner…
@@ -204,6 +220,12 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
       ) : null}
 
       <div className="proposal__footer">
+        {working || stillFilling ? (
+          <p className="ai-status" role="status">
+            <span className="ai-status__dot" aria-hidden="true" />
+            {working?.label ?? "Un bac se remplit avec tes titres…"}
+          </p>
+        ) : null}
         <button type="button" className="btn btn--ghost" onClick={() => setCustomOpen(true)}>
           + Il manque un bac ? Décris-le
         </button>
@@ -235,18 +257,18 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
                   type="button"
                   className="choice"
                   disabled={busy !== null}
-                  onClick={() =>
-                    act(mergeSource.id, () => mergeBacs(mergeSource.id, b.id), () => {
-                      setMergeFrom(null);
-                      setOpen(null);
-                    })
-                  }
+                  onClick={() => {
+                    setMergeFrom(null);
+                    act(mergeSource.id, () => mergeBacs(mergeSource.id, b.id), () => setOpen(null), {
+                      ids: [mergeSource.id, b.id],
+                      label: `L'IA fusionne « ${mergeSource.name} » et « ${b.name} »…`,
+                    });
+                  }}
                 >
                   <Sleeve name={b.sleeve} color={b.color} size={36} />
                   <span className="grow">{b.name}</span>
                 </button>
               ))}
-            {busy === mergeSource.id ? <p className="small muted">L&apos;IA fusionne les deux fiches…</p> : null}
           </>
         ) : null}
       </BottomSheet>
@@ -254,7 +276,10 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
       <BottomSheet open={customOpen} onClose={() => setCustomOpen(false)} title="Il manque un bac ?">
         <CustomForm
           busy={busy === "custom"}
-          onSubmit={(text) => act("custom", () => addCustomBac(text), () => setCustomOpen(false))}
+          onSubmit={(text) => {
+            setCustomOpen(false);
+            act("custom", () => addCustomBac(text), undefined, { ids: [], label: "L'IA écrit la fiche de ton bac sur mesure…" });
+          }}
         />
       </BottomSheet>
     </>

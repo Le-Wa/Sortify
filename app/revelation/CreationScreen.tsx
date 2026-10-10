@@ -11,7 +11,7 @@ export function CreationScreen() {
   const { state, error, retry } = useRevelation(["creation", "done"], (s) => s.stage === "creation" && s.status === "running");
   const creation = state?.stage === "creation" ? state : null;
   const done = state?.stage === "done";
-  const bacs = creation?.progress.bacs ?? [];
+  const bacs = (state?.stage === "done" ? state.creation?.bacs : creation?.progress.bacs) ?? [];
   const regular = bacs.filter((b) => !b.is_divers);
   const current = bacs.find((b) => !b.done);
   const pressed = regular.filter((b) => b.done).length;

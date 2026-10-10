@@ -453,8 +453,10 @@ a { color: inherit; }
   min-height: 60px;
   padding: 10px 6px 12px 14px;
 }
-.proposal .bin__card > .row:first-child { padding-left: 62px; }
-.proposal .bin--open .bin__card > .row:first-child { padding-left: 80px; }
+.proposal .bin__top,
+.proposal .bin__working { padding-left: 62px; }
+.proposal .bin--open .bin__top,
+.proposal .bin--open .bin__working { padding-left: 80px; }
 .proposal .bin--open .bin__card { padding-bottom: 14px; padding-right: 14px; }
 .bin__head {
   flex: 1;
@@ -533,3 +535,36 @@ a { color: inherit; }
 .press__fill { position: absolute; left: 0; right: 0; bottom: 0; transition: height 0.6s ease-out; }
 .press__text { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: space-between; color: var(--mid); }
 .press__tile.is-active { box-shadow: 0 0 0 2px var(--ink); }
+
+/* ── Travail de l'IA en cours ─────────────────────────────── */
+.bin__card.is-working { animation: working 1.4s ease-in-out infinite; }
+@keyframes working { 50% { opacity: 0.55; } }
+.bin__working {
+  margin-top: -2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+.ai-status {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+  font-weight: 600;
+}
+.ai-status__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 50% { transform: scale(0.55); opacity: 0.5; } }

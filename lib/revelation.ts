@@ -18,7 +18,7 @@ export type RevelationState =
   | ({ stage: "analyse"; covers: string[] } & JobView<AnalyseProgress>)
   | { stage: "proposition"; filling: boolean; error: string | null }
   | ({ stage: "creation" } & JobView<CreationProgress>)
-  | { stage: "done" };
+  | { stage: "done"; creation: CreationProgress | null };
 
 const view = <P>(job: Job<P>): JobView<P> => ({ status: job.status, progress: job.progress, error: job.error });
 
@@ -38,7 +38,11 @@ async function nudge<P>(job: Job<P>): Promise<void> {
  * `retry` relance l'étape qui a échoué.
  */
 export async function revelationState(memberId: string, retry = false): Promise<RevelationState> {
-  if (await hasActiveBacs(memberId)) return { stage: "done" };
+  if (await hasActiveBacs(memberId)) {
+    // L'écran de création garde son bilan une fois terminé.
+    const last = await latestJob<CreationProgress>(memberId, "creation");
+    return { stage: "done", creation: last?.progress ?? null };
+  }
 
   const creation = await latestJob<CreationProgress>(memberId, "creation");
   if (creation && creation.status !== "done") {
