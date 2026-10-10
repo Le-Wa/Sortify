@@ -80,6 +80,7 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 - ✅ **Erreurs Spotify** à la création : réessai silencieux, signalé seulement si ça échoue encore au tri suivant.
 - ✅ **Relancer l'analyse** (Réglages) : l'IA peut proposer d'ajouter, supprimer ou fusionner des bacs ; chaque changement est validé.
 - ✅ **Invitation** : pas de saisie d'email ; le code est suivi de la connexion Spotify. ⚠️ À vérifier au code : le comportement de Spotify pour un compte pas encore autorisé (mode dev).
+- ✅ **Ordre des titres** dans les playlists Spotify : les nouveaux titres sont ajoutés en haut.
 - ✅ **Noms dans Spotify** : nom seul (« Soirée potes »), sans suffixe. Sortify garde la liste de ses playlists de son côté.
 - ✅ **Raison de l'IA** dans « À trier » : sur demande (« Pourquoi ? » qui se déplie).
 - ✅ **Ré-analyse** : automatique dès la V1 (voir point 9).
