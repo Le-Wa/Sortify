@@ -44,8 +44,8 @@ like sur Spotify ─► Sortify détecte ─► classe
 ### Dans la V1
 1. **Connexion Spotify** — 3 étapes d'explication + un bouton. Les nouveaux entrent un **code d'invitation** (généré par toi dans Réglages ; l'ajout du compte dans le dashboard Spotify reste manuel en mode dev).
 2. **Analyse IA de la bibliothèque** — lit mes likes des 2 dernières années, propose les playlists qui la résument — nombre libre selon sa taille et ses directions (nom + description en une phrase + quelques titres exemples).
-3. **Ajuster la proposition** — garder / retirer / renommer / « autre idée » / fusionner deux bacs. Champ « Il manque un bac ? » pour en demander un en texte libre. Chaque bac affiche son type (scène / ambiance / moment) et 5 pochettes d'exemple. Pas d'éditeur de règles.
-4. **Création dans Spotify** — Sortify crée les playlists validées et les remplit avec mes likes existants.
+3. **Ajuster la proposition** — garder / retirer / renommer / « autre idée » / fusionner deux bacs. Champ « Il manque un bac ? » pour en demander un en texte libre. Chaque bac affiche son type (scène / ambiance / moment) et 5 pochettes d'exemple. Fusion : l'IA réécrit la fiche et propose un nom. Toucher une pochette lance un extrait. Pas d'éditeur de règles.
+4. **Création dans Spotify** — Sortify crée les playlists validées et les remplit avec mes likes existants ; on voit chaque bac se remplir, puis « Voir mes bacs » → Accueil.
 5. **Tri quotidien automatique** des nouveaux likes + bouton « Trier maintenant ».
 6. **Multi-playlists** — un titre va dans toutes les playlists où il a sa place (c'est le cœur de la valeur).
 7. **À trier** — les titres incertains : extrait audio, suggestions, choisir, ignorer.
