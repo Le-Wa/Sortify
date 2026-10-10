@@ -38,6 +38,11 @@ Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, d
 
 ## État au 10/10/2026
 - **Phase 1 — Socle** : faite. Connexion Spotify testée de bout en bout (premier compte = propriétaire). Base `sortify-v2` créée via l'intégration Vercel Marketplace (Paris `eu-west-3`, Postgres 17) ; migrations appliquées avec `psql "$POSTGRES_URL_NON_POOLING" -f …`.
-- **Phase 2 — Import** : faite. `lib/import.ts` (likes sur 2 ans, repli sur tout l'historique si < 300, puis enrichissement), `/api/import` (lance / relance / état), écran « On fouille tes bacs » sur `/revelation` (vraies pochettes, compteur, segments). Testé sur la vraie bibliothèque (1 154 likes), relance entre passages et reprise d'un job bloqué vérifiées.
+- **Phase 2 — Import** : faite. Testée sur la vraie bibliothèque (1 154 likes, ~3 min 30).
+- **Phase 3 — Révélation** : code fait, **création dans Spotify pas encore testée** (elle crée de vraies playlists : à lancer par l'utilisateur).
+  - Analyse (`lib/analyse.ts`, enchaînée après l'import) : fiches (Fable, ~2 min 15) → rangement du corpus (Haiku, ~2 min 15) → passe « compléter » si couverture < 85 % (Opus, sur les orphelins) → remplissage des bacs à remplir. Mesuré : 13 bacs, couverture 83 %, 15 % des titres dans plusieurs bacs. Les orphelins restants sont surtout des titres sans aucun tag.
+  - Proposition (`app/revelation/ProposalScreen.tsx`) : garder/retirer, renommer, autre idée, fusionner (titres des deux réunis, sans re-rangement), bac sur mesure ; extraits Deezer au toucher (`/api/preview`). Testé : dépliage, extrait, retrait/remise ; retouches IA testées hors base (`scripts/try-edits.mts`).
+  - Création (`lib/creation.ts`) : `POST /me/playlists` (l'ancien `/users/{id}/playlists` renvoie 403), pochette JPEG générée (`lib/cover.tsx`, polices statiques dans `assets/fonts/`), titres ajoutés par 100 du plus récent au plus ancien, Divers = titres sans bac, puis bacs actifs.
+  - Seuil de placement initial `INITIAL_PLACE_THRESHOLD = 0.5` (`lib/bacs.ts`) : à calibrer.
 - À trancher pour la phase 4 : le cron Vercel Hobby ne tourne qu'une fois par jour, ce qui ne permet pas une heure de tri par membre (il faudrait un cron horaire, plan Pro). `vercel.json` pointe encore vers l'ancien cron V1.
-- Ensuite : phase 3 (analyse IA → fiches de bacs, écran Proposition, création des playlists).
+- Essais hors app : `npm run try scripts/<fichier>.mts` (analyse, pochettes, retouches).

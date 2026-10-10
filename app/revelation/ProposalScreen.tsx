@@ -1,0 +1,323 @@
+"use client";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { BottomSheet } from "../ui/BottomSheet";
+import { catalogCode, Sleeve } from "../ui/Sleeve";
+import { usePreview } from "../ui/usePreview";
+import { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept, type ActionResult } from "./actions";
+import { useRevelation } from "./useRevelation";
+
+export interface ProposalBac {
+  id: string;
+  name: string;
+  sleeve: string;
+  pitch: string;
+  axis: string;
+  color: string;
+  kept: boolean;
+  count: number;
+  filling: boolean;
+  examples: { track_id: string; title: string; artist: string; cover_url: string | null; isrc: string | null }[];
+}
+
+interface Props {
+  likes: number;
+  period: string;
+  bacs: ProposalBac[];
+  filling: boolean;
+  error: string | null;
+}
+
+export function ProposalScreen({ likes, period, bacs, filling, error: jobError }: Props) {
+  const router = useRouter();
+  const [open, setOpen] = useState<string | null>(bacs[0]?.id ?? null);
+  const [busy, setBusy] = useState<string | null>(null); // id du bac (ou « create », « custom ») en cours
+  const [error, setError] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [mergeFrom, setMergeFrom] = useState<string | null>(null);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [, startTransition] = useTransition();
+  const preview = usePreview();
+
+  // Un bac se remplit en arrière-plan : on suit le job, puis on recharge les compteurs.
+  const { state, resume } = useRevelation("proposition", (s) => s.stage === "proposition" && s.filling);
+  const stillFilling = state?.stage === "proposition" ? state.filling : filling;
+  useEffect(() => {
+    if (filling) resume();
+  }, [filling, resume]);
+  useEffect(() => {
+    if (filling && state?.stage === "proposition" && !state.filling) router.refresh();
+  }, [filling, state, router]);
+
+  const kept = bacs.filter((b) => b.kept);
+
+  function act(key: string, action: () => Promise<ActionResult>, after?: () => void) {
+    setBusy(key);
+    setError(null);
+    startTransition(async () => {
+      const result = await action().catch((e: unknown) => ({
+        ok: false as const,
+        message: e instanceof Error ? e.message : "Erreur inconnue.",
+      }));
+      setBusy(null);
+      if (!result.ok) setError(result.message);
+      else after?.();
+    });
+  }
+
+  const mergeSource = bacs.find((b) => b.id === mergeFrom);
+
+  return (
+    <>
+      <div className="stack" style={{ gap: 8 }}>
+        <div className="row between label">
+          <span>
+            {likes.toLocaleString("fr-FR")} likes · {period}
+          </span>
+          <span>
+            {kept.length} bacs + Divers
+          </span>
+        </div>
+        <h1 className="display">
+          Voici l&apos;âme de
+          <br />
+          ta discothèque.
+        </h1>
+      </div>
+
+      {jobError ? (
+        <p className="notice notice--error" role="alert">
+          Le remplissage d&apos;un bac a échoué : {jobError}
+        </p>
+      ) : null}
+
+      <div className="proposal">
+        {bacs.map((bac, i) => {
+          const expanded = open === bac.id;
+          const working = busy === bac.id;
+          return (
+            <section key={bac.id} className={`bin ${expanded ? "bin--open" : ""}`} style={{ zIndex: i + 1 }}>
+              <div className={`card bin__card ${bac.kept ? "" : "bin__card--off"}`}>
+                <div className="row" style={{ alignItems: "flex-start", gap: 12 }}>
+                  <button
+                    type="button"
+                    className="bin__head"
+                    aria-expanded={expanded}
+                    onClick={() => setOpen(expanded ? null : bac.id)}
+                  >
+                    <span className="bin__name">
+                      {bac.name}
+                      {!expanded && bac.kept ? <span className="bin__count">{bac.filling ? "…" : bac.count}</span> : null}
+                    </span>
+                    <span className="bin__sub">{bac.kept ? bac.pitch : "Retiré · touche l'interrupteur pour le remettre"}</span>
+                    {expanded && bac.kept ? (
+                      <span className="row" style={{ gap: 6 }}>
+                        <span className="tag">{bac.axis}</span>
+                        <span className="mono small muted">{bac.filling ? "se remplit…" : `${bac.count} titres`}</span>
+                      </span>
+                    ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    role="switch"
+                    className="switch"
+                    aria-label={`Garder ${bac.name}`}
+                    aria-checked={bac.kept}
+                    disabled={working}
+                    onClick={() => act(bac.id, () => setKept(bac.id, !bac.kept))}
+                  />
+                </div>
+
+                {expanded && bac.kept ? (
+                  <>
+                    <div className="covers">
+                      {bac.examples.slice(0, 5).map((ex) => (
+                        <button
+                          key={ex.track_id}
+                          type="button"
+                          className={`covers__item ${preview.playing === ex.isrc ? "is-playing" : ""}`}
+                          aria-label={`Écouter un extrait : ${ex.artist} — ${ex.title}`}
+                          disabled={!ex.isrc}
+                          onClick={() => void preview.toggle(ex.isrc)}
+                        >
+                          {ex.cover_url ? <Image src={ex.cover_url} alt="" fill sizes="64px" /> : null}
+                        </button>
+                      ))}
+                    </div>
+                    {bac.examples.some((ex) => ex.isrc === preview.unavailable) ? (
+                      <p className="small muted" style={{ margin: 0 }}>
+                        Pas d&apos;extrait pour ce titre.
+                      </p>
+                    ) : null}
+
+                    {renaming === bac.id ? (
+                      <RenameForm
+                        initial={bac.name}
+                        busy={working}
+                        onCancel={() => setRenaming(null)}
+                        onSave={(name) => act(bac.id, () => renameBac(bac.id, name), () => setRenaming(null))}
+                      />
+                    ) : (
+                      <div className="row" style={{ gap: 6 }}>
+                        <button type="button" className="btn btn--ghost btn--sm grow" disabled={working} onClick={() => setRenaming(bac.id)}>
+                          Renommer
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm grow"
+                          disabled={working || stillFilling}
+                          onClick={() => act(bac.id, () => otherIdea(bac.id))}
+                        >
+                          {working ? "L'IA cherche…" : "Autre idée"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm grow"
+                          disabled={working || kept.length < 2}
+                          onClick={() => setMergeFrom(bac.id)}
+                        >
+                          Fusionner…
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : null}
+              </div>
+              <Sleeve
+                name={bac.sleeve}
+                color={bac.kept ? bac.color : "#8E8F89"}
+                size={expanded ? 72 : 56}
+                code={catalogCode(i)}
+                className="bin__sleeve"
+              />
+            </section>
+          );
+        })}
+      </div>
+
+      {error ? (
+        <p className="notice notice--error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="proposal__footer">
+        <button type="button" className="btn btn--ghost" onClick={() => setCustomOpen(true)}>
+          + Il manque un bac ? Décris-le
+        </button>
+        <button
+          type="button"
+          className="btn"
+          disabled={kept.length === 0 || busy !== null || stillFilling}
+          onClick={() => act("create", createBacs, () => router.refresh())}
+        >
+          {busy === "create"
+            ? "On lance la presse…"
+            : stillFilling
+              ? "Un bac se remplit…"
+              : `Créer ${kept.length} bac${kept.length > 1 ? "s" : ""} dans Spotify`}
+        </button>
+      </div>
+
+      <BottomSheet open={mergeFrom !== null} onClose={() => setMergeFrom(null)} title="Fusionner avec…">
+        {mergeSource ? (
+          <>
+            <p className="small muted" style={{ margin: 0 }}>
+              L&apos;IA réécrit une fiche commune à « {mergeSource.name} » et au bac choisi, et lui trouve un nom.
+            </p>
+            {kept
+              .filter((b) => b.id !== mergeSource.id)
+              .map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  className="choice"
+                  disabled={busy !== null}
+                  onClick={() =>
+                    act(mergeSource.id, () => mergeBacs(mergeSource.id, b.id), () => {
+                      setMergeFrom(null);
+                      setOpen(null);
+                    })
+                  }
+                >
+                  <Sleeve name={b.sleeve} color={b.color} size={36} />
+                  <span className="grow">{b.name}</span>
+                </button>
+              ))}
+            {busy === mergeSource.id ? <p className="small muted">L&apos;IA fusionne les deux fiches…</p> : null}
+          </>
+        ) : null}
+      </BottomSheet>
+
+      <BottomSheet open={customOpen} onClose={() => setCustomOpen(false)} title="Il manque un bac ?">
+        <CustomForm
+          busy={busy === "custom"}
+          onSubmit={(text) => act("custom", () => addCustomBac(text), () => setCustomOpen(false))}
+        />
+      </BottomSheet>
+    </>
+  );
+}
+
+function RenameForm({
+  initial,
+  busy,
+  onSave,
+  onCancel,
+}: {
+  initial: string;
+  busy: boolean;
+  onSave: (name: string) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(initial);
+  return (
+    <form
+      className="row"
+      style={{ gap: 6 }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSave(name);
+      }}
+    >
+      <input className="field grow" value={name} maxLength={40} autoFocus aria-label="Nouveau nom" onChange={(e) => setName(e.target.value)} />
+      <button type="submit" className="btn btn--sm" disabled={busy}>
+        OK
+      </button>
+      <button type="button" className="btn btn--quiet btn--sm" onClick={onCancel}>
+        Annuler
+      </button>
+    </form>
+  );
+}
+
+function CustomForm({ busy, onSubmit }: { busy: boolean; onSubmit: (text: string) => void }) {
+  const [text, setText] = useState("");
+  return (
+    <form
+      className="stack"
+      style={{ gap: 12 }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(text);
+      }}
+    >
+      <label className="small muted" htmlFor="custom-bac">
+        Décris-le avec tes mots : un genre, une ambiance, un moment… L&apos;IA écrit la fiche et le remplit avec tes likes.
+      </label>
+      <textarea
+        id="custom-bac"
+        className="textarea"
+        value={text}
+        maxLength={500}
+        placeholder="Ex. : du jazz pour cuisiner le dimanche"
+        onChange={(e) => setText(e.target.value)}
+      />
+      <button type="submit" className="btn" disabled={busy || text.trim().length < 3}>
+        {busy ? "L'IA écrit la fiche…" : "Créer ce bac"}
+      </button>
+    </form>
+  );
+}

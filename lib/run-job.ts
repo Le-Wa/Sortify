@@ -1,6 +1,8 @@
 import "server-only";
+import { initialAnalyse, runAnalyseStep, type AnalyseProgress } from "./analyse";
+import { runCreationStep, type CreationProgress } from "./creation";
 import { runImportStep, type ImportProgress } from "./import";
-import { claimJob, failJob, finishJob, kickJob, releaseJob, STEP_BUDGET_MS, type Job } from "./jobs";
+import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
 /**
  * Un passage de worker : prend le bail, avance jusqu'au budget, puis se relance
@@ -15,6 +17,27 @@ export async function runJob(id: string): Promise<void> {
     switch (job.kind) {
       case "import": {
         const progress = await runImportStep(job as Job<ImportProgress>, deadline);
+        if (progress.phase === "done") {
+          await finishJob(id, progress);
+          // Les likes sont prêts : l'IA enchaîne sur l'analyse.
+          const analyse = await startJob(job.member_id, "analyse", initialAnalyse);
+          await kickJob(analyse.id);
+          return;
+        }
+        await releaseJob(id, progress);
+        break;
+      }
+      case "analyse": {
+        const progress = await runAnalyseStep(job as Job<AnalyseProgress>, deadline);
+        if (progress.phase === "done") {
+          await finishJob(id, progress);
+          return;
+        }
+        await releaseJob(id, progress);
+        break;
+      }
+      case "creation": {
+        const progress = await runCreationStep(job as Job<CreationProgress>, deadline);
         if (progress.phase === "done") {
           await finishJob(id, progress);
           return;

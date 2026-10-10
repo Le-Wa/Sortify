@@ -34,6 +34,8 @@
     --shadow: 0 -1px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
     color-scheme: dark;
   }
+  /* Une pochette noire reste lisible sur fond sombre. */
+  .sleeve { outline: 1px solid rgba(236, 237, 232, 0.12); outline-offset: -1px; }
 }
 
 * { box-sizing: border-box; }
@@ -393,3 +395,141 @@ a { color: inherit; }
 .segments span { background: var(--line); }
 .segments .on { background: var(--ink); }
 .segments .now { background: var(--accent); }
+
+/* ── Bottom sheet ─────────────────────────────────────────── */
+.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85dvh;
+  border: 0;
+  padding: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--card);
+  color: var(--ink);
+}
+.sheet::backdrop { background: rgba(17, 17, 17, 0.45); }
+.sheet__body {
+  padding: 18px var(--gutter) max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sheet h2 { margin: 0; }
+.sheet[open] { animation: sheet-up 0.2s ease-out; }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.textarea {
+  min-height: 96px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--ground);
+  resize: vertical;
+  width: 100%;
+}
+.choice {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ground);
+  padding: 0 12px;
+  text-align: left;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* ── Proposition : intercalaires dépliables ───────────────── */
+.proposal { display: flex; flex-direction: column; }
+.proposal .bin { padding-top: 16px; }
+.proposal .bin__card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 60px;
+  padding: 10px 6px 12px 14px;
+}
+.proposal .bin__card > .row:first-child { padding-left: 62px; }
+.proposal .bin--open .bin__card > .row:first-child { padding-left: 80px; }
+.proposal .bin--open .bin__card { padding-bottom: 14px; padding-right: 14px; }
+.bin__head {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.bin__name { font-size: 16px; font-weight: 800; font-stretch: 75%; }
+.bin--open .bin__name { font-size: 20px; font-weight: 900; }
+.bin__sub { font-size: 12px; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bin--open .bin__sub { font-size: 13px; color: var(--ink); white-space: normal; line-height: 1.3; }
+.bin__count { margin-left: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--mid); }
+.bin__card--off .bin__name { text-decoration: line-through; color: var(--mid); }
+.tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.covers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.covers__item {
+  position: relative;
+  aspect-ratio: 1;
+  border: 0;
+  padding: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--soft);
+  cursor: pointer;
+  min-height: 44px;
+}
+.covers__item img { object-fit: cover; }
+.covers__item.is-playing { outline: 3px solid var(--accent); outline-offset: 1px; }
+.covers__item.is-playing::after {
+  content: "■";
+  position: absolute;
+  inset: auto 4px 4px auto;
+  font-size: 10px;
+  color: #ffffff;
+  background: rgba(17, 17, 17, 0.7);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.proposal__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0 max(4px, env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--ground) 18px);
+  margin-top: auto;
+  z-index: 50; /* au-dessus des intercalaires, qui s'empilent */
+}
+
+/* ── Création : la presse ─────────────────────────────────── */
+.press { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.press__tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--soft);
+  display: flex;
+}
+.press__fill { position: absolute; left: 0; right: 0; bottom: 0; transition: height 0.6s ease-out; }
+.press__text { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: space-between; color: var(--mid); }
+.press__tile.is-active { box-shadow: 0 0 0 2px var(--ink); }
