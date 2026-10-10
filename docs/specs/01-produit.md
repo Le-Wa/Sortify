@@ -72,7 +72,8 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 ## 8. Décisions
 
 - ✅ **Tri** : quotidien automatique + bouton « Nouveaux likes ? ». Plan Vercel Hobby : un seul cron par jour, à la même heure pour tout le monde (6 h UTC, soit 8 h l'été et 7 h l'hiver à Paris) ; pas de choix d'heure dans les Réglages (oct. 2026).
-- ✅ **Multi-playlists** : oui, c'est la différence clé — 3 playlists max par titre.
+- ✅ **Multi-playlists** : oui, c'est la différence clé.
+- 🟡 **Limite de 3 bacs par titre** : remise en question (oct. 2026). Aujourd'hui appliquée au rangement IA, à « À trier », aux corrections et au rangement depuis Divers, mais pas à la création d'un bac après coup (un titre peut alors en avoir 4 ou plus). Un nouveau bac garde les titres dans leurs autres bacs (pas d'« aspiration »), seul Divers est vidé.
 - ✅ **Like original** : reste dans « Titres likés » (non destructif).
 - 🟡 **Autonomie** : par défaut, Sortify range seul quand il est sûr et ne demande que pour les vrais doutes (cible : < 1 titre sur 5 en « À trier »). Réglable plus tard si besoin.
 - ✅ **Connexion** : mini-explication en 3 étapes ; rassurance « Tes playlists actuelles ne sont pas touchées » ; accès des potes par code d'invitation.
