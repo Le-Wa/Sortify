@@ -347,3 +347,49 @@ a { color: inherit; }
 .hero-a { left: 6px; top: 26px; }
 .hero-b { right: 4px; top: 6px; }
 .hero-c { left: calc(50% - 90px); top: 62px; }
+
+/* ── Analyse : le bac qu'on feuillette ────────────────────── */
+.crate { position: relative; height: 300px; margin: 6px calc(-1 * var(--gutter)) 0; perspective: 700px; overflow: hidden; }
+.crate > span { position: absolute; left: 50%; border-radius: 3px; }
+/* Les disques du fond penchent en arrière depuis leur bord bas, derrière celui qu'on regarde. */
+.crate__back { bottom: 60px; width: 210px; height: 210px; margin-left: -105px; transform-origin: 50% 100%; }
+.crate__back--3 { background: var(--soft); transform: translateY(-52px) rotateX(24deg) rotate(1.5deg); }
+.crate__back--2 { background: var(--line); transform: translateY(-36px) rotateX(18deg) rotate(-1deg); }
+.crate__back--1 { background: var(--faint); transform: translateY(-20px) rotateX(12deg) rotate(2deg); }
+.crate__front {
+  bottom: 52px;
+  width: 220px;
+  height: 220px;
+  margin-left: -110px;
+  background: var(--kraft);
+  transform: rotate(-3deg);
+  box-shadow: 0 24px 40px rgba(17, 17, 17, 0.25);
+  overflow: hidden;
+}
+.crate__front img { object-fit: cover; animation: flip-in 0.35s ease-out; }
+.crate__front img.under { animation: none; }
+@keyframes flip-in {
+  from { transform: translateY(-14px) rotateX(18deg); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+.crate__label {
+  bottom: 8px;
+  width: 260px;
+  height: 26px;
+  margin-left: -130px;
+  border-radius: 8px 8px 2px 2px !important;
+  background: var(--ink);
+  color: var(--ground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  font-stretch: 75%;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.segments { margin-top: 8px; display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; height: 26px; }
+.segments span { background: var(--line); }
+.segments .on { background: var(--ink); }
+.segments .now { background: var(--accent); }

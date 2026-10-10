@@ -70,7 +70,7 @@ Après chaque tri quotidien, si Divers contient assez de titres proches (seuil �
 
 ## 3. Ce qu'on garde / jette du code V0
 
-- **Garder (à réécrire proprement)** : enrichissement (Spotify + Last.fm/MusicBrainz pour genres, ReccoBeats pour audio features, Deezer pour preview/ISRC), batching LLM robuste, écriture batch dans Spotify.
+- **Garder (à réécrire proprement)** : enrichissement (Last.fm pour les genres, ReccoBeats pour les audio features ; Deezer seulement pour les extraits — voir 04-plan-technique), batching LLM robuste, écriture batch dans Spotify.
 - **Jeter** : level1-rules, level2-cluster/centroïdes, `genres_include/exclude`, benchmark A/B, personas, BYOK, onboarding multi-chemins.
 
 ## 4. Questions ouvertes

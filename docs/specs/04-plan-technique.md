@@ -6,7 +6,10 @@
 - Supabase Postgres (service role côté serveur uniquement).
 - Claude API (SDK `@anthropic-ai/sdk`) pour l'analyse et le rangement.
 - Vercel + Cron quotidien.
-- Enrichissement : Deezer (genres, ISRC, extraits), Last.fm (tags), ReccoBeats (énergie, valence…).
+- Enrichissement (mesuré le 10/10/2026 sur 1 154 likes, ~3 min 30) :
+  - **Last.fm** : tags de l'artiste principal (cache partagé `artist_tags`), tags du titre en repli. 85 % des titres ont des genres. Limite 5 req/s respectée.
+  - **ReccoBeats** : énergie, dansabilité, valence, acoustique, instrumental, tempo, par lots de 40 **identifiants Spotify** (les ISRC ne marchent pas — le code V1 ne récupérait rien). ~55 % de couverture, à toutes les époques.
+  - **Deezer** : retiré de l'import (genres trop grossiers, 2 appels par titre). Sert uniquement aux extraits audio, résolus par ISRC au moment de l'écoute.
 
 ## Base de données V2
 Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`… restent en place, inutilisées) :
@@ -20,7 +23,8 @@ Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`
 | `bac_examples` | ancres positives/négatives (exemples et corrections) |
 | `placements` | titre ↔ bac (confiance, source : ia / correction / manuel) |
 | `pending` | titres « À trier » avec suggestions |
-| `jobs` | analyse / création / tri en cours (statut, progression) |
+| `jobs` | import / analyse / création / tri en cours (statut, progression, bail du worker) |
+| `artist_tags` | cache des tags Last.fm par artiste, partagé entre membres |
 
 ## Phases
 1. **Socle** — nettoyage du code V1 sur `v2`, design system (tokens clair/sombre, typo, composants), layout, navigation, connexion Spotify, codes d'invitation, schéma DB.
@@ -29,11 +33,11 @@ Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`
 4. **Quotidien** — rangement IA (cron + « Nouveaux likes ? »), À trier (swipe, tout accepter, pourquoi), Accueil, corrections.
 5. **Bacs** — liste réordonnable, détail (fiche éditable / ajustée par l'IA, retrait), caisse Divers, Réglages, ré-analyse et suggestions de bacs.
 
-## État au 10/10/2026 (fin de phase 1, hors base)
-- Fait : code V1 retiré de la branche `v2` (consultable au tag `legacy-v1`), dépendances inutiles retirées (Tailwind, xlsx, puppeteer).
-- Fait, `npm run build` OK : `lib/` (env, db, members, auth, library, spotify/client, bac-colors), `proxy.ts`, design system (`app/globals.css`, `app/ui/`), pages Connexion (`/`), Invitation (`/invitation`), Réglages (heure/pause/suggestions, codes d'invitation, déconnexion), layout connecté `app/(app)/` (barre d'onglets, renvoi vers `/revelation` tant qu'aucun bac n'est actif), pages d'attente Accueil / À trier / Bacs / Révélation.
-- Vérifié dans le navigateur (sans base) : Connexion clair/sombre, erreurs, formulaire d'invitation.
-- Base V2 : projet Supabase `sortify-v2` créé via l'intégration Vercel Marketplace (région Paris `eu-west-3`, Postgres 17), connecté au projet Vercel `sortify` (variables `SUPABASE_*`, `NEXT_PUBLIC_SUPABASE_*`, `POSTGRES_*` gérées par l'intégration). Migration `20261010120000_v2_schema.sql` appliquée avec `psql "$POSTGRES_URL_NON_POOLING" -f …`. L'ancien projet V1 (`jsdbonvhvjlestkxkzdv`) n'existe plus.
-- Non testé : connexion Spotify de bout en bout, Réglages.
+## Jobs de fond
+Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, dans `after()` de la route `POST /api/jobs/[id]/run` (protégée par `CRON_SECRET`, `maxDuration` 300). Un passage prend un bail (`lease_until`), fait au moins une unité de travail, sauvegarde sa progression à chaque unité (battement de cœur) puis se relance lui-même s'il reste du travail. Un job sans battement de cœur depuis 90 s est relancé par l'écran qui le suit. L'utilisateur peut fermer l'app.
+
+## État au 10/10/2026
+- **Phase 1 — Socle** : faite. Connexion Spotify testée de bout en bout (premier compte = propriétaire). Base `sortify-v2` créée via l'intégration Vercel Marketplace (Paris `eu-west-3`, Postgres 17) ; migrations appliquées avec `psql "$POSTGRES_URL_NON_POOLING" -f …`.
+- **Phase 2 — Import** : faite. `lib/import.ts` (likes sur 2 ans, repli sur tout l'historique si < 300, puis enrichissement), `/api/import` (lance / relance / état), écran « On fouille tes bacs » sur `/revelation` (vraies pochettes, compteur, segments). Testé sur la vraie bibliothèque (1 154 likes), relance entre passages et reprise d'un job bloqué vérifiées.
 - À trancher pour la phase 4 : le cron Vercel Hobby ne tourne qu'une fois par jour, ce qui ne permet pas une heure de tri par membre (il faudrait un cron horaire, plan Pro). `vercel.json` pointe encore vers l'ancien cron V1.
-- Ensuite : phase 2 (import des likes + enrichissement).
+- Ensuite : phase 3 (analyse IA → fiches de bacs, écran Proposition, création des playlists).

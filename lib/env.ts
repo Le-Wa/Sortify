@@ -20,6 +20,10 @@ export const env = {
   get supabaseServiceKey() {
     return required("SUPABASE_SERVICE_ROLE_KEY");
   },
+  /** URL publique de l'app, utilisée par les jobs pour se relancer eux-mêmes. */
+  get appUrl() {
+    return required("NEXTAUTH_URL").replace(/\/$/, "");
+  },
   get cronSecret() {
     return required("CRON_SECRET");
   },
