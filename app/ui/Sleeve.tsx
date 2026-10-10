@@ -17,11 +17,10 @@ interface SleeveProps {
 export function Sleeve({ name, color, size, code, corner, rotate = 0, className = "" }: SleeveProps) {
   const words = name.split(/\s+/).filter(Boolean);
   const lines = splitLines(words);
-  const longest = Math.max(...lines.map((l) => l.length), 1);
-  const padding = Math.round(size * 0.09);
-  // Archivo condensé 62 % : environ 0,46 em par caractère en capitales.
-  const fontSize = Math.min(size * 0.34, (size - padding * 2) / (longest * 0.46), (size * 0.62) / (lines.length * 0.84));
-  const small = Math.max(7, Math.round(size * 0.11));
+  const widest = Math.max(...lines.map(lineWidthEm), 1);
+  const padding = Math.round(size * 0.08);
+  const fontSize = Math.min(size * 0.34, (size - padding * 2) / widest, (size * 0.62) / (lines.length * 0.84));
+  const small = Math.max(7, Math.round(size * 0.055));
 
   return (
     <span
@@ -49,6 +48,18 @@ export function Sleeve({ name, color, size, code, corner, rotate = 0, className 
       </span>
     </span>
   );
+}
+
+/** Largeur d'une ligne en em, mesurée sur Archivo 900 condensé 62 % en capitales. */
+function lineWidthEm(line: string): number {
+  let em = 0;
+  for (const char of line.toUpperCase()) {
+    if (char === " ") em += 0.25;
+    else if ("MW".includes(char)) em += 0.72;
+    else if ("IJL'’.,:;!|".includes(char)) em += 0.35;
+    else em += 0.52;
+  }
+  return em;
 }
 
 /** Répartit les mots sur 3 lignes au plus, en équilibrant leur longueur. */

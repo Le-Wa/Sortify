@@ -29,8 +29,11 @@ Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`
 4. **Quotidien** — rangement IA (cron + « Nouveaux likes ? »), À trier (swipe, tout accepter, pourquoi), Accueil, corrections.
 5. **Bacs** — liste réordonnable, détail (fiche éditable / ajustée par l'IA, retrait), caisse Divers, Réglages, ré-analyse et suggestions de bacs.
 
-## État au 10/10/2026 (pause en cours de phase 1)
+## État au 10/10/2026 (fin de phase 1, hors base)
 - Fait : code V1 retiré de la branche `v2` (consultable au tag `legacy-v1`), dépendances inutiles retirées (Tailwind, xlsx, puppeteer).
-- Écrit, non testé : schéma `supabase/migrations/20261010120000_v2_schema.sql`, `lib/` (env, db, members, auth, spotify/client, bac-colors), `proxy.ts`, `app/layout.tsx`, `app/globals.css` (tokens clair/sombre), `app/ui/Sleeve.tsx`, `app/ui/TabBar.tsx`, route NextAuth.
+- Fait, `npm run build` OK : `lib/` (env, db, members, auth, library, spotify/client, bac-colors), `proxy.ts`, design system (`app/globals.css`, `app/ui/`), pages Connexion (`/`), Invitation (`/invitation`), Réglages (heure/pause/suggestions, codes d'invitation, déconnexion), layout connecté `app/(app)/` (barre d'onglets, renvoi vers `/revelation` tant qu'aucun bac n'est actif), pages d'attente Accueil / À trier / Bacs / Révélation.
+- Vérifié dans le navigateur (sans base) : Connexion clair/sombre, erreurs, formulaire d'invitation.
+- Non testé faute de base : schéma `supabase/migrations/20261010120000_v2_schema.sql`, connexion Spotify de bout en bout, Réglages.
 - **Bloquant** : le projet Supabase V1 (`jsdbonvhvjlestkxkzdv`) n'existe plus (DNS introuvable) et le `SUPABASE_ACCESS_TOKEN` est expiré. Il faut créer ou restaurer un projet Supabase, mettre à jour `.env.local`, puis appliquer la migration.
-- À faire ensuite : installer `server-only`, pages Connexion (`/`) et Invitation (`/invitation`), layout des pages connectées, `npm run build`, puis phase 2.
+- À trancher pour la phase 4 : le cron Vercel Hobby ne tourne qu'une fois par jour, ce qui ne permet pas une heure de tri par membre (il faudrait un cron horaire, plan Pro). `vercel.json` pointe encore vers l'ancien cron V1.
+- Ensuite : phase 2 (import des likes + enrichissement).

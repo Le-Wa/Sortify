@@ -4,7 +4,16 @@ import { redirect } from "next/navigation";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { env } from "./env";
-import { consumeInvitation, countMembers, createMember, getMember, MAX_MEMBERS, saveTokens, type Member } from "./members";
+import {
+  consumeInvitation,
+  countMembers,
+  createMember,
+  deleteMember,
+  getMember,
+  MAX_MEMBERS,
+  saveTokens,
+  type Member,
+} from "./members";
 
 export const INVITE_COOKIE = "sortify_invite";
 
@@ -64,9 +73,9 @@ export const authOptions: NextAuthOptions = {
       // Le membre doit exister avant de pouvoir être référencé par l'invitation.
       await createMember({ ...base, isOwner: false });
       if (!(await consumeInvitation(code, spotifyId))) {
-        const { db } = await import("./db");
-        await db().from("members").delete().eq("spotify_id", spotifyId);
-        return "/?erreur=invitation";
+        await deleteMember(spotifyId);
+        jar.delete(INVITE_COOKIE);
+        return "/?erreur=code";
       }
       jar.delete(INVITE_COOKIE);
       return true;

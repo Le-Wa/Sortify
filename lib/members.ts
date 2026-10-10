@@ -56,6 +56,10 @@ export async function createMember(input: {
   );
 }
 
+export async function deleteMember(spotifyId: string): Promise<void> {
+  check(await db().from("members").delete().eq("spotify_id", spotifyId), "Suppression du membre");
+}
+
 export async function saveTokens(spotifyId: string, tokens: SpotifyTokens): Promise<void> {
   check(await db().from("members").update(tokens).eq("spotify_id", spotifyId), "Mise à jour des tokens");
 }
@@ -73,7 +77,8 @@ const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const MAX_MEMBERS = 25; // limite Spotify en mode développement
 
 export function normalizeCode(raw: string): string {
-  return raw.trim().toUpperCase().replace(/\s+/g, "");
+  const code = raw.trim().toUpperCase().replace(/[\s_]+/g, "");
+  return code.replace(/^DISQ-?([A-Z0-9]{4})$/, "DISQ-$1");
 }
 
 export async function createInvitation(createdBy: string): Promise<string> {
@@ -81,6 +86,25 @@ export async function createInvitation(createdBy: string): Promise<string> {
   const code = `DISQ-${suffix}`;
   check(await db().from("invitations").insert({ code, created_by: createdBy }), "Création du code");
   return code;
+}
+
+export interface Invitation {
+  code: string;
+  created_at: string;
+}
+
+/** Codes encore libres créés par ce membre, du plus récent au plus ancien. */
+export async function openInvitations(createdBy: string): Promise<Invitation[]> {
+  const data = check(
+    await db()
+      .from("invitations")
+      .select("code, created_at")
+      .eq("created_by", createdBy)
+      .is("used_by", null)
+      .order("created_at", { ascending: false }),
+    "Lecture des codes",
+  );
+  return data as Invitation[];
 }
 
 export async function isInvitationUsable(code: string): Promise<boolean> {

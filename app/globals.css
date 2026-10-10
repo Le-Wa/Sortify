@@ -77,7 +77,7 @@ a { color: inherit; }
   font-size: 50px;
   text-wrap: balance;
 }
-.display--xl { font-size: 62px; }
+.display--xl { font-size: clamp(44px, 14.5vw, 62px); }
 .display--s { font-size: 22px; line-height: 0.95; }
 .label {
   font-family: var(--font-mono);
@@ -238,3 +238,112 @@ a { color: inherit; }
   font-size: 11px;
   line-height: 16px;
 }
+
+/* ── Connexion : pile de pochettes ───────────────────────── */
+.hero-stack { position: relative; height: 256px; margin-top: 2px; }
+.hero-stack > * { position: absolute; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.35; }
+.steps li { display: flex; gap: 12px; }
+.steps .mono { font-size: 12px; padding-top: 1px; }
+
+/* ── Retour, sections, listes de réglages ────────────────── */
+.back {
+  align-self: flex-start;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  margin: -8px 0 -12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+.section-label { margin: 6px 4px -10px; font-size: 10px; }
+.list { background: var(--card); border-radius: var(--radius); display: flex; flex-direction: column; }
+.list__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 14px;
+  font-weight: 600;
+}
+.list__row + .list__row { border-top: 1px solid var(--ground); }
+.select {
+  height: 44px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  background: var(--ground);
+}
+
+/* ── Interrupteur ─────────────────────────────────────────── */
+.switch {
+  flex: none;
+  width: 52px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  background: none;
+  position: relative;
+  cursor: pointer;
+}
+.switch::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 8px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--line);
+  transition: background 0.15s;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.15s, background 0.15s;
+}
+.switch[aria-checked="true"]::before { background: var(--ink); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); background: var(--accent); }
+.switch:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Code d'invitation ────────────────────────────────────── */
+.code-input {
+  min-height: 56px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--card);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  width: 100%;
+}
+.code-slot {
+  flex: 1;
+  min-height: 48px;
+  border: 1.5px dashed var(--faint);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  letter-spacing: 0.12em;
+}
+.counter .muted { color: var(--soft); }
+.danger-btn { color: var(--danger); }
+.hero-a { left: 6px; top: 26px; }
+.hero-b { right: 4px; top: 6px; }
+.hero-c { left: calc(50% - 90px); top: 62px; }
