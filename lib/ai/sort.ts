@@ -28,6 +28,15 @@ export interface Sorted {
 
 export const MAX_BACS_PER_TRACK = 3;
 const BATCH = 20;
+
+/** Réglages du rangement (le banc d'essai compare des variantes ; l'app utilise les valeurs par défaut). */
+export interface SortOptions {
+  model?: string;
+  effort?: "low" | "medium" | "high";
+  batch?: number;
+  /** Cumul des tokens consommés, pour mesurer le coût. */
+  usage?: { input: number; output: number };
+}
 const CONCURRENCY = 6;
 
 const sortSchema = z.object({
@@ -69,16 +78,26 @@ Juge l'ensemble (artiste, titre, époque, énergie, tags) et respecte les fronti
 Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique).`;
 }
 
-async function sortBatch(system: string, tracks: CorpusTrack[], offset: number, bacCount: number): Promise<Sorted[]> {
+async function sortBatch(
+  system: string,
+  tracks: CorpusTrack[],
+  offset: number,
+  bacCount: number,
+  opts: SortOptions,
+): Promise<Sorted[]> {
   const lines = tracks.map((t, i) => trackLine(t, offset + i)).join("\n");
   const message = await claude().messages.create({
-    model: SORT_MODEL,
+    model: opts.model ?? SORT_MODEL,
     max_tokens: 8000,
-    output_config: { effort: "low", format: zodOutputFormat(sortSchema) },
+    output_config: { effort: opts.effort ?? "low", format: zodOutputFormat(sortSchema) },
     // Les fiches sont identiques pour tous les lots : on les met en cache.
     system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: lines }],
   });
+  if (opts.usage) {
+    opts.usage.input += message.usage.input_tokens + (message.usage.cache_read_input_tokens ?? 0) + (message.usage.cache_creation_input_tokens ?? 0);
+    opts.usage.output += message.usage.output_tokens;
+  }
   const parsed = sortSchema.parse(JSON.parse(responseText(message, "Rangement")));
 
   const byId = new Map(parsed.titres.map((t) => [t.id, t]));
@@ -100,16 +119,22 @@ function isSplittable(error: unknown): boolean {
   return error instanceof Error; // réponse tronquée ou JSON invalide
 }
 
-async function sortWithSplit(system: string, tracks: CorpusTrack[], offset: number, bacCount: number): Promise<Sorted[]> {
+async function sortWithSplit(
+  system: string,
+  tracks: CorpusTrack[],
+  offset: number,
+  bacCount: number,
+  opts: SortOptions,
+): Promise<Sorted[]> {
   try {
-    return await sortBatch(system, tracks, offset, bacCount);
+    return await sortBatch(system, tracks, offset, bacCount, opts);
   } catch (error) {
     if (tracks.length <= 1 || !isSplittable(error)) throw error;
     console.warn(`Rangement : lot de ${tracks.length} titres coupé en deux (${(error as Error).message})`);
     const half = Math.ceil(tracks.length / 2);
     return [
-      ...(await sortWithSplit(system, tracks.slice(0, half), offset, bacCount)),
-      ...(await sortWithSplit(system, tracks.slice(half), offset + half, bacCount)),
+      ...(await sortWithSplit(system, tracks.slice(0, half), offset, bacCount, opts)),
+      ...(await sortWithSplit(system, tracks.slice(half), offset + half, bacCount, opts)),
     ];
   }
 }
@@ -122,17 +147,19 @@ export async function sortTracks(
   fiches: SortFiche[],
   tracks: CorpusTrack[],
   onBatch?: (done: Sorted[]) => Promise<void>,
+  opts: SortOptions = {},
 ): Promise<Sorted[]> {
   const system = systemPrompt(fiches);
   const batches: { tracks: CorpusTrack[]; offset: number }[] = [];
-  for (let i = 0; i < tracks.length; i += BATCH) batches.push({ tracks: tracks.slice(i, i + BATCH), offset: i });
+  const size = opts.batch ?? BATCH;
+  for (let i = 0; i < tracks.length; i += size) batches.push({ tracks: tracks.slice(i, i + size), offset: i });
 
   const results: Sorted[] = [];
   let next = 0;
   async function worker() {
     while (next < batches.length) {
       const batch = batches[next++];
-      const sorted = await sortWithSplit(system, batch.tracks, batch.offset, fiches.length);
+      const sorted = await sortWithSplit(system, batch.tracks, batch.offset, fiches.length, opts);
       results.push(...sorted);
       await onBatch?.(sorted);
     }
