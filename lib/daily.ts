@@ -32,6 +32,8 @@ export interface PendingItem extends TrackInfo {
 
 export interface RecentItem extends TrackInfo {
   bacs: BacChip[];
+  /** Tu as changé ses bacs (correction, ou choix dans « À trier »). */
+  corrected: boolean;
 }
 
 const chip = (b: Bac): BacChip => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, is_divers: b.is_divers });
@@ -103,34 +105,35 @@ export async function lastTri(memberId: string): Promise<Job<TriProgress> | null
   return (data as Job<TriProgress> | null) ?? null;
 }
 
-/** Titres rangés par un tri (entre son début et sa fin), avec leurs bacs. */
+/**
+ * Titres arrivés lors d'un tri (likés après le dernier like connu au début du tri), avec leurs bacs
+ * actuels : un titre corrigé reste dans la liste, avec ses nouveaux bacs. Ceux encore « À trier » n'y sont pas.
+ */
 export async function recentlySorted(memberId: string, job: Job<TriProgress>): Promise<RecentItem[]> {
+  if (!job.progress.since || job.progress.fetched === 0) return [];
   const bacs = await activeBacs(memberId);
   const byId = new Map(bacs.map((b) => [b.id, b]));
   const rows = check(
     await db()
-      .from("placements")
-      .select("track_id, bac_id, placed_at, likes(title, artists, cover_url, isrc, liked_at)")
+      .from("likes")
+      .select("track_id, title, artists, cover_url, isrc, liked_at, placements!inner(bac_id, source)")
       .eq("member_id", memberId)
-      .eq("source", "ia")
-      .gte("placed_at", job.started_at)
-      .lte("placed_at", job.finished_at ?? new Date().toISOString())
-      .order("placed_at", { ascending: false })
-      .limit(200),
+      .gt("liked_at", job.progress.since)
+      .lte("liked_at", job.finished_at ?? new Date().toISOString())
+      .order("liked_at", { ascending: false })
+      .limit(100),
     "Lecture des derniers rangements",
-  ) as unknown as { track_id: string; bac_id: string; likes: (LikeJoin & { liked_at: string }) | null }[];
+  ) as unknown as (LikeJoin & { track_id: string; placements: { bac_id: string; source: string }[] })[];
 
-  const items = new Map<string, RecentItem & { liked_at: string }>();
-  for (const r of rows) {
-    const bac = byId.get(r.bac_id);
-    if (!bac) continue;
-    const item = items.get(r.track_id) ?? { ...trackInfo(r.track_id, r.likes), bacs: [], liked_at: r.likes?.liked_at ?? "" };
-    item.bacs.push(chip(bac));
-    items.set(r.track_id, item);
-  }
-  return [...items.values()]
-    .sort((a, b) => b.liked_at.localeCompare(a.liked_at))
-    .map((item) => ({ track_id: item.track_id, title: item.title, artist: item.artist, cover_url: item.cover_url, isrc: item.isrc, bacs: item.bacs }));
+  return rows.map((r) => ({
+    ...trackInfo(r.track_id, r),
+    corrected: r.placements.some((p) => p.source !== "ia"),
+    bacs: r.placements
+      .map((p) => byId.get(p.bac_id))
+      .filter((b): b is Bac => b !== undefined)
+      .sort((a, b) => a.position - b.position)
+      .map(chip),
+  }));
 }
 
 /** Bacs actuels d'un titre (Divers compris). */

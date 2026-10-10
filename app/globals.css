@@ -620,6 +620,7 @@ a { color: inherit; }
   white-space: nowrap;
 }
 .chip--divers { border-style: dashed; }
+.chip--note { border-color: transparent; background: var(--ground); font-family: var(--font-mono); font-weight: 400; }
 .bin-row { display: flex; gap: 8px; overflow-x: auto; margin: 4px calc(-1 * var(--gutter)) 0; padding: 4px var(--gutter) 8px; scrollbar-width: none; }
 .bin-row__item { flex: none; border-radius: 3px; text-decoration: none; }
 .pick {

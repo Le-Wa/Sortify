@@ -30,6 +30,7 @@ export function RecentList({ items, bacs }: { items: RecentItem[]; bacs: BacChip
                 {item.title} <span className="muted">{item.artist}</span>
               </span>
               <span className="chips">
+                {item.corrected ? <span className="chip chip--note">corrigé</span> : null}
                 {item.bacs.map((b) => (
                   <span key={b.id} className={`chip ${b.is_divers ? "chip--divers" : ""}`} style={{ "--chip": b.color } as React.CSSProperties}>
                     {b.name}
