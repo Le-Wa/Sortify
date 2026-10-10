@@ -151,9 +151,9 @@ const PL = [
 ];
 const DIVERS = {id:"divers", name:"Divers", n:61, pitch:"Les titres qui n'ont trouvé leur place nulle part.", brief:"Sortify y repasse à chaque nouvelle analyse : si une playlist apparaît qui leur correspond, ils déménagent.", ex:["Nina Simone — Sinnerman","Daft Punk — Contact","Ennio Morricone — L'estasi dell'oro"]};
 const QUEUE0 = [
-  {t:"Can I Call You Rose?", a:"Thee Sacred Souls", sug:[["soul",54],["dimanche",48]]},
-  {t:"So U Kno", a:"Overmono", sug:[["club",52],["soiree",46],["solaire",31]]},
-  {t:"River", a:"Ibeyi", sug:[["dimanche",41],["afro",38]]},
+  {t:"Can I Call You Rose?", a:"Thee Sacred Souls", why:"Voix soul vintage et tempo lent : entre la nuit et le dimanche.", sug:[["soul",54],["dimanche",48]]},
+  {t:"So U Kno", a:"Overmono", why:"UK garage énergique avec un refrain chanté : club ou soirée.", sug:[["club",52],["soiree",46],["solaire",31]]},
+  {t:"River", a:"Ibeyi", why:"Percussions afro-cubaines mais ambiance calme et acoustique.", sug:[["dimanche",41],["afro",38]]},
 ];
 const RECENT0 = [
   {t:"Witchy", a:"Kaytranada, Childish Gambino", to:["soiree","solaire"]},
@@ -163,6 +163,7 @@ const RECENT0 = [
 ];
 
 const S = {
+  why:false, sugg:"open",
   screen:"login", keep:Object.fromEntries(PL.map(p=>[p.id,true])), names:{}, regen:{},
   queue:QUEUE0.map(q=>({...q,sel:new Set([q.sug[0][0]])})), qi:0,
   recent:RECENT0.map(r=>({...r,undone:false})), plId:"soiree", editBrief:false, auto:{}, hour:"08:00",
@@ -183,12 +184,12 @@ const NOTES = {
   login:{t:"Connexion", p:"Un seul geste. On dit ce que fait l'app et ce qu'elle ne fait pas.", v:["Une phrase de promesse suffit-elle, ou faut-il montrer un exemple de playlist ?","La rassurance « on ne touche pas à tes likes » est au bon endroit."], q:["Les potes arrivent-ils via un lien d'invitation, ou un simple lien vers l'app ? (Spotify en mode dev : il faut ajouter chaque compte à la main.)"]},
   analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. L'attente doit raconter ce qui se passe, avec de vrais chiffres de ta bibliothèque.", v:["Les étapes affichées sont parlantes.","On peut quitter et revenir : l'analyse continue côté serveur."], q:["Montrer quelques pochettes qui défilent pendant l'attente ? (moment « wow » vs. complexité)"]},
   propose:{t:"Proposition", p:"Le moment clé de l'app : « voici l'âme de ta bibliothèque ». On ajuste sans jamais éditer de règles.", v:["Par playlist : garder ou retirer, renommer, « autre idée » (régénère juste celle-là).","Le nombre de playlists est choisi par l'IA (ici 9), plus Divers.","Les chiffres se chevauchent : un titre peut être dans 3 playlists max."], q:["Faut-il pouvoir demander « ajoute une playlist pour… » en texte libre ? (je propose : hors V1)","Afficher l'axe (scène / ambiance / moment) ou c'est du bruit ?"]},
-  create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Les playlists sont créées dans ton compte Spotify, préfixées ou non ?","À la fin : écran d'accueil directement."], q:["Préfixer les noms dans Spotify (« Soirée potes · Sortify ») pour les repérer, ou noms nus ?"]},
-  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","« Trier maintenant » à côté de l'heure du prochain tri auto.","Les derniers rangements, avec annulation par titre."], q:["Garder un accès direct aux playlists ici, ou l'onglet suffit ?"]},
-  triage:{t:"À trier", p:"Un titre à la fois. Sortify pré-coche sa meilleure idée ; tu confirmes en un tap ou tu corriges.", v:["Jusqu'à 3 playlists cochables.","« Divers » et « Passer » restent toujours accessibles.","Ta correction devient un exemple pour la playlist : l'IA apprend."], q:["Extrait audio : lecteur Spotify intégré (30 s) suffisant ?","Montrer la raison de l'IA (« voix soul, tempo lent ») ou pas ?"]},
+  create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Noms seuls dans Spotify, sans suffixe (décidé).","À la fin : écran d'accueil directement."], q:["Pendant la création, montrer les playlists qui se remplissent une à une, ou une simple barre ?"]},
+  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","Nouveau : une suggestion de playlist quand Divers grossit (ré-analyse automatique).","« Trier maintenant » à côté de l'heure du prochain tri auto.","Les derniers rangements, avec annulation par titre."], q:["Garder un accès direct aux playlists ici, ou l'onglet suffit ?"]},
+  triage:{t:"À trier", p:"Un titre à la fois. Sortify pré-coche sa meilleure idée ; tu confirmes en un tap ou tu corriges.", v:["Jusqu'à 3 playlists cochables.","« Divers » et « Passer » restent toujours accessibles.","Ta correction devient un exemple pour la playlist : l'IA apprend.","« Pourquoi ? » déplie la raison de l'IA (décidé : sur demande)."], q:["Extrait audio : lecteur Spotify intégré (30 s) suffisant ?","Swipe (gauche/droite) en plus des boutons, ou boutons seuls ?"]},
   playlists:{t:"Playlists", p:"La liste des playlists gérées par Sortify, Divers en dernier.", v:["Le compteur et les ajouts récents donnent la vie de chaque playlist.","Pas de réordonnancement ni de couleurs en V1."], q:["Divers : la mettre à part visuellement (c'est un choix qui t'agace, on peut en faire un objet à part, type « bac de sortie »)."]},
   playlist:{t:"Détail playlist", p:"Ce que Sortify cherche ici, en clair, modifiable. Plus les titres exemples qui servent d'ancres.", v:["Le « brief » est lisible et modifiable en texte libre.","Désactiver le remplissage auto sans supprimer.","« Retirer de Sortify » laisse la playlist dans Spotify."], q:["Pouvoir retirer un titre de la playlist depuis ici ? (= correction, l'IA apprend)"]},
-  settings:{t:"Réglages", p:"Le strict minimum.", v:["Heure du tri quotidien.","Déconnexion."], q:["« Relancer l'analyse » : utile dès la V1 si ta biblio évolue, ou plus tard ?"]},
+  settings:{t:"Réglages", p:"Le strict minimum.", v:["Heure du tri quotidien.","Suggestions de nouvelles playlists : activées par défaut.","Déconnexion."], q:["Faut-il aussi un bouton manuel « Relancer l'analyse » ?"]},
 };
 
 function go(s){ S.screen=s; if(S.timer){clearInterval(S.timer);S.timer=null;} render(); document.getElementById("screen").scrollTop=0; }
@@ -295,6 +296,13 @@ const V = {
       </div>
       <button class="btn ghost" id="sortnow" ${S.sorting?"disabled":""}>${S.sorting?"Tri en cours…":"Chercher les nouveaux likes"}</button>
     </div>
+    ${S.sugg==="open"?`<div class="box" style="border-style:dashed">
+      <p class="lbl">Nouvelle playlist suggérée</p>
+      <div class="h2">Jazz du soir</div>
+      <p class="sub" style="font-size:13px">18 titres de Divers vont ensemble : jazz vocal, contrebasse, ambiance feutrée.</p>
+      <div class="chips"><span class="chip">Nina Simone — Sinnerman</span><span class="chip">Gregory Porter — Liquid Spirit</span></div>
+      <div class="row"><button class="btn-sm" id="sugyes" style="flex:1">Créer la playlist</button><button class="btn-sm" id="sugno">Non merci</button></div>
+    </div>`:""}
     <div class="stack">
       <p class="lbl">Rangés aujourd'hui</p>
       <div class="list">
@@ -327,6 +335,8 @@ const V = {
       <p class="lbl">Sortify hésite entre</p>
       ${q.sug.map(([id,pc])=>`<button class="pick" aria-pressed="${q.sel.has(id)}" data-pick="${id}"><span class="row"><span class="check">${q.sel.has(id)?"✓":""}</span>${esc(nameOf(id))}</span><span class="pct">${pc}%</span></button>`).join("")}
       <button class="btn-sm" id="other">Autre playlist…</button>
+      <button class="back" id="why" aria-expanded="${S.why}">${S.why?"Masquer":"Pourquoi ?"}</button>
+      ${S.why?`<p class="sub" style="font-size:13px;margin-top:-8px">${esc(q.why||"Proche de tes corrections récentes.")}</p>`:""}
     </div>
     <button class="btn" id="validate" ${n?"":"disabled"}>${n?`Ranger dans ${n} playlist${n>1?"s":""}`:"Choisis au moins une playlist"}</button>
     <div class="row"><button class="btn quiet" id="todivers">Divers</button><button class="btn quiet" id="skip">Passer</button></div>`;
@@ -368,7 +378,7 @@ const V = {
     <div class="list">
       <div class="row" style="justify-content:space-between"><span>Tri automatique, chaque jour à</span>
         <select id="hour" aria-label="Heure du tri">${["06:00","08:00","12:00","20:00"].map(h=>`<option ${h===S.hour?"selected":""}>${h}</option>`).join("")}</select></div>
-      <div class="row" style="justify-content:space-between"><span>Relancer l'analyse</span><span class="mark">hors V1 ?</span></div>
+      <div class="row" style="justify-content:space-between"><span>Suggérer de nouvelles playlists</span><button class="toggle" aria-label="Suggérer de nouvelles playlists" aria-pressed="true"></button></div>
       <div class="row" style="justify-content:space-between"><span>Compte</span><span class="meta">Connecté à Spotify</span></div>
     </div>
     <div class="spacer"></div>
@@ -407,8 +417,11 @@ document.addEventListener("click",e=>{
   if(d.pl){ S.plId=d.pl; S.editBrief=false; return go("playlist"); }
   if(d.auto){ S.auto[d.auto]=S.auto[d.auto]===false; return render(); }
   switch(b.id){
-    case "validate": { const q=S.queue[S.qi]; toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; return render(); }
+    case "validate": { S.why=false; const q=S.queue[S.qi]; toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; return render(); }
     case "todivers": toast("Rangé dans Divers"); S.qi++; return render();
+    case "why": S.why=!S.why; return render();
+    case "sugyes": S.sugg="done"; PL.push({id:"jazz",name:"Jazz du soir",axe:"ambiance",n:18,pitch:"Jazz vocal, contrebasse, ambiance feutrée.",brief:"Jazz vocal et instrumental feutré, tempo lent à moyen. Frontière : le jazz très calme sans voix va dans Focus.",ex:["Nina Simone — Sinnerman","Gregory Porter — Liquid Spirit","Melody Gardot — Baby I'm a Fool"]}); S.keep.jazz=true; DIVERS.n-=18; toast("« Jazz du soir » créée dans Spotify, 18 titres quittent Divers"); return render();
+    case "sugno": S.sugg="done"; toast("Suggestion écartée"); return render();
     case "skip": toast("Passé, il reviendra plus tard"); S.qi++; return render();
     case "other": toast("Ouvre la liste de toutes les playlists (bottom sheet)"); return;
     case "resetq": S.queue=QUEUE0.map(q=>({...q,sel:new Set([q.sug[0][0]])})); S.qi=0; return render();

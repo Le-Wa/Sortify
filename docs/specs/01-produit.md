@@ -50,13 +50,13 @@ like sur Spotify ─► Sortify détecte ─► classe
 6. **Multi-playlists** — un titre va dans toutes les playlists où il a sa place (c'est le cœur de la valeur).
 7. **À trier** — les titres incertains : extrait audio, suggestions, choisir, ignorer.
 8. **Historique léger** — ce qui a été rangé récemment, avec annulation.
+9. **Ré-analyse automatique** — quand Divers grossit autour d'une même direction (ou que tes likes dérivent), Sortify propose une nouvelle playlist sur l'Accueil : accepter / refuser.
 
 ### Hors V1
 - Onboarding élaboré (chemins multiples, codes d'invitation, BYOK, import de playlists existantes, mode « from scratch » manuel)
 - Stats, profil émotionnel, dashboards KPI
 - Couleurs perso, réordonnancement, admin, personas, logs détaillés
 - Landing page publique
-- Ré-analyse périodique de la bibliothèque (« ta biblio a évolué, nouvelle playlist suggérée ») — bonne idée pour V2
 
 ## 7. Écrans (premier jet, sans design)
 
@@ -75,6 +75,9 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 - ✅ **Multi-playlists** : oui, c'est la différence clé — 3 playlists max par titre.
 - ✅ **Like original** : reste dans « Titres likés » (non destructif).
 - 🟡 **Autonomie** : par défaut, Sortify range seul quand il est sûr et ne demande que pour les vrais doutes (cible : < 1 titre sur 5 en « À trier »). Réglable plus tard si besoin.
+- ✅ **Noms dans Spotify** : nom seul (« Soirée potes »), sans suffixe. Sortify garde la liste de ses playlists de son côté.
+- ✅ **Raison de l'IA** dans « À trier » : sur demande (« Pourquoi ? » qui se déplie).
+- ✅ **Ré-analyse** : automatique dès la V1 (voir point 9).
 - ✅ **Like qui ne va nulle part** : va dans une playlist « Divers » (à rendre élégante côté design).
 
 ## 9. Étapes suivantes

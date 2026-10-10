@@ -63,6 +63,10 @@ Une playlist n'est plus une liste de genres, c'est **une description riche que l
 
 Quand je corrige dans « À trier », le titre rejoint les `exemples` de la playlist (ancres vivantes). Pas de ré-entraînement, juste un contexte qui s'enrichit. Les fiches restent lisibles et modifiables.
 
+### 2.5 Ré-analyse automatique
+
+Après chaque tri quotidien, si Divers contient assez de titres proches (seuil à calibrer, ex. ≥ 15 titres cohérents), le LLM propose une nouvelle fiche playlist à partir de ces titres. Elle apparaît sur l'Accueil ; si je l'accepte, elle est créée dans Spotify et les titres concernés quittent Divers. Même logique, plus rare, si les likes récents ne collent plus bien aux playlists existantes.
+
 ## 3. Ce qu'on garde / jette du code V0
 
 - **Garder (à réécrire proprement)** : enrichissement (Spotify + Last.fm/MusicBrainz pour genres, ReccoBeats pour audio features, Deezer pour preview/ISRC), batching LLM robuste, écriture batch dans Spotify.
