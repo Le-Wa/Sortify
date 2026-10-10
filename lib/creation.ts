@@ -5,6 +5,7 @@ import { coverJpegBase64 } from "./cover";
 import { check, db } from "./db";
 import { kickJob, saveProgress, startJob, type Job } from "./jobs";
 import { spotify } from "./spotify/client";
+import { append } from "./spotify/playlists";
 
 export interface CreationBac {
   id: string;
@@ -159,10 +160,7 @@ async function addNextChunk(memberId: string, bacId: string, playlistId: string)
   ) as { track_id: string }[];
   if (rows.length === 0) return 0;
 
-  await spotify(memberId, `/playlists/${playlistId}/items`, {
-    method: "POST",
-    json: { uris: rows.map((r) => `spotify:track:${r.track_id}`) },
-  });
+  await append(memberId, playlistId, rows.map((r) => r.track_id));
   check(
     await db()
       .from("placements")

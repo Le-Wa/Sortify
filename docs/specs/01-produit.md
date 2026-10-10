@@ -71,7 +71,7 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 
 ## 8. Décisions
 
-- ✅ **Tri** : quotidien automatique + bouton « Trier maintenant ».
+- ✅ **Tri** : quotidien automatique + bouton « Nouveaux likes ? ». Plan Vercel Hobby : un seul cron par jour, à la même heure pour tout le monde (6 h UTC, soit 8 h l'été et 7 h l'hiver à Paris) ; pas de choix d'heure dans les Réglages (oct. 2026).
 - ✅ **Multi-playlists** : oui, c'est la différence clé — 3 playlists max par titre.
 - ✅ **Like original** : reste dans « Titres likés » (non destructif).
 - 🟡 **Autonomie** : par défaut, Sortify range seul quand il est sûr et ne demande que pour les vrais doutes (cible : < 1 titre sur 5 en « À trier »). Réglable plus tard si besoin.

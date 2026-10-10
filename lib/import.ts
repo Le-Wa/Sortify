@@ -28,7 +28,7 @@ export const initialImport: ImportProgress = {
   current: null,
 };
 
-interface SavedTrack {
+export interface SavedTrack {
   added_at: string;
   track: {
     id: string | null;
@@ -40,7 +40,7 @@ interface SavedTrack {
   } | null;
 }
 
-interface SavedTracksPage {
+export interface SavedTracksPage {
   items: SavedTrack[];
   next: string | null;
   offset: number;
@@ -58,7 +58,7 @@ interface LikeRow {
   liked_at: string;
 }
 
-function toRow(memberId: string, item: SavedTrack): LikeRow | null {
+export function toRow(memberId: string, item: SavedTrack): LikeRow | null {
   const t = item.track;
   if (!t?.id || t.is_local) return null;
   // Pochette moyenne (300 px) : assez nette pour l'écran, légère à charger.
@@ -126,6 +126,19 @@ interface PendingLike {
 }
 
 async function enrichBatch(memberId: string, progress: ImportProgress): Promise<ImportProgress> {
+  const { count, last } = await enrichNext(memberId);
+  if (count === 0) return { ...progress, phase: "done" };
+  return {
+    ...progress,
+    enriched: progress.enriched + count,
+    current: last
+      ? { title: last.title, artist: last.artists[0] ?? "", cover: last.cover_url, liked_at: last.liked_at }
+      : progress.current,
+  };
+}
+
+/** Enrichit le prochain lot de likes pas encore enrichis (40 au plus). `count` = 0 quand il n'y en a plus. */
+export async function enrichNext(memberId: string): Promise<{ count: number; last: PendingLike | null }> {
   const likes = check(
     await db()
       .from("likes")
@@ -136,7 +149,7 @@ async function enrichBatch(memberId: string, progress: ImportProgress): Promise<
       .limit(RECCOBEATS_BATCH),
     "Lecture des likes à enrichir",
   ) as PendingLike[];
-  if (likes.length === 0) return { ...progress, phase: "done" };
+  if (likes.length === 0) return { count: 0, last: null };
 
   const [audio, genres] = await Promise.all([
     audioFeatures(likes.map((l) => l.track_id)).catch((error: unknown) => {
@@ -160,15 +173,7 @@ async function enrichBatch(memberId: string, progress: ImportProgress): Promise<
       );
     }),
   );
-
-  const last = likes.at(-1);
-  return {
-    ...progress,
-    enriched: progress.enriched + likes.length,
-    current: last
-      ? { title: last.title, artist: last.artists[0] ?? "", cover: last.cover_url, liked_at: last.liked_at }
-      : progress.current,
-  };
+  return { count: likes.length, last: likes.at(-1) ?? null };
 }
 
 /**

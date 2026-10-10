@@ -66,7 +66,7 @@ export async function saveTokens(spotifyId: string, tokens: SpotifyTokens): Prom
 
 export async function updateSettings(
   spotifyId: string,
-  settings: Partial<Pick<Member, "sort_hour" | "sort_paused" | "suggest_bacs">>,
+  settings: Partial<Pick<Member, "sort_paused" | "suggest_bacs">>,
 ): Promise<void> {
   check(await db().from("members").update(settings).eq("spotify_id", spotifyId), "Mise à jour des réglages");
 }

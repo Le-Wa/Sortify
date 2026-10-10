@@ -2,6 +2,7 @@ import "server-only";
 import { initialAnalyse, runAnalyseStep, type AnalyseProgress } from "./analyse";
 import { runCreationStep, type CreationProgress } from "./creation";
 import { runImportStep, type ImportProgress } from "./import";
+import { runTriStep, type TriProgress } from "./tri";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
 /**
@@ -38,6 +39,15 @@ export async function runJob(id: string): Promise<void> {
       }
       case "creation": {
         const progress = await runCreationStep(job as Job<CreationProgress>, deadline);
+        if (progress.phase === "done") {
+          await finishJob(id, progress);
+          return;
+        }
+        await releaseJob(id, progress);
+        break;
+      }
+      case "tri": {
+        const progress = await runTriStep(job as Job<TriProgress>, deadline);
         if (progress.phase === "done") {
           await finishJob(id, progress);
           return;

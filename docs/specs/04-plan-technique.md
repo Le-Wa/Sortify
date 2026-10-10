@@ -5,7 +5,7 @@
 - NextAuth v4 + Spotify OAuth. Scopes : `user-library-read`, `playlist-read-private`, `playlist-modify-private`, `playlist-modify-public`, `ugc-image-upload` (pochettes), `user-read-email`.
 - Supabase Postgres (service role côté serveur uniquement).
 - Claude API (SDK `@anthropic-ai/sdk`) pour l'analyse et le rangement.
-- Vercel + Cron quotidien.
+- Vercel (plan Hobby) + Cron quotidien `0 6 * * *` → `/api/cron/tri` (`vercel.json`), protégé par `CRON_SECRET`.
 - Enrichissement (mesuré le 10/10/2026 sur 1 154 likes, ~3 min 30) :
   - **Last.fm** : tags de l'artiste principal (cache partagé `artist_tags`), tags du titre en repli. 85 % des titres ont des genres. Limite 5 req/s respectée.
   - **ReccoBeats** : énergie, dansabilité, valence, acoustique, instrumental, tempo, par lots de 40 **identifiants Spotify** (les ISRC ne marchent pas — le code V1 ne récupérait rien). ~55 % de couverture, à toutes les époques.
@@ -44,5 +44,10 @@ Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, d
   - Proposition (`app/revelation/ProposalScreen.tsx`) : garder/retirer, renommer, autre idée, fusionner (titres des deux réunis, sans re-rangement), bac sur mesure ; extraits Deezer au toucher (`/api/preview`). Testé : dépliage, extrait, retrait/remise ; retouches IA testées hors base (`scripts/try-edits.mts`).
   - Création (`lib/creation.ts`) : `POST /me/playlists` (l'ancien `/users/{id}/playlists` renvoie 403), pochette JPEG générée (`lib/cover.tsx`, polices statiques dans `assets/fonts/`), titres ajoutés par 100 du plus récent au plus ancien, Divers = titres sans bac, puis bacs actifs.
   - Seuil de placement initial `INITIAL_PLACE_THRESHOLD = 0.5` (`lib/bacs.ts`) : à calibrer.
-- À trancher pour la phase 4 : le cron Vercel Hobby ne tourne qu'une fois par jour, ce qui ne permet pas une heure de tri par membre (il faudrait un cron horaire, plan Pro). `vercel.json` pointe encore vers l'ancien cron V1.
+- **Phase 4 — Quotidien** : code fait, testé sans nouveau like réel.
+  - Tri (`lib/tri.ts`, job « tri ») : nouveaux likes (plus récents que le dernier connu) → enrichissement → rangement Haiku → synchro Spotify (`lib/sync.ts`, nouveaux titres en haut) → `last_sorted_at`. Seuils : ≥ 0,6 rangé directement (avec ses autres bacs ≥ 0,5), 0,4–0,6 « À trier », sinon Divers. Mesuré sur 240 titres : 74 % rangés, 15 % À trier, 10 % Divers (`scripts/try-tri.mts`).
+  - Cron Hobby quotidien (`/api/cron/tri`) + bouton « Nouveaux likes ? » (`/api/tri` pour le suivi). Pas d'heure par membre (`sort_hour` inutilisé).
+  - À trier (`app/(app)/a-trier`) : un titre à la fois, swipe droite = ranger, gauche = Divers, « Pourquoi ? », « + Autre bac… », « Tout accepter ». Accueil : résumé du dernier tri, comptoir, derniers rangements avec « Corriger », rangée de bacs.
+  - Apprentissage (`lib/daily.ts`) : bac choisi contre l'IA → exemple positif ; bac proposé refusé ou retiré → contre-exemple ; 20 au plus par bac et par polarité. Retrait Spotify : `DELETE /playlists/{id}/items` `{ items: [{ uri }] }`.
+- Ensuite : phase 5 (Bacs : liste réordonnable, détail, Divers, ré-analyse et suggestions de bacs ; Réglages : relancer l'analyse, supprimer mes données).
 - Essais hors app : `npm run try scripts/<fichier>.mts` (analyse, pochettes, retouches).

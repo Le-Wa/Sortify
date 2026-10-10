@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/weekly-sort",
-      "schedule": "0 8 * * 1"
+      "path": "/api/cron/tri",
+      "schedule": "0 6 * * *"
     }
   ]
 }

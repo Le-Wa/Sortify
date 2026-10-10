@@ -9,7 +9,6 @@ export type ActionResult = { ok: true } | { ok: false; message: string };
 
 const settingsSchema = z
   .object({
-    sort_hour: z.number().int().min(0).max(23),
     sort_paused: z.boolean(),
     suggest_bacs: z.boolean(),
   })

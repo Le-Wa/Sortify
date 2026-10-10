@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
+import { hourOf, nextCron } from "@/lib/dates";
 import { homeFor } from "@/lib/library";
 import { countMembers, MAX_MEMBERS, openInvitations } from "@/lib/members";
 import { SignOutButton } from "../ui/SignOutButton";
@@ -21,7 +22,7 @@ export default async function ReglagesPage() {
       <h1 className="display">Réglages</h1>
 
       <div className="label section-label">Le tri</div>
-      <SortSettings sortHour={member.sort_hour} sortPaused={member.sort_paused} suggestBacs={member.suggest_bacs} />
+      <SortSettings cronHour={hourOf(nextCron())} sortPaused={member.sort_paused} suggestBacs={member.suggest_bacs} />
 
       {member.is_owner ? (
         <>

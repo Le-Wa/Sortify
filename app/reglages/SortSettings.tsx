@@ -4,15 +4,12 @@ import { useState, useTransition } from "react";
 import { saveSettings } from "./actions";
 
 interface Props {
-  sortHour: number;
   sortPaused: boolean;
   suggestBacs: boolean;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, h) => h);
-const pad = (h: number) => `${String(h).padStart(2, "0")}:00`;
-
-export function SortSettings(initial: Props) {
+/** `cronHour` : heure de Paris du tri quotidien (fixe pour tout le monde sur le plan Vercel Hobby). */
+export function SortSettings({ cronHour, ...initial }: Props & { cronHour: string }) {
   const [values, setValues] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
@@ -23,7 +20,6 @@ export function SortSettings(initial: Props) {
     setError(null);
     startSaving(async () => {
       const result = await saveSettings({
-        sort_hour: patch.sortHour,
         sort_paused: patch.sortPaused,
         suggest_bacs: patch.suggestBacs,
       }).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur inconnue." }));
@@ -38,20 +34,8 @@ export function SortSettings(initial: Props) {
     <>
       <div className="list">
         <div className="list__row">
-          <label htmlFor="heure">Chaque jour à</label>
-          <select
-            id="heure"
-            className="select"
-            value={values.sortHour}
-            disabled={saving}
-            onChange={(e) => change({ sortHour: Number(e.target.value) })}
-          >
-            {HOURS.map((h) => (
-              <option key={h} value={h}>
-                {pad(h)}
-              </option>
-            ))}
-          </select>
+          <span>Tri chaque matin</span>
+          <span className="mono muted">vers {cronHour}</span>
         </div>
         <Toggle label="Mettre en pause" checked={values.sortPaused} disabled={saving} onChange={(v) => change({ sortPaused: v })} />
         <Toggle
