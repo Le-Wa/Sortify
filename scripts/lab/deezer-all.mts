@@ -34,7 +34,10 @@ function score(sorted: Sorted[]) {
     const placed = top >= 0.6 ? s.suggestions.filter((x) => x.confidence >= 0.5).map((x) => x.bac) : [];
     if (!placed.length && top >= 0.4) pending++;
     if (top < 0.4) div++;
-    if (g.size && s.suggestions[0]) (n1++, g.has(s.suggestions[0].bac) && top1++);
+    if (g.size && s.suggestions[0]) {
+      n1++;
+      if (g.has(s.suggestions[0].bac)) top1++;
+    }
     pairs += placed.length;
     tp += placed.filter((b) => g.has(b)).length;
     gp += g.size;

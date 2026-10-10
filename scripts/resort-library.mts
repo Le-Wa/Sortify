@@ -88,8 +88,18 @@ for (const t of corpus) {
   const before = current.get(t.track_id) ?? new Set<string>();
   const after = target.get(t.track_id) ?? new Set([divers.id]);
   let diff = false;
-  for (const b of after) if (!before.has(b)) ((adds.get(b) ?? adds.set(b, []).get(b)!).push(t.track_id), (diff = true));
-  for (const b of before) if (!after.has(b) && name.has(b)) ((removes.get(b) ?? removes.set(b, []).get(b)!).push(t.track_id), (diff = true));
+  for (const b of after) {
+    if (before.has(b)) continue;
+    if (!adds.has(b)) adds.set(b, []);
+    adds.get(b)!.push(t.track_id);
+    diff = true;
+  }
+  for (const b of before) {
+    if (after.has(b) || !name.has(b)) continue;
+    if (!removes.has(b)) removes.set(b, []);
+    removes.get(b)!.push(t.track_id);
+    diff = true;
+  }
   if (diff) changed++;
 }
 const count = (map: Map<string, Set<string>>, bacId: string) => [...map.values()].filter((s) => s.has(bacId)).length;
@@ -110,6 +120,10 @@ for (const b of all) {
 
 // 4. Application
 if (apply) {
+  // Sauvegarde de l'état actuel (placements + ordre des playlists) pour pouvoir revenir en arrière.
+  const backup = `${dir}/resort-backup-${Date.now()}.json`;
+  writeFileSync(backup, JSON.stringify({ placements, bacs: all.map((b) => ({ id: b.id, name: b.name, playlist: b.spotify_playlist_id })) }));
+  console.log(`Sauvegarde de l'état actuel : ${backup}`);
   for (const b of all) {
     const want = corpus.filter((t) => target.get(t.track_id)?.has(b.id)).map((t) => t.track_id); // corpus = plus récents d'abord
     const keep = new Set(want);
