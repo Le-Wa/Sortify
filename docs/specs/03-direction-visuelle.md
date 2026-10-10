@@ -15,3 +15,4 @@ Sources : `docs/design/ecrans-v2/`.
 - Métaphores : intercalaires à onglets décalés (Proposition, Bacs), « disques sur le comptoir » (À trier), caisse en carton (Divers), « on presse tes bacs » (Création).
 - **Règle des pochettes générées** : le nom est ajusté automatiquement à la pochette (taille calculée selon la longueur du mot le plus long, jusqu'à 3 lignes). Au-delà, l'IA propose un nom court pour la pochette, le nom complet restant celui de la playlist.
 - **Couleur des bacs** : attribuée automatiquement par Sortify, jamais choisie pendant l'onboarding. Pas de personnalisation de couleur en V1.
+- **Deux modes** (clair / sombre), qui suivent le réglage du téléphone. Plus d'écrans noirs mélangés aux clairs. Clair : fond `#ECEDE8`, encre `#111111`, cartes blanches. Sombre : fond `#141413`, encre `#ECEDE8`, cartes `#232421`. Les couleurs des bacs restent identiques dans les deux modes, avec un texte toujours foncé dessus (sauf cobalt et vert, texte blanc).

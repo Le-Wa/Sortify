@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Sombre — Accueil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #141413; color: #ECEDE8; font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: center">
+    <span style="font-size: 24px; font-weight: 900; font-stretch: 62%; text-transform: uppercase; letter-spacing: 0.02em">Sortify</span>
+    <span style="display: flex; gap: 8px">
+    <button aria-label="Chercher les nouveaux likes maintenant" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 0; background: #232421; display: flex; align-items: center; gap: 6px; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ECEDE8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7"></path><path d="M21 4v5h-5"></path></svg>Nouveaux likes ?</button>
+    <button aria-label="Réglages" style="width: 44px; height: 44px; border-radius: 10px; border: 0; background: #232421; display: grid; place-items: center; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ECEDE8" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg></button>
+    </span>
+  </div>
+
+  <div style="margin: 14px 16px 0; background: #ECEDE8; color: #141413; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; justify-content: space-between; gap: 10px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #A9AAA4">Tri de 08:00 · 12 rangés</span>
+        <span style="font-size: 44px; line-height: 0.86; font-weight: 900; font-stretch: 62%; text-transform: uppercase">3 disques<br>sur le<br>comptoir.</span>
+      </div>
+      <div aria-hidden="true" style="position: relative; width: 120px; height: 120px; flex: none">
+        <div style="position: absolute; left: 0; top: 18px; width: 80px; height: 80px; background: #5C4B3B; border-radius: 3px; transform: rotate(-11deg)"></div>
+        <div style="position: absolute; left: 22px; top: 6px; width: 80px; height: 80px; background: #364560; border-radius: 3px; transform: rotate(-2deg)"></div>
+        <div style="position: absolute; left: 40px; top: 22px; width: 80px; height: 80px; background: #8C7B66; border-radius: 3px; transform: rotate(9deg); box-shadow: 0 8px 18px rgba(0,0,0,0.45)"></div>
+      </div>
+    </div>
+    <button style="height: 50px; border: 0; border-radius: 10px; background: #FF6A13; color: #111111; font-family: 'Archivo', sans-serif; font-size: 18px; font-weight: 900; font-stretch: 75%; text-transform: uppercase; letter-spacing: 0.02em; cursor: pointer">Les ranger</button>
+  </div>
+
+  <div style="margin: 12px 16px 0; border: 1.5px dashed #ECEDE8; border-radius: 14px; padding: 12px; display: flex; gap: 12px; align-items: center">
+    <div style="width: 64px; height: 64px; flex: none; background: #1E9E5A; color: #FFFFFF; border-radius: 3px; padding: 6px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'DM Mono', monospace; font-size: 7px">NOUVEAU</span><span style="font-size: 17px; line-height: 0.82; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Jazz du<br>soir</span></div>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; line-height: 1.3"><b>18 titres de Divers</b> vont ensemble. Un nouveau bac ?</span>
+      <span style="display: flex; gap: 6px"><button style="height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: #ECEDE8; color: #141413; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer">Créer</button><button style="height: 36px; padding: 0 12px; border: 1.5px solid #ECEDE8; border-radius: 8px; background: transparent; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer">Non merci</button></span>
+    </div>
+  </div>
+
+  <div style="margin: 20px 20px 0; display: flex; justify-content: space-between; align-items: baseline">
+    <span style="font-size: 20px; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Rangés ce matin</span>
+    <span style="font-family: 'DM Mono', monospace; font-size: 11px; color: #A9AAA4">prochain tri demain 08:00</span>
+  </div>
+  <div style="padding: 6px 16px 0; display: flex; flex-direction: column; gap: 6px">
+    <div style="background: #232421; border-radius: 10px; padding: 8px 8px 8px 10px; display: flex; align-items: center; gap: 10px">
+      <div style="width: 40px; height: 40px; background: #B5A898; border-radius: 3px; flex: none"></div>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Witchy <span style="font-weight: 400; color: #A9AAA4">Kaytranada</span></div>
+        <div style="display: flex; gap: 4px"><span style="font-size: 10px; font-weight: 900; font-stretch: 75%; text-transform: uppercase; background: #FF6A13; padding: 2px 6px; border-radius: 4px 4px 4px 0; color: #111111">Soirée potes</span><span style="font-size: 10px; font-weight: 900; font-stretch: 75%; text-transform: uppercase; background: #FFD23F; padding: 2px 6px; border-radius: 4px 4px 4px 0; color: #111111">Électro solaire</span></div>
+      </div>
+      <button style="height: 44px; padding: 0 10px; border: 0; background: none; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer">Corriger</button>
+    </div>
+    <div style="background: #232421; border-radius: 10px; padding: 8px 8px 8px 10px; display: flex; align-items: center; gap: 10px">
+      <div style="width: 40px; height: 40px; background: #7D8796; border-radius: 3px; flex: none"></div>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Gorilla <span style="font-weight: 400; color: #A9AAA4">Little Simz</span></div>
+        <div style="display: flex; gap: 4px"><span style="font-size: 10px; font-weight: 900; font-stretch: 75%; text-transform: uppercase; background: #1E9E5A; color: #FFFFFF; padding: 2px 6px; border-radius: 4px 4px 4px 0">Rap introspectif</span></div>
+      </div>
+      <button style="height: 44px; padding: 0 10px; border: 0; background: none; font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer">Corriger</button>
+    </div>
+  </div>
+
+  <div style="margin: 18px 0 0; display: flex; gap: 8px; overflow: hidden; padding: 0 20px">
+    <a href="#" style="flex: none; width: 76px; height: 76px; background: #FF6A13; color: #111111; text-decoration: none; border-radius: 3px; padding: 6px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'DM Mono', monospace; font-size: 8px">+3</span><span style="font-size: 15px; line-height: 0.82; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Soirée<br>potes</span></a>
+    <a href="#" style="flex: none; width: 76px; height: 76px; background: #FF9FCB; color: #111111; text-decoration: none; border-radius: 3px; padding: 6px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'DM Mono', monospace; font-size: 8px">+1</span><span style="font-size: 15px; line-height: 0.82; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Dimanche<br>lent</span></a>
+    <a href="#" style="flex: none; width: 76px; height: 76px; background: #2448D8; color: #FFFFFF; text-decoration: none; border-radius: 3px; padding: 6px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'DM Mono', monospace; font-size: 8px">+2</span><span style="font-size: 15px; line-height: 0.82; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Club 2h<br>du mat'</span></a>
+    <a href="#" style="flex: none; width: 76px; height: 76px; background: #B9A8FF; color: #111111; text-decoration: none; border-radius: 3px; padding: 6px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'DM Mono', monospace; font-size: 8px">+2</span><span style="font-size: 15px; line-height: 0.82; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Soul<br>nocturne</span></a>
+    <a href="#" style="flex: none; width: 76px; height: 76px; background: #FFD23F; color: #111111; text-decoration: none; border-radius: 3px; padding: 6px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'DM Mono', monospace; font-size: 8px">+1</span><span style="font-size: 15px; line-height: 0.82; font-weight: 900; font-stretch: 62%; text-transform: uppercase">Électro<br>solaire</span></a>
+  </div>
+
+  <div style="flex: 1"></div>
+  <nav style="margin: 0 16px 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; background: #232421; border-radius: 14px; padding: 6px">
+    <a href="#" style="min-height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #ECEDE8; color: #141413; text-decoration: none; font-size: 13px; font-weight: 900; font-stretch: 75%; text-transform: uppercase">Accueil</a>
+    <a href="#" style="min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; color: #ECEDE8; text-decoration: none; font-size: 13px; font-weight: 900; font-stretch: 75%; text-transform: uppercase">À trier <span style="background: #FF6A13; border-radius: 999px; padding: 0 6px; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 16px; color: #111111">3</span></a>
+    <a href="#" style="min-height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #ECEDE8; text-decoration: none; font-size: 13px; font-weight: 900; font-stretch: 75%; text-transform: uppercase">Bacs</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
