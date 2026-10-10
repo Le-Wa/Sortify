@@ -4,12 +4,15 @@
 - Next.js 16 App Router + React 19, TypeScript strict (`proxy.ts`, APIs de requête async).
 - NextAuth v4 + Spotify OAuth. Scopes : `user-library-read`, `playlist-read-private`, `playlist-modify-private`, `playlist-modify-public`, `ugc-image-upload` (pochettes), `user-read-email`.
 - Supabase Postgres (service role côté serveur uniquement).
-- Claude API (SDK `@anthropic-ai/sdk`) pour l'analyse et le rangement.
+- Claude API (SDK `@anthropic-ai/sdk`, `lib/claude.ts`) :
+  - analyse : **Claude Fable 5.1** (spec 02 : « le plus capable »), effort `medium`, sortie structurée, repli serveur `fallbacks: "default"` ;
+  - retouches (autre idée, fusion, sur mesure, passe « compléter », ajustement d'une fiche) : **Claude Opus 5.5** ;
+  - rangement : **Claude Sonnet 5.5** en effort `low` depuis le banc d'essai du 10/10/2026 (`docs/bench/`) : 86 % de premier bac juste contre 76 % pour Haiku 5.5, décisions stables à 94 %. Lots de 20 (100 pour remplir un seul bac), 6 en parallèle, fiches en cache.
 - Vercel (plan Hobby) + Cron quotidien `0 6 * * *` → `/api/cron/tri` (`vercel.json`), protégé par `CRON_SECRET`.
 - Enrichissement (mesuré le 10/10/2026 sur 1 154 likes, ~3 min 30) :
   - **Last.fm** : tags de l'artiste principal (cache partagé `artist_tags`), tags du titre en repli. 85 % des titres ont des genres. Limite 5 req/s respectée.
   - **ReccoBeats** : énergie, dansabilité, valence, acoustique, instrumental, tempo, par lots de 40 **identifiants Spotify** (les ISRC ne marchent pas — le code V1 ne récupérait rien). ~55 % de couverture, à toutes les époques.
-  - **Deezer** : retiré de l'import (genres trop grossiers, 2 appels par titre). Sert uniquement aux extraits audio, résolus par ISRC au moment de l'écoute.
+  - **Deezer** : extraits audio (résolus par ISRC au moment de l'écoute) et, depuis le banc d'essai, **repli pour les titres que Last.fm ne connaît pas** : genres d'album préfixés `deezer:` (`lib/enrichment/deezer.ts`), 90 % de couverture sur ces titres. Il ne reste que 17 likes sans tag sur 1 159.
 
 ## Base de données V2
 Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`… restent en place, inutilisées) :
@@ -41,12 +44,12 @@ Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, d
 - **Phase 1 — Socle** : faite. Connexion Spotify testée de bout en bout (premier compte = propriétaire). Base `sortify-v2` créée via l'intégration Vercel Marketplace (Paris `eu-west-3`, Postgres 17) ; migrations appliquées avec `psql "$POSTGRES_URL_NON_POOLING" -f …`.
 - **Phase 2 — Import** : faite. Testée sur la vraie bibliothèque (1 154 likes, ~3 min 30).
 - **Phase 3 — Révélation** : code fait, **création dans Spotify pas encore testée** (elle crée de vraies playlists : à lancer par l'utilisateur).
-  - Analyse (`lib/analyse.ts`, enchaînée après l'import) : fiches (Fable, ~2 min 15) → rangement du corpus (Haiku, ~2 min 15) → passe « compléter » si couverture < 85 % (Opus, sur les orphelins) → remplissage des bacs à remplir. Mesuré : 13 bacs, couverture 83 %, 15 % des titres dans plusieurs bacs. Les orphelins restants sont surtout des titres sans aucun tag.
+  - Analyse (`lib/analyse.ts`, enchaînée après l'import) : fiches (Fable, ~2 min 15) → rangement du corpus (Haiku à l'époque, Sonnet depuis le banc d'essai) → passe « compléter » si couverture < 85 % (Opus, sur les orphelins) → remplissage des bacs à remplir. Mesuré : 13 bacs, couverture 83 %, 15 % des titres dans plusieurs bacs. Les orphelins restants sont surtout des titres sans aucun tag.
   - Proposition (`app/revelation/ProposalScreen.tsx`) : garder/retirer, renommer, autre idée, fusionner (titres des deux réunis, sans re-rangement), bac sur mesure ; extraits Deezer au toucher (`/api/preview`). Testé : dépliage, extrait, retrait/remise ; retouches IA testées hors base (`scripts/try-edits.mts`).
   - Création (`lib/creation.ts`) : `POST /me/playlists` (l'ancien `/users/{id}/playlists` renvoie 403), pochette JPEG générée (`lib/cover.tsx`, polices statiques dans `assets/fonts/`), titres ajoutés par 100 du plus récent au plus ancien, Divers = titres sans bac, puis bacs actifs.
   - Seuil de placement initial `INITIAL_PLACE_THRESHOLD = 0.5` (`lib/bacs.ts`) : à calibrer.
 - **Phase 4 — Quotidien** : code fait, testé sans nouveau like réel.
-  - Tri (`lib/tri.ts`, job « tri ») : nouveaux likes (plus récents que le dernier connu) → enrichissement → rangement Haiku → synchro Spotify (`lib/sync.ts`, nouveaux titres en haut) → `last_sorted_at`. Seuils : ≥ 0,6 rangé directement (avec ses autres bacs ≥ 0,5), 0,4–0,6 « À trier », sinon Divers. Mesuré sur 240 titres : 74 % rangés, 15 % À trier, 10 % Divers (`scripts/try-tri.mts`).
+  - Tri (`lib/tri.ts`, job « tri ») : nouveaux likes (plus récents que le dernier connu) → enrichissement → rangement IA (Sonnet) → synchro Spotify (`lib/sync.ts`, nouveaux titres en haut) → `last_sorted_at`. Seuils : ≥ 0,6 rangé directement (avec ses autres bacs ≥ 0,5), 0,4–0,6 « À trier », sinon Divers. Mesuré sur 240 titres : 74 % rangés, 15 % À trier, 10 % Divers (`scripts/try-tri.mts`).
   - Cron Hobby quotidien (`/api/cron/tri`) + bouton « Nouveaux likes ? » (`/api/tri` pour le suivi). Pas d'heure par membre (`sort_hour` inutilisé).
   - À trier (`app/(app)/a-trier`) : un titre à la fois, swipe droite = ranger, gauche = Divers, « Pourquoi ? », « + Autre bac… », « Tout accepter ». Accueil : résumé du dernier tri, comptoir, derniers rangements avec « Corriger », rangée de bacs.
   - Apprentissage (`lib/daily.ts`) : bac choisi contre l'IA → exemple positif ; bac proposé refusé ou retiré → contre-exemple ; 20 au plus par bac et par polarité. Retrait Spotify : `DELETE /playlists/{id}/items` `{ items: [{ uri }] }`.

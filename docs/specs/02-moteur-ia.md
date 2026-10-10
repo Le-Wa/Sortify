@@ -58,7 +58,7 @@ Une playlist n'est plus une liste de genres, c'est **une description riche que l
   - confiance ≥ seuil haut → ajouté directement ;
   - entre les deux → « À trier » avec suggestion pré-cochée ;
   - rien au-dessus du seuil bas → playlist « Divers ».
-- Modèle : rapide/économique, batchs petits (5–10), concurrence limitée, retry en coupant le batch.
+- Modèle : Claude Sonnet 5.5 en effort bas. Haiku, plus économique, rangeait nettement moins bien au banc d'essai du 10/10/2026 (`docs/bench/`). Lots de 20, concurrence limitée, retry en coupant le lot.
 
 ### 2.4 L'IA apprend de mes corrections
 
