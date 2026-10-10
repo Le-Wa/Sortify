@@ -92,6 +92,9 @@ nav.flow{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:f
 textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--fill2);color:var(--ink);resize:vertical}
 select{font:inherit;color:inherit;background:var(--fill2);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:40px}
 .spacer{flex:1}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:5;border:0}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--paper);border-radius:20px 20px 0 0;padding:10px 20px 24px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line)}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center}
 .crate{height:150px;overflow:hidden;position:relative;margin:0 -20px}
 .crate-track{display:flex;gap:10px;position:absolute;left:50%;top:10px;transition:transform .5s ease}
 .crate-track .cover{width:120px;height:120px;border-radius:8px;flex:none;transition:transform .5s,opacity .5s;opacity:.35;transform:scale(.82)}
@@ -167,7 +170,7 @@ const RECENT0 = [
 ];
 
 const S = {
-  why:false, sugg:"open", merge:null, merged:{},
+  why:false, sugg:"open", merge:null, merged:{}, fix:null, fixSel:new Set(),
   screen:"login", keep:Object.fromEntries(PL.map(p=>[p.id,true])), names:{}, regen:{},
   queue:QUEUE0.map(q=>({...q,sel:new Set([q.sug[0][0]])})), qi:0,
   recent:RECENT0.map(r=>({...r,undone:false})), plId:"soiree", editBrief:false, auto:{}, hour:"08:00",
@@ -190,14 +193,14 @@ const NOTES = {
   analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. On feuillette tes vraies pochettes, comme on fouille un bac.", v:["Pochettes qui défilent + le titre en cours + une ligne d'étape (décidé).","On peut quitter : l'analyse continue côté serveur, on retombe sur la proposition en revenant (décidé).","Petite bibliothèque : si moins de ~300 likes sur 2 ans, on remonte plus loin ; si ça reste petit, l'IA propose moins de bacs (décidé)."], q:["Le défilement doit-il suivre l'ordre réel de l'analyse, ou juste être un effet (plus simple) ?"]},
   propose:{t:"Proposition", p:"Le moment clé : « voici l'âme de ta bibliothèque ». On ajuste sans jamais éditer de règles.", v:["Par bac : garder/retirer, renommer, autre idée, fusionner avec un autre (décidé).","Type de bac (scène / ambiance / moment) en étiquette discrète (décidé).","5 pochettes d'exemple, sans texte (décidé).","« Il manque un bac ? » en texte libre dès la V1 (décidé).","Nombre de bacs choisi par l'IA, plus Divers. Un titre peut être dans 3 bacs max."], q:["Fusion : l'IA réécrit la fiche et propose un nom, modifiable (décidé).","Toucher une pochette lance un extrait de 30 s (décidé)."]},
   create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Les bacs se remplissent un par un, compteur qui monte (décidé).","Noms seuls dans Spotify, sans suffixe (décidé).","À la fin : « Voir mes bacs » → Accueil (décidé)."], q:["Si Spotify échoue sur un bac (quota, réseau) : on réessaie en silence, ou on le signale à la fin ?"]},
-  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","Nouveau : une suggestion de playlist quand Divers grossit (ré-analyse automatique).","« Trier maintenant » à côté de l'heure du prochain tri auto.","Les derniers rangements, avec annulation par titre."], q:["Garder un accès direct aux playlists ici, ou l'onglet suffit ?"]},
+  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","Suggestion de nouveau bac quand Divers grossit (ré-analyse automatique).","Rangements du dernier tri seulement, même quand il n'y a rien à trier (décidé).","« Corriger » ouvre directement le choix des bacs, en bottom sheet (décidé)."], q:["Garder un accès direct aux bacs ici, ou l'onglet suffit ?"]},
   triage:{t:"À trier", p:"Un titre à la fois. Sortify pré-coche sa meilleure idée ; tu confirmes en un tap ou tu corriges.", v:["Jusqu'à 3 playlists cochables.","« Divers » et « Passer » restent toujours accessibles.","Ta correction devient un exemple pour la playlist : l'IA apprend.","« Pourquoi ? » déplie la raison de l'IA (décidé : sur demande)."], q:["Extrait audio : lecteur Spotify intégré (30 s) suffisant ?","Swipe (gauche/droite) en plus des boutons, ou boutons seuls ?"]},
   playlists:{t:"Playlists", p:"La liste des playlists gérées par Sortify, Divers en dernier.", v:["Le compteur et les ajouts récents donnent la vie de chaque playlist.","Pas de réordonnancement ni de couleurs en V1."], q:["Divers : la mettre à part visuellement (c'est un choix qui t'agace, on peut en faire un objet à part, type « bac de sortie »)."]},
   playlist:{t:"Détail playlist", p:"Ce que Sortify cherche ici, en clair, modifiable. Plus les titres exemples qui servent d'ancres.", v:["Le « brief » est lisible et modifiable en texte libre.","Désactiver le remplissage auto sans supprimer.","« Retirer de Sortify » laisse la playlist dans Spotify."], q:["Pouvoir retirer un titre de la playlist depuis ici ? (= correction, l'IA apprend)"]},
   settings:{t:"Réglages", p:"Le strict minimum.", v:["Heure du tri quotidien.","Suggestions de nouvelles playlists : activées par défaut.","Déconnexion."], q:["Faut-il aussi un bouton manuel « Relancer l'analyse » ?"]},
 };
 
-function go(s){ S.screen=s; if(S.timer){clearInterval(S.timer);S.timer=null;} render(); document.getElementById("screen").scrollTop=0; }
+function go(s){ S.screen=s; S.fix=null; if(S.timer){clearInterval(S.timer);S.timer=null;} render(); document.getElementById("screen").scrollTop=0; }
 let toastT;
 function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),2200); }
 
@@ -331,16 +334,24 @@ const V = {
       <div class="row"><button class="btn-sm" id="sugyes" style="flex:1">Créer la playlist</button><button class="btn-sm" id="sugno">Non merci</button></div>
     </div>`:""}
     <div class="stack">
-      <p class="lbl">Rangés aujourd'hui</p>
+      <p class="lbl">Rangés au dernier tri · aujourd'hui ${S.hour}</p>
       <div class="list">
-        ${S.recent.map((r,i)=>`<div class="track" style="${r.undone?"opacity:.45":""}">
+        ${S.recent.map((r,i)=>`<div class="track">
           <div class="cover"></div>
           <div class="t"><b>${esc(r.t)}</b><span>${esc(r.a)}</span>
-            <div class="chips" style="margin-top:6px">${r.undone?`<span class="chip">Remis à trier</span>`:r.to.map(id=>`<span class="chip">→ ${esc(nameOf(id))}</span>`).join("")}</div></div>
-          ${r.undone?"":`<button class="btn-sm" data-undo="${i}">Annuler</button>`}
+            <div class="chips" style="margin-top:6px">${r.to.map(id=>`<span class="chip">→ ${esc(nameOf(id))}</span>`).join("")}${r.fixed?`<span class="chip">corrigé</span>`:""}</div></div>
+          <button class="btn-sm" data-undo="${i}">Corriger</button>
         </div>`).join("")}
       </div>
-    </div>`;
+    </div>
+    ${S.fix!==null?(()=>{const r=S.recent[S.fix];return `<div class="sheet-bg" id="fixclose"></div><div class="sheet" role="dialog" aria-label="Corriger le rangement">
+      <div class="grab"></div>
+      <p class="lbl">Corriger</p>
+      <div class="track"><div class="cover"></div><div class="t"><b>${esc(r.t)}</b><span>${esc(r.a)}</span></div></div>
+      <p class="meta">Choisis jusqu'à 3 bacs. Ta correction sert d'exemple à l'IA.</p>
+      <div class="stack" style="max-height:300px;overflow:auto">${PL.filter(p=>S.keep[p.id]).concat([DIVERS]).map(p=>`<button class="pick" aria-pressed="${S.fixSel.has(p.id)}" data-fixpick="${p.id}"><span class="row"><span class="check">${S.fixSel.has(p.id)?"✓":""}</span>${esc(nameOf(p.id))}</span></button>`).join("")}</div>
+      <button class="btn" id="fixsave" ${S.fixSel.size?"":"disabled"}>Enregistrer</button>
+    </div>`;})():""}`;
   },
 
   triage:()=>{
@@ -456,7 +467,8 @@ document.addEventListener("click",e=>{
   if(d.merge){ S.merge=d.merge; return render(); }
   if(d.mergeto){ const a=byId(S.merge), b=byId(d.mergeto); b.n=Math.round((a.n+b.n)*0.85); S.names[b.id]=([a.id,b.id].sort().join()==="dimanche,soul")?"Soul du dimanche soir":nameOf(b.id)+" élargi"; b.pitch=a.pitch.replace(/\.$/,"")+", et "+b.pitch.charAt(0).toLowerCase()+b.pitch.slice(1); S.merged[a.id]=true; S.keep[a.id]=false; S.merge=null; toast("Bacs fusionnés. L'IA propose ce nom, modifiable."); return render(); }
   if(d.regen){ S.regen[d.regen]=true; toast("Nouvelle proposition pour cette playlist"); return render(); }
-  if(d.undo){ S.recent[+d.undo].undone=true; S.queue.push({t:S.recent[+d.undo].t,a:S.recent[+d.undo].a,sug:S.recent[+d.undo].to.map((id,k)=>[id,70-k*12]),sel:new Set()}); toast("Remis dans « À trier »"); return render(); }
+  if(d.undo){ S.fix=+d.undo; S.fixSel=new Set(S.recent[S.fix].to); return render(); }
+  if(d.fixpick){ if(S.fixSel.has(d.fixpick)) S.fixSel.delete(d.fixpick); else if(d.fixpick==="divers") S.fixSel=new Set(["divers"]); else { S.fixSel.delete("divers"); if(S.fixSel.size<3) S.fixSel.add(d.fixpick); else toast("3 bacs maximum"); } return render(); }
   if(d.pick){ const q=S.queue[S.qi]; if(q.sel.has(d.pick)) q.sel.delete(d.pick); else if(q.sel.size<3) q.sel.add(d.pick); else toast("3 playlists maximum"); return render(); }
   if(d.pl){ S.plId=d.pl; S.editBrief=false; return go("playlist"); }
   if(d.auto){ S.auto[d.auto]=S.auto[d.auto]===false; return render(); }
@@ -466,6 +478,7 @@ document.addEventListener("click",e=>{
     case "mkcode": toast("Code DISQ-7K2P créé. Pense à ajouter son compte dans ton dashboard Spotify."); return;
     case "mergecancel": S.merge=null; return render();
     case "askgo": if(!PL.find(p=>p.id==="sport")){ PL.push({id:"sport",name:"Séance de sport",axe:"moment",n:94,pitch:"Tempo élevé, basses lourdes, zéro temps mort.",brief:"Titres à 125+ BPM, énergie très haute : rap énergique, drum & bass, house qui tape. Exclure les morceaux lents ou à longue intro.",ex:["Skrillex — Rumble","Little Simz — Gorilla","Overmono — So U Kno"]}); S.keep.sport=true; S.regen.sport=true; toast("Nouveau bac ajouté : Séance de sport (94 titres)"); } return render();
+    case "fixsave": { const r=S.recent[S.fix]; r.to=[...S.fixSel]; r.fixed=true; S.fix=null; toast("Corrigé dans Spotify"); return render(); }
     case "why": S.why=!S.why; return render();
     case "sugyes": S.sugg="done"; PL.push({id:"jazz",name:"Jazz du soir",axe:"ambiance",n:18,pitch:"Jazz vocal, contrebasse, ambiance feutrée.",brief:"Jazz vocal et instrumental feutré, tempo lent à moyen. Frontière : le jazz très calme sans voix va dans Focus.",ex:["Nina Simone — Sinnerman","Gregory Porter — Liquid Spirit","Melody Gardot — Baby I'm a Fool"]}); S.keep.jazz=true; DIVERS.n-=18; toast("« Jazz du soir » créée dans Spotify, 18 titres quittent Divers"); return render();
     case "sugno": S.sugg="done"; toast("Suggestion écartée"); return render();
@@ -476,6 +489,7 @@ document.addEventListener("click",e=>{
     case "sortnow": S.sorting=true; render(); setTimeout(()=>{S.sorting=false; S.recent.unshift({t:"Selfless",a:"The Strokes",to:["route"],undone:false}); toast("1 nouveau titre rangé"); if(S.screen==="home") render();},1400); return;
   }
 });
+document.addEventListener("click",e=>{ if(e.target.id==="fixclose"){ S.fix=null; render(); } });
 document.addEventListener("change",e=>{ if(e.target.id==="hour"){ S.hour=e.target.value; toast(`Tri quotidien à ${S.hour}`);} });
 try{ const h=location.hash.slice(1); if(NOTES[h]) S.screen=h; }catch(_){}
 render();
