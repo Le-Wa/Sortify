@@ -2,7 +2,7 @@
 //   Essai à blanc (par défaut) : calcule, enregistre <dossier>/resort.json et affiche les différences, sans rien modifier.
 //   --apply : applique le calcul enregistré (base + playlists Spotify reconstruites, plus récents en haut).
 // Toujours conservés : corrections et rangements manuels, titres exemples des fiches ; contre-exemples respectés.
-// Usage : npm run try scripts/resort-library.mts <dossier> [--apply]
+// Usage : npm run try -- scripts/resort-library.mts <dossier> [--apply | --reuse]  (le « -- » est indispensable : sans lui, npm avale les options)
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { sortTracks, type Sorted } from "@/lib/ai/sort";
 import { ensureDivers, INITIAL_PLACE_THRESHOLD, listBacs, sortFichesFor, type Bac } from "@/lib/bacs";

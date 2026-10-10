@@ -60,4 +60,5 @@ Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, d
   - Réglages : relancer l'analyse, supprimer mes données (confirmation « SUPPRIMER », cascade en base, playlists gardées dans Spotify).
   - Testé : écrans, réordonnancement, ajustement IA (hors base), vérification de Divers, ré-analyse réelle (1 proposition : « Techno mélodique »), aller-retour Divers → bac → Divers vérifié dans Spotify. Pas testé en réel : accepter une suggestion, retirer un bac de Sortify, fusion de bacs actifs, suppression des données.
 - Ensuite : déploiement en production (le cron ne tourne qu'en prod), puis retours d'usage.
-- Essais hors app : `npm run try scripts/<fichier>.mts` (analyse, pochettes, retouches).
+- Essais hors app : `npm run try -- scripts/<fichier>.mts [options]` (le `--` est indispensable pour transmettre les options). Bancs d'essai dans `scripts/lab/`, re-rangement complet : `scripts/resort-library.mts` (essai à blanc, puis `--apply`).
+- 10/10/2026 : bibliothèque entièrement re-rangée avec Sonnet (441 titres déplacés, Divers 195 → 151), playlists reconstruites et vérifiées.
