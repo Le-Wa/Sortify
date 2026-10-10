@@ -64,8 +64,8 @@ like sur Spotify ─► Sortify détecte ─► classe
 2. **Révélation** (une seule fois) — analyse en cours (avec du feedback, ça prend du temps) → « Voici l'âme de ta bibliothèque » : les playlists proposées → ajuster → créer.
 3. **Accueil** — l'état en une phrase (+ rangée d'intercalaires vers les bacs) (« 3 titres à trier » / « Tout est rangé ») + les derniers rangements + accès aux playlists.
 4. **À trier** — un titre à la fois (ou liste), extrait audio, suggestion + alternatives.
-5. **Bacs** — liste des bacs gérés, Divers à part. Détail : la fiche IA d'abord (modifiable en texte libre ou « demande à l'IA »), puis les ajouts récents avec « Retirer » (exemple négatif pour l'IA), les titres exemples, activer/désactiver.
-6. **Réglages** — fréquence du tri, déconnexion.
+5. **Bacs** — liste des bacs gérés, Divers est un objet à part, « la caisse » (« 61 titres attendent leur bac »). Détail : la fiche IA d'abord (modifiable en texte libre ou « demande à l'IA »), puis les ajouts récents avec « Retirer » (exemple négatif pour l'IA ; s'il n'est dans aucun autre bac, il part dans Divers), les titres exemples, activer/désactiver.
+6. **Réglages** — heure du tri quotidien, pause du tri, suggestions de nouveaux bacs, relancer l'analyse, inviter un pote (code), supprimer mes données (les playlists restent dans Spotify), déconnexion.
 
 Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 
