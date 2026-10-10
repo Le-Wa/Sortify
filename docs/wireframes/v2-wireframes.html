@@ -92,6 +92,10 @@ nav.flow{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:f
 textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--fill2);color:var(--ink);resize:vertical}
 select{font:inherit;color:inherit;background:var(--fill2);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:40px}
 .spacer{flex:1}
+.crate{height:150px;overflow:hidden;position:relative;margin:0 -20px}
+.crate-track{display:flex;gap:10px;position:absolute;left:50%;top:10px;transition:transform .5s ease}
+.crate-track .cover{width:120px;height:120px;border-radius:8px;flex:none;transition:transform .5s,opacity .5s;opacity:.35;transform:scale(.82)}
+.crate-track .cover.on{opacity:1;transform:scale(1)}
 .wm{font-weight:700;font-size:15px;letter-spacing:.5px;font-family:var(--mono)}
 .mark{font-family:var(--mono);font-size:10px;color:var(--note);border:1px dashed var(--note);border-radius:4px;padding:1px 5px;white-space:nowrap}
 
@@ -183,7 +187,7 @@ const SCREENS = [
 const NOTES = {
   login:{t:"Connexion", p:"Ce que fait l'app en 3 étapes, puis un seul bouton.", v:["Les 3 étapes (décidé).","Rassurance : « Tes playlists actuelles ne sont pas touchées » (décidé).","Les nouveaux passent par « J'ai un code d'invitation »."], q:["Le wording des 3 étapes te va ?"]},
   invite:{t:"Code d'invitation", p:"Pour un pote qui arrive pour la première fois. Tu génères le code depuis tes Réglages.", v:["Un code = une personne, utilisable une fois.","Contrainte Spotify (mode dev) : tu dois aussi ajouter son compte dans ton dashboard Spotify. Sortify te le rappelle et te donne son email."], q:["Faut-il que le pote saisisse son email Spotify ici pour que tu l'ajoutes, ou tu gères en direct avec lui ?"]},
-  analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. L'attente doit raconter ce qui se passe, avec de vrais chiffres de ta bibliothèque.", v:["Les étapes affichées sont parlantes.","On peut quitter et revenir : l'analyse continue côté serveur."], q:["Montrer quelques pochettes qui défilent pendant l'attente ? (moment « wow » vs. complexité)"]},
+  analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. On feuillette tes vraies pochettes, comme on fouille un bac.", v:["Pochettes qui défilent + le titre en cours + une ligne d'étape (décidé).","On peut quitter : l'analyse continue côté serveur, on retombe sur la proposition en revenant (décidé).","Petite bibliothèque : si moins de ~300 likes sur 2 ans, on remonte plus loin ; si ça reste petit, l'IA propose moins de bacs (décidé)."], q:["Le défilement doit-il suivre l'ordre réel de l'analyse, ou juste être un effet (plus simple) ?"]},
   propose:{t:"Proposition", p:"Le moment clé de l'app : « voici l'âme de ta bibliothèque ». On ajuste sans jamais éditer de règles.", v:["Par playlist : garder ou retirer, renommer, « autre idée » (régénère juste celle-là).","Le nombre de playlists est choisi par l'IA (ici 9), plus Divers.","Les chiffres se chevauchent : un titre peut être dans 3 playlists max."], q:["Faut-il pouvoir demander « ajoute une playlist pour… » en texte libre ? (je propose : hors V1)","Afficher l'axe (scène / ambiance / moment) ou c'est du bruit ?"]},
   create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Noms seuls dans Spotify, sans suffixe (décidé).","À la fin : écran d'accueil directement."], q:["Pendant la création, montrer les playlists qui se remplissent une à une, ou une simple barre ?"]},
   home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","Nouveau : une suggestion de playlist quand Divers grossit (ré-analyse automatique).","« Trier maintenant » à côté de l'heure du prochain tri auto.","Les derniers rangements, avec annulation par titre."], q:["Garder un accès direct aux playlists ici, ou l'onglet suffit ?"]},
@@ -251,10 +255,12 @@ const V = {
     <div class="lbl">Première analyse</div>
     <p class="h1">On écoute ta bibliothèque.</p>
     <p class="sub">1 248 titres likés depuis octobre 2024.</p>
+    <div class="crate" aria-hidden="true"><div class="crate-track" id="crate"></div></div>
+    <div class="track" style="justify-content:center"><div class="t" style="text-align:center;flex:none"><b id="nowt">Khruangbin — Time (You and I)</b><span id="nowc">titre 1 / 1 248</span></div></div>
     <div class="prog"><i id="pbar"></i></div>
-    <div class="steps" id="steps"></div>
+    <p class="meta" id="stepline" style="text-align:center">Lecture de tes likes…</p>
     <div class="spacer"></div>
-    <p class="meta">Tu peux fermer l'app, on te prévient quand c'est prêt.</p>
+    <p class="meta">Tu peux fermer l'app : l'analyse continue, et tu retrouveras tes bacs en revenant.</p>
     <button class="btn ghost" data-go="propose">Passer l'attente (maquette)</button>`,
 
   propose:()=>{
@@ -403,12 +409,21 @@ const V = {
 
 function afterRender(){
   if(S.screen==="analyse"){
-    const steps=["Lecture de 1 248 likes","Genres, époques, artistes","Énergie et ambiances","Regroupement en playlists"];
-    let i=0; const draw=()=>{
-      document.getElementById("steps").innerHTML=steps.map((s,k)=>`<div class="step ${k<i?"done":k===i?"now":""}"><span class="dot">${k<i?"✓":""}</span><span>${s}${k===i?" …":""}</span></div>`).join("");
-      document.getElementById("pbar").style.width=(i/steps.length*100)+"%";
+    const tracks=["Khruangbin — Time (You and I)","Little Simz — Introvert","Bicep — Glue","SZA — Good Days","Polo & Pan — Canopée","Burna Boy — Last Last","Nils Frahm — Says","Tame Impala — Let It Happen","Kaytranada — 10%","Men I Trust — Show Me How","Damso — Θ. Macarena","Peggy Gou — Starry Night"];
+    const steps=["Lecture de tes likes…","Genres, époques, artistes…","Énergie et ambiances…","On imagine tes bacs…"];
+    const crate=document.getElementById("crate");
+    crate.innerHTML=tracks.map(()=>'<div class="cover"></div>').join("");
+    let i=0; const N=tracks.length*2;
+    const draw=()=>{
+      const k=i%tracks.length;
+      [...crate.children].forEach((c,n)=>c.classList.toggle("on",n===k));
+      crate.style.transform=`translateX(${-(k*130+60)}px)`;
+      document.getElementById("nowt").textContent=tracks[k];
+      document.getElementById("nowc").textContent=`titre ${Math.round((i+1)/N*1248).toLocaleString("fr-FR")} / 1 248`;
+      document.getElementById("stepline").textContent=steps[Math.min(steps.length-1,Math.floor(i/N*steps.length))];
+      document.getElementById("pbar").style.width=((i+1)/N*100)+"%";
     }; draw();
-    S.timer=setInterval(()=>{ i++; if(i>steps.length){clearInterval(S.timer);S.timer=null;go("propose");return;} draw(); },1100);
+    S.timer=setInterval(()=>{ i++; if(i>=N){clearInterval(S.timer);S.timer=null;go("propose");return;} draw(); },450);
   }
   if(S.screen==="create"){
     let n=0; S.timer=setInterval(()=>{ n=Math.min(1248,n+156);

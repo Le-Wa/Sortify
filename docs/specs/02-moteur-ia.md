@@ -44,9 +44,10 @@ Une playlist n'est plus une liste de genres, c'est **une description riche que l
 
 ### 2.2 Analyse (onboarding)
 
-- Corpus : **les likes des 2 dernières années** (reflète le goût actuel, pas l'historique complet). Si trop gros pour un appel : échantillon stratifié (genre/époque/artiste) + statistiques globales.
+- Corpus : **les likes des 2 dernières années** (reflète le goût actuel, pas l'historique complet). **Petite biblio** : si < ~300 likes sur 2 ans, on remonte dans tout l'historique ; si ça reste petit, l'IA propose moins de playlists. Si trop gros pour un appel : échantillon stratifié (genre/époque/artiste) + statistiques globales.
 - Consigne : **nombre de playlists libre**, dicté par la taille du corpus et le nombre de « directions » réelles de la biblio (garde-fous indicatifs : rarement < 5, rarement > 15). **Mix d'axes** (scènes, ambiances/énergies, moments). Chaque titre doit avoir au moins une maison.
 - Modèle : le plus capable (appel unique, rare, qualité > coût).
+- Exécution : job côté serveur. L'utilisateur peut fermer l'app ; en revenant, il tombe sur la proposition.
 - Vérification : on range l'échantillon avec les fiches → couverture et taux de multi affichés en interne. Si couverture < 85 %, on relance avec les orphelins (« compléter », déjà prototypé en V0).
 
 ### 2.3 Rangement (quotidien + bouton)

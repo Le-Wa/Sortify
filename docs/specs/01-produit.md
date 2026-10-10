@@ -76,6 +76,7 @@ Soit **5–6 écrans**, contre ~12 routes dans la version actuelle.
 - ✅ **Like original** : reste dans « Titres likés » (non destructif).
 - 🟡 **Autonomie** : par défaut, Sortify range seul quand il est sûr et ne demande que pour les vrais doutes (cible : < 1 titre sur 5 en « À trier »). Réglable plus tard si besoin.
 - ✅ **Connexion** : mini-explication en 3 étapes ; rassurance « Tes playlists actuelles ne sont pas touchées » ; accès des potes par code d'invitation.
+- ✅ **Analyse** : on feuillette les vraies pochettes pendant l'attente ; on peut quitter et revenir.
 - ✅ **Noms dans Spotify** : nom seul (« Soirée potes »), sans suffixe. Sortify garde la liste de ses playlists de son côté.
 - ✅ **Raison de l'IA** dans « À trier » : sur demande (« Pourquoi ? » qui se déplie).
 - ✅ **Ré-analyse** : automatique dès la V1 (voir point 9).
