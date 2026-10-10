@@ -14,3 +14,4 @@ Sources : `docs/design/ecrans-v2/`.
 - **Pochettes Sortify** : chaque bac a une pochette générée (couleur du bac, nom en capitales condensées, code catalogue `SRT·04`). Elle sert aussi de cover à la playlist Spotify.
 - Métaphores : intercalaires à onglets décalés (Proposition, Bacs), « disques sur le comptoir » (À trier), caisse en carton (Divers), « on presse tes bacs » (Création).
 - **Règle des pochettes générées** : le nom est ajusté automatiquement à la pochette (taille calculée selon la longueur du mot le plus long, jusqu'à 3 lignes). Au-delà, l'IA propose un nom court pour la pochette, le nom complet restant celui de la playlist.
+- **Couleur des bacs** : attribuée automatiquement par Sortify, jamais choisie pendant l'onboarding. Pas de personnalisation de couleur en V1.
