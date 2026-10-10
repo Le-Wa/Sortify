@@ -48,7 +48,7 @@ like sur Spotify ─► Sortify détecte ─► classe
 4. **Création dans Spotify** — Sortify crée les playlists validées et les remplit avec mes likes existants ; on voit chaque bac se remplir, puis « Voir mes bacs » → Accueil.
 5. **Tri quotidien automatique** des nouveaux likes + bouton « Trier maintenant ».
 6. **Multi-playlists** — un titre va dans toutes les playlists où il a sa place (c'est le cœur de la valeur).
-7. **À trier** — les titres incertains : extrait audio, suggestions, choisir, ignorer.
+7. **À trier** — un titre à la fois : suggestions pré-cochées (3 bacs max), extrait au tap, « Pourquoi ? » sur demande. Swipe droite = ranger, swipe gauche = Divers ; boutons équivalents. Pas de « Passer » : « Je ne sais pas » = Divers.
 8. **Historique léger** — ce que le dernier tri a rangé, affiché sur l'Accueil ; « Corriger » ouvre directement le choix des bacs.
 9. **Ré-analyse automatique** — quand Divers grossit autour d'une même direction (ou que tes likes dérivent), Sortify propose une nouvelle playlist sur l'Accueil : accepter / refuser.
 
@@ -62,7 +62,7 @@ like sur Spotify ─► Sortify détecte ─► classe
 
 1. **Connexion** — logo, une phrase, « Se connecter avec Spotify ».
 2. **Révélation** (une seule fois) — analyse en cours (avec du feedback, ça prend du temps) → « Voici l'âme de ta bibliothèque » : les playlists proposées → ajuster → créer.
-3. **Accueil** — l'état en une phrase (« 3 titres à trier » / « Tout est rangé ») + les derniers rangements + accès aux playlists.
+3. **Accueil** — l'état en une phrase (+ rangée d'intercalaires vers les bacs) (« 3 titres à trier » / « Tout est rangé ») + les derniers rangements + accès aux playlists.
 4. **À trier** — un titre à la fois (ou liste), extrait audio, suggestion + alternatives.
 5. **Playlists** — liste des playlists gérées ; détail = titres récemment ajoutés + activer/désactiver + ré-apprendre.
 6. **Réglages** — fréquence du tri, déconnexion.

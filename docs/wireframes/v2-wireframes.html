@@ -92,6 +92,14 @@ nav.flow{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:f
 textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--fill2);color:var(--ink);resize:vertical}
 select{font:inherit;color:inherit;background:var(--fill2);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:40px}
 .spacer{flex:1}
+.tabsrow{display:flex;gap:8px;overflow-x:auto;margin:0 -20px;padding:0 20px 4px;scrollbar-width:none}
+.tabcard{flex:none;background:none;border:0;padding:0;text-align:left;display:flex;flex-direction:column;min-height:44px}
+.tabcard .tab{align-self:flex-start;background:var(--fill);border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.tabcard .tabbody{background:var(--fill);border:1px solid var(--line);border-radius:0 8px 8px 8px;padding:10px;width:120px;font-size:12px;color:var(--mid)}
+.swipe{position:relative;touch-action:pan-y;cursor:grab;user-select:none}
+.swipe .cover{transition:transform .2s}
+.swipe-tag{position:absolute;top:14px;font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:6px;background:var(--ink);color:var(--paper);opacity:0;transition:opacity .15s}
+.swipe-tag.l{left:14px}.swipe-tag.r{right:14px}
 .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:5;border:0}
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--paper);border-radius:20px 20px 0 0;padding:10px 20px 24px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line)}
 .grab{width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center}
@@ -170,7 +178,7 @@ const RECENT0 = [
 ];
 
 const S = {
-  why:false, sugg:"open", merge:null, merged:{}, fix:null, fixSel:new Set(),
+  playing:false, why:false, sugg:"open", merge:null, merged:{}, fix:null, fixSel:new Set(),
   screen:"login", keep:Object.fromEntries(PL.map(p=>[p.id,true])), names:{}, regen:{},
   queue:QUEUE0.map(q=>({...q,sel:new Set([q.sug[0][0]])})), qi:0,
   recent:RECENT0.map(r=>({...r,undone:false})), plId:"soiree", editBrief:false, auto:{}, hour:"08:00",
@@ -193,8 +201,8 @@ const NOTES = {
   analyse:{t:"Analyse en cours", p:"Ça prend 1 à 3 minutes. On feuillette tes vraies pochettes, comme on fouille un bac.", v:["Pochettes qui défilent + le titre en cours + une ligne d'étape (décidé).","On peut quitter : l'analyse continue côté serveur, on retombe sur la proposition en revenant (décidé).","Petite bibliothèque : si moins de ~300 likes sur 2 ans, on remonte plus loin ; si ça reste petit, l'IA propose moins de bacs (décidé)."], q:["Le défilement doit-il suivre l'ordre réel de l'analyse, ou juste être un effet (plus simple) ?"]},
   propose:{t:"Proposition", p:"Le moment clé : « voici l'âme de ta bibliothèque ». On ajuste sans jamais éditer de règles.", v:["Par bac : garder/retirer, renommer, autre idée, fusionner avec un autre (décidé).","Type de bac (scène / ambiance / moment) en étiquette discrète (décidé).","5 pochettes d'exemple, sans texte (décidé).","« Il manque un bac ? » en texte libre dès la V1 (décidé).","Nombre de bacs choisi par l'IA, plus Divers. Un titre peut être dans 3 bacs max."], q:["Fusion : l'IA réécrit la fiche et propose un nom, modifiable (décidé).","Toucher une pochette lance un extrait de 30 s (décidé)."]},
   create:{t:"Création", p:"Sortify crée les playlists dans Spotify et les remplit avec tes likes existants.", v:["Les bacs se remplissent un par un, compteur qui monte (décidé).","Noms seuls dans Spotify, sans suffixe (décidé).","À la fin : « Voir mes bacs » → Accueil (décidé)."], q:["Si Spotify échoue sur un bac (quota, réseau) : on réessaie en silence, ou on le signale à la fin ?"]},
-  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","Suggestion de nouveau bac quand Divers grossit (ré-analyse automatique).","Rangements du dernier tri seulement, même quand il n'y a rien à trier (décidé).","« Corriger » ouvre directement le choix des bacs, en bottom sheet (décidé)."], q:["Garder un accès direct aux bacs ici, ou l'onglet suffit ?"]},
-  triage:{t:"À trier", p:"Un titre à la fois. Sortify pré-coche sa meilleure idée ; tu confirmes en un tap ou tu corriges.", v:["Jusqu'à 3 playlists cochables.","« Divers » et « Passer » restent toujours accessibles.","Ta correction devient un exemple pour la playlist : l'IA apprend.","« Pourquoi ? » déplie la raison de l'IA (décidé : sur demande)."], q:["Extrait audio : lecteur Spotify intégré (30 s) suffisant ?","Swipe (gauche/droite) en plus des boutons, ou boutons seuls ?"]},
+  home:{t:"Accueil", p:"Répond en 2 secondes à « y a-t-il quelque chose à faire ? », puis laisse repartir.", v:["La phrase d'état change : X titres à trier / Tout est rangé.","Suggestion de nouveau bac quand Divers grossit (ré-analyse automatique).","Rangements du dernier tri seulement, même quand il n'y a rien à trier (décidé).","« Corriger » ouvre directement le choix des bacs, en bottom sheet (décidé).","Rangée d'intercalaires en bas pour accéder aux bacs (décidé)."], q:["Ordre de la rangée de bacs : par activité récente, ou ordre fixe ?"]},
+  triage:{t:"À trier", p:"Un titre à la fois. Sortify pré-coche sa meilleure idée ; tu confirmes en un geste ou tu corriges.", v:["Swipe droite = ranger dans les bacs cochés, swipe gauche = Divers ; les boutons restent là (décidé).","Extrait au tap seulement (décidé).","Pas de « Passer » : « Je ne sais pas » envoie dans Divers (décidé).","Jusqu'à 3 bacs cochables. Ta correction devient un exemple : l'IA apprend.","« Pourquoi ? » déplie la raison de l'IA."], q:["Si 40 titres attendent (retour de vacances) : tout trier d'un coup, ou proposer « tout accepter les suggestions » ?"]},
   playlists:{t:"Playlists", p:"La liste des playlists gérées par Sortify, Divers en dernier.", v:["Le compteur et les ajouts récents donnent la vie de chaque playlist.","Pas de réordonnancement ni de couleurs en V1."], q:["Divers : la mettre à part visuellement (c'est un choix qui t'agace, on peut en faire un objet à part, type « bac de sortie »)."]},
   playlist:{t:"Détail playlist", p:"Ce que Sortify cherche ici, en clair, modifiable. Plus les titres exemples qui servent d'ancres.", v:["Le « brief » est lisible et modifiable en texte libre.","Désactiver le remplissage auto sans supprimer.","« Retirer de Sortify » laisse la playlist dans Spotify."], q:["Pouvoir retirer un titre de la playlist depuis ici ? (= correction, l'IA apprend)"]},
   settings:{t:"Réglages", p:"Le strict minimum.", v:["Heure du tri quotidien.","Suggestions de nouvelles playlists : activées par défaut.","Déconnexion."], q:["Faut-il aussi un bouton manuel « Relancer l'analyse » ?"]},
@@ -344,6 +352,10 @@ const V = {
         </div>`).join("")}
       </div>
     </div>
+    <div class="stack">
+      <p class="lbl">Tes bacs</p>
+      <div class="tabsrow">${PL.filter(p=>S.keep[p.id]).concat([DIVERS]).map(p=>`<button class="tabcard" data-pl="${p.id}"><span class="tab">${esc(nameOf(p.id))}</span><span class="tabbody">${p.n} titres</span></button>`).join("")}</div>
+    </div>
     ${S.fix!==null?(()=>{const r=S.recent[S.fix];return `<div class="sheet-bg" id="fixclose"></div><div class="sheet" role="dialog" aria-label="Corriger le rangement">
       <div class="grab"></div>
       <p class="lbl">Corriger</p>
@@ -366,9 +378,12 @@ const V = {
     const q=S.queue[S.qi], n=q.sel.size;
     return `
     <div class="row" style="justify-content:space-between"><p class="lbl">À trier</p><p class="meta" style="font-variant-numeric:tabular-nums">${S.qi+1} / ${S.queue.length}</p></div>
-    <div class="cover xl" aria-hidden="true"></div>
-    <div><p class="h1" style="font-size:22px">${esc(q.t)}</p><p class="sub">${esc(q.a)}</p></div>
-    <button class="btn ghost">▶ Écouter un extrait</button>
+    <div class="swipe" id="swipe">
+      <div class="cover xl" aria-hidden="true"></div>
+      <span class="swipe-tag l">Divers</span><span class="swipe-tag r">Ranger</span>
+    </div>
+    <p class="meta" style="text-align:center;margin-top:-8px">← Divers · glisse · Ranger →</p>
+    <div class="row" style="justify-content:space-between;align-items:flex-start"><div style="min-width:0"><p class="h1" style="font-size:22px">${esc(q.t)}</p><p class="sub">${esc(q.a)}</p></div><button class="btn-sm" id="play" aria-label="Écouter un extrait" style="flex:none;width:52px;height:52px;border-radius:50%">${S.playing?"❚❚":"▶"}</button></div>
     <div class="stack">
       <p class="lbl">Sortify hésite entre</p>
       ${q.sug.map(([id,pc])=>`<button class="pick" aria-pressed="${q.sel.has(id)}" data-pick="${id}"><span class="row"><span class="check">${q.sel.has(id)?"✓":""}</span>${esc(nameOf(id))}</span><span class="pct">${pc}%</span></button>`).join("")}
@@ -377,7 +392,7 @@ const V = {
       ${S.why?`<p class="sub" style="font-size:13px;margin-top:-8px">${esc(q.why||"Proche de tes corrections récentes.")}</p>`:""}
     </div>
     <button class="btn" id="validate" ${n?"":"disabled"}>${n?`Ranger dans ${n} playlist${n>1?"s":""}`:"Choisis au moins une playlist"}</button>
-    <div class="row"><button class="btn quiet" id="todivers">Divers</button><button class="btn quiet" id="skip">Passer</button></div>`;
+    <button class="btn quiet" id="todivers">Je ne sais pas → Divers</button>`;
   },
 
   playlists:()=>`
@@ -442,6 +457,15 @@ function afterRender(){
     }; draw();
     S.timer=setInterval(()=>{ i++; if(i>=N){clearInterval(S.timer);S.timer=null;go("propose");return;} draw(); },450);
   }
+  if(S.screen==="triage" && document.getElementById("swipe")){
+    const el=document.getElementById("swipe"), card=el.querySelector(".cover"), L=el.querySelector(".l"), R=el.querySelector(".r");
+    let x0=null, dx=0;
+    el.onpointerdown=e=>{ x0=e.clientX; el.setPointerCapture(e.pointerId); card.style.transition="none"; };
+    el.onpointermove=e=>{ if(x0===null) return; dx=e.clientX-x0; card.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`; L.style.opacity=dx<-30?1:0; R.style.opacity=dx>30?1:0; };
+    el.onpointerup=()=>{ card.style.transition=""; const d=dx; x0=null; dx=0; card.style.transform=""; L.style.opacity=R.style.opacity=0;
+      if(d>90){ const q=S.queue[S.qi]; if(q.sel.size){ toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; S.why=false; S.playing=false; render(); } else toast("Choisis au moins un bac"); }
+      else if(d<-90){ toast("Rangé dans Divers"); S.qi++; S.why=false; S.playing=false; render(); } };
+  }
   if(S.screen==="create"){
     const bins=PL.filter(p=>S.keep[p.id]); let b=0, n=0;
     S.timer=setInterval(()=>{
@@ -473,8 +497,9 @@ document.addEventListener("click",e=>{
   if(d.pl){ S.plId=d.pl; S.editBrief=false; return go("playlist"); }
   if(d.auto){ S.auto[d.auto]=S.auto[d.auto]===false; return render(); }
   switch(b.id){
-    case "validate": { S.why=false; const q=S.queue[S.qi]; toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; return render(); }
-    case "todivers": toast("Rangé dans Divers"); S.qi++; return render();
+    case "validate": { S.why=false; S.playing=false; if(!S.queue[S.qi].sel.size) return; const q=S.queue[S.qi]; toast(`Rangé dans ${[...q.sel].map(nameOf).join(", ")}`); S.qi++; return render(); }
+    case "todivers": toast("Rangé dans Divers"); S.qi++; S.why=false; S.playing=false; return render();
+    case "play": S.playing=!S.playing; toast(S.playing?"▶ Extrait de 30 s":"Pause"); return render();
     case "mkcode": toast("Code DISQ-7K2P créé. Pense à ajouter son compte dans ton dashboard Spotify."); return;
     case "mergecancel": S.merge=null; return render();
     case "askgo": if(!PL.find(p=>p.id==="sport")){ PL.push({id:"sport",name:"Séance de sport",axe:"moment",n:94,pitch:"Tempo élevé, basses lourdes, zéro temps mort.",brief:"Titres à 125+ BPM, énergie très haute : rap énergique, drum & bass, house qui tape. Exclure les morceaux lents ou à longue intro.",ex:["Skrillex — Rumble","Little Simz — Gorilla","Overmono — So U Kno"]}); S.keep.sport=true; S.regen.sport=true; toast("Nouveau bac ajouté : Séance de sport (94 titres)"); } return render();
