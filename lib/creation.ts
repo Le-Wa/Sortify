@@ -117,7 +117,7 @@ async function creationUnit(memberId: string, progress: CreationProgress): Promi
   };
 }
 
-async function createPlaylist(memberId: string, bac: Bac): Promise<string> {
+export async function createPlaylist(memberId: string, bac: Bac): Promise<string> {
   const playlist = await spotify<{ id: string }>(memberId, "/me/playlists", {
     method: "POST",
     json: { name: bac.name, description: bac.pitch.slice(0, 300), public: false },
@@ -128,7 +128,7 @@ async function createPlaylist(memberId: string, bac: Bac): Promise<string> {
 }
 
 /** Pochette Sortify. Un échec n'arrête pas la création : on réessaiera au prochain tri (spec 01). */
-async function uploadCover(memberId: string, bac: Bac): Promise<void> {
+export async function uploadCover(memberId: string, bac: Bac): Promise<void> {
   try {
     const jpeg = await coverJpegBase64(bac);
     await spotify(memberId, `/playlists/${bac.spotify_playlist_id}/images`, {

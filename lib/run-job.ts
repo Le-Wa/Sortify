@@ -2,6 +2,7 @@ import "server-only";
 import { initialAnalyse, runAnalyseStep, type AnalyseProgress } from "./analyse";
 import { runCreationStep, type CreationProgress } from "./creation";
 import { runImportStep, type ImportProgress } from "./import";
+import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
@@ -50,10 +51,18 @@ export async function runJob(id: string): Promise<void> {
         const progress = await runTriStep(job as Job<TriProgress>, deadline);
         if (progress.phase === "done") {
           await finishJob(id, progress);
+          // Ré-analyse automatique (spec 02 §2.5) : un échec ne doit pas faire échouer le tri.
+          await suggestFromDivers(job.member_id).catch((error: unknown) =>
+            console.error("Suggestion depuis Divers impossible :", error instanceof Error ? error.message : error),
+          );
           return;
         }
         await releaseJob(id, progress);
         break;
+      }
+      case "reanalyse": {
+        await finishJob(id, await runReanalyseStep(job as Job<ReanalyseProgress>));
+        return;
       }
       default:
         throw new Error(`Type de job pas encore géré : ${job.kind}`);

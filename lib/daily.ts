@@ -175,7 +175,7 @@ export async function setTrackBacs(
   memberId: string,
   trackId: string,
   wanted: string[],
-  opts: { source: "ia" | "correction" | "manuel"; aiChoice: string[] },
+  opts: { source: "ia" | "correction" | "manuel"; aiChoice: string[]; forceNegative?: boolean },
 ): Promise<void> {
   const bacs = await activeBacs(memberId);
   const byId = new Map(bacs.map((b) => [b.id, b]));
@@ -188,7 +188,7 @@ export async function setTrackBacs(
     const bac = byId.get(bacId);
     check(await db().from("placements").delete().eq("bac_id", bacId).eq("track_id", trackId), "Retrait du titre");
     if (bac?.spotify_playlist_id) await removeFromPlaylist(memberId, bac.spotify_playlist_id, [trackId]);
-    if (bac && !bac.is_divers && chosen.length > 0) await addExample(memberId, bacId, trackId, "negative");
+    if (bac && !bac.is_divers && (chosen.length > 0 || opts.forceNegative)) await addExample(memberId, bacId, trackId, "negative");
   }
   const added = target.filter((id) => !current.includes(id));
   if (added.length) {

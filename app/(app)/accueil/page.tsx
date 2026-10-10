@@ -5,12 +5,14 @@ import { activeBacs, lastTri, pendingQueue, recentlySorted } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { Sleeve } from "../../ui/Sleeve";
 import { NewLikesButton } from "./NewLikesButton";
+import { openSuggestions } from "@/lib/suggestions";
 import { RecentList } from "./RecentList";
+import { SuggestionCards } from "./SuggestionCards";
 
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs] = await Promise.all([pendingQueue(id), lastTri(id), activeBacs(id)]);
+  const [queue, tri, bacs, suggestions] = await Promise.all([pendingQueue(id), lastTri(id), activeBacs(id), openSuggestions(id)]);
   const lastDone = tri?.status === "done" ? tri : null;
   const recent = lastDone ? await recentlySorted(id, lastDone) : [];
   const added = new Map<string, number>();
@@ -81,6 +83,8 @@ export default async function AccueilPage() {
         ) : null}
       </section>
 
+      {suggestions.length > 0 ? <SuggestionCards suggestions={suggestions} /> : null}
+
       {recent.length > 0 ? (
         <section className="stack" style={{ gap: 6 }}>
           <div className="row between" style={{ alignItems: "baseline", padding: "4px 4px 0" }}>
@@ -105,7 +109,7 @@ export default async function AccueilPage() {
         {bacs
           .filter((b) => !b.is_divers)
           .map((b) => (
-            <Link key={b.id} href="/bacs" className="bin-row__item" aria-label={`${b.name}${added.get(b.id) ? `, ${added.get(b.id)} nouveaux` : ""}`}>
+            <Link key={b.id} href={`/bacs/${b.id}`} className="bin-row__item" aria-label={`${b.name}${added.get(b.id) ? `, ${added.get(b.id)} nouveaux` : ""}`}>
               <Sleeve name={b.sleeve_name ?? b.name} color={b.color} size={76} code={added.get(b.id) ? `+${added.get(b.id)}` : undefined} />
             </Link>
           ))}

@@ -25,6 +25,7 @@ Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`
 | `pending` | titres « À trier » avec suggestions |
 | `jobs` | import / analyse / création / tri en cours (statut, progression, bail du worker) |
 | `artist_tags` | cache des tags Last.fm par artiste, partagé entre membres |
+| `suggestions` | changements de bacs proposés (ajouter / supprimer / fusionner), depuis Divers ou la ré-analyse, validés sur l'Accueil |
 
 ## Phases
 1. **Socle** — nettoyage du code V1 sur `v2`, design system (tokens clair/sombre, typo, composants), layout, navigation, connexion Spotify, codes d'invitation, schéma DB.
@@ -49,5 +50,11 @@ Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, d
   - Cron Hobby quotidien (`/api/cron/tri`) + bouton « Nouveaux likes ? » (`/api/tri` pour le suivi). Pas d'heure par membre (`sort_hour` inutilisé).
   - À trier (`app/(app)/a-trier`) : un titre à la fois, swipe droite = ranger, gauche = Divers, « Pourquoi ? », « + Autre bac… », « Tout accepter ». Accueil : résumé du dernier tri, comptoir, derniers rangements avec « Corriger », rangée de bacs.
   - Apprentissage (`lib/daily.ts`) : bac choisi contre l'IA → exemple positif ; bac proposé refusé ou retiré → contre-exemple ; 20 au plus par bac et par polarité. Retrait Spotify : `DELETE /playlists/{id}/items` `{ items: [{ uri }] }`.
-- Ensuite : phase 5 (Bacs : liste réordonnable, détail, Divers, ré-analyse et suggestions de bacs ; Réglages : relancer l'analyse, supprimer mes données).
+- **Phase 5 — Bacs** : code fait.
+  - Bacs (`app/(app)/bacs`) : liste avec titres et likes de la semaine, « Réordonner » (↑↓, ordre de la rangée de l'Accueil), caisse Divers (ranger un titre à la main).
+  - Détail d'un bac : fiche modifiable à la main ou « demande à l'IA de l'ajuster » (Opus, ~15 s), arrivées récentes avec « Retirer » (contre-exemple, Divers si plus aucun bac), remplissage automatique, « Retirer ce bac de Sortify » (la playlist reste dans Spotify).
+  - Suggestions (`lib/suggestions.ts`) : après chaque tri, si les suggestions sont activées, au plus une fois par semaine, l'IA cherche dans Divers un groupe d'au moins 15 titres ; « Relancer l'analyse » (Réglages, job `reanalyse`, Fable) propose ajouter / supprimer / fusionner. Tout s'affiche sur l'Accueil (Créer / Non merci). Accepter crée la playlist et sa pochette ; les titres concernés quittent Divers.
+  - Réglages : relancer l'analyse, supprimer mes données (confirmation « SUPPRIMER », cascade en base, playlists gardées dans Spotify).
+  - Testé : écrans, réordonnancement, ajustement IA (hors base), vérification de Divers, ré-analyse réelle (1 proposition : « Techno mélodique »), aller-retour Divers → bac → Divers vérifié dans Spotify. Pas testé en réel : accepter une suggestion, retirer un bac de Sortify, fusion de bacs actifs, suppression des données.
+- Ensuite : déploiement en production (le cron ne tourne qu'en prod), puis retours d'usage.
 - Essais hors app : `npm run try scripts/<fichier>.mts` (analyse, pochettes, retouches).

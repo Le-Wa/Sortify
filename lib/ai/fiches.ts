@@ -165,3 +165,93 @@ Format des titres : numéro | artistes — titre | année | tags | én da va ac.
   const parsed = complementSchema.parse(JSON.parse(responseText(message, "Passe compléter")));
   return parsed.bacs.slice(0, 2).map((f) => cleanFiche(f, orphans.length));
 }
+
+const adjustSchema = z.object({ pitch: z.string(), brief: z.string() });
+
+/** « Demande à l'IA de l'ajuster » : réécrit pitch et brief d'un bac selon une consigne libre (le nom ne change pas). */
+export async function adjustFiche(
+  current: FicheContext & { brief: string },
+  instruction: string,
+  others: FicheContext[],
+): Promise<{ pitch: string; brief: string }> {
+  const message = await claude().beta.messages.create({
+    model: EDIT_MODEL,
+    max_tokens: 8000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "low", format: zodOutputFormat(adjustSchema) },
+    system: `Tu es un disquaire passionné qui tient à jour les fiches des bacs (playlists) de quelqu'un.
+
+${RULES}
+
+Les autres bacs de la personne :
+${others.map((o) => `- ${o.name} (${o.axis}) : ${o.pitch}`).join("\n")}
+
+Tout le texte est en français, tutoiement.`,
+    messages: [
+      {
+        role: "user",
+        content: `Bac « ${current.name} » (${current.axis}).\nPitch actuel : ${current.pitch}\nBrief actuel :\n${current.brief}\n\nLa personne demande : « ${instruction.slice(0, 500)} ».\nRéécris le pitch et le brief en tenant compte de sa demande, sans changer l'esprit du bac au-delà de ce qu'elle demande.`,
+      },
+    ],
+  });
+  return adjustSchema.parse(JSON.parse(responseText(message, "Ajustement d'un bac")));
+}
+
+const reanalysisSchema = z.object({
+  changements: z.array(
+    z.object({
+      type: z.enum(["ajouter", "supprimer", "fusionner"]),
+      bacs: z.array(z.number().int()).describe("Numéros des bacs existants concernés : 1 pour supprimer, 2 pour fusionner, aucun pour ajouter."),
+      raison: z.string().describe("Une phrase pour la personne : pourquoi ce changement."),
+      fiche: ficheSchema.nullable().describe("Fiche du nouveau bac (ajouter) ou du bac fusionné (fusionner) ; null pour supprimer."),
+    }),
+  ),
+});
+
+export interface Change {
+  type: "ajouter" | "supprimer" | "fusionner";
+  /** Index (base 0) des bacs existants concernés. */
+  bacs: number[];
+  reason: string;
+  fiche: Fiche | null;
+}
+
+/**
+ * « Relancer l'analyse » (spec 02 §2.5) : relit toute la bibliothèque à la lumière des bacs existants
+ * et propose des changements (ajouter, supprimer, fusionner), chacun validé ensuite par la personne.
+ */
+export async function reanalyse(
+  corpus: CorpusTrack[],
+  existing: (FicheContext & { brief: string; count: number })[],
+): Promise<Change[]> {
+  const lines = corpus.map((t, i) => trackLine(t, i)).join("\n");
+  const bacs = existing.map((b, i) => `${i + 1}. ${b.name} (${b.axis}, ${b.count} titres) : ${b.pitch}\n   ${b.brief.replace(/\n/g, " ")}`).join("\n");
+  const stream = claude().beta.messages.stream({
+    model: ANALYSIS_MODEL,
+    max_tokens: 32000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "medium", format: zodOutputFormat(reanalysisSchema) },
+    system: `Tu es un disquaire passionné. La personne a déjà des bacs ; ses goûts ont pu évoluer. Tu relis toute sa discothèque et tu proposes des changements, qu'elle validera un par un.
+
+${RULES}
+
+Propose seulement les changements qui valent vraiment le coup (souvent 0 à 3) :
+- « ajouter » : une direction réelle de la bibliothèque qui n'a pas de bac (au moins ~${Math.max(15, Math.round(corpus.length * 0.03))} titres) ;
+- « supprimer » : un bac devenu marginal ou qui ne correspond plus à ses likes ;
+- « fusionner » : deux bacs qui se recouvrent trop.
+Si tout va bien, renvoie une liste vide. Tout le texte est en français, tutoiement. Les exemples des fiches sont des numéros de titres du corpus.
+Format du corpus : numéro | artistes — titre | année | tags | én da va ac.`,
+    messages: [{ role: "user", content: `Bacs actuels :\n${bacs}\n\nCorpus (${corpus.length} titres) :\n${lines}` }],
+  });
+  const parsed = reanalysisSchema.parse(JSON.parse(responseText(await stream.finalMessage(), "Ré-analyse")));
+  const valid: Change[] = [];
+  for (const c of parsed.changements) {
+    const idx = [...new Set(c.bacs.map((n) => n - 1).filter((i) => i >= 0 && i < existing.length))];
+    if (c.type === "ajouter" && c.fiche) valid.push({ type: c.type, bacs: [], reason: c.raison, fiche: cleanFiche(c.fiche, corpus.length) });
+    if (c.type === "supprimer" && idx.length === 1) valid.push({ type: c.type, bacs: idx, reason: c.raison, fiche: null });
+    if (c.type === "fusionner" && idx.length === 2 && c.fiche) valid.push({ type: c.type, bacs: idx, reason: c.raison, fiche: cleanFiche(c.fiche, corpus.length) });
+  }
+  return valid;
+}

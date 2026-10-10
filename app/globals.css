@@ -695,3 +695,26 @@ a { color: inherit; }
   cursor: pointer;
 }
 .play-btn:disabled { opacity: 0.35; }
+
+/* ── Bacs ─────────────────────────────────────────────────── */
+.bins { display: flex; flex-direction: column; }
+.bins .bin { padding-top: 16px; }
+.bins .bin + .bin { margin-top: -6px; }
+.bins .bin__card { min-height: 60px; padding: 8px 10px 8px 86px; }
+.bins__name { font-size: 17px; font-weight: 800; font-stretch: 75%; }
+.icon-btn:disabled { opacity: 0.3; }
+.icon-btn { background: none; font-size: 18px; font-weight: 700; cursor: pointer; }
+.crate-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--kraft);
+  color: #111111;
+  text-decoration: none;
+  min-height: 72px;
+}
+.crate-card__label { font-size: 22px; line-height: 0.86; font-weight: 900; font-stretch: 62%; text-transform: uppercase; }
+.is-working { animation: working 1.4s ease-in-out infinite; }
+.suggestion { display: flex; gap: 12px; align-items: flex-start; padding: 12px; }
