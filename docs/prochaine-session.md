@@ -25,6 +25,7 @@ Fait aujourd'hui :
 ## En attente de Walid
 - Tester un retrait / ajout fait directement dans Spotify, puis « Nouveaux likes ? ».
 - Décider de la limite de 3 bacs par titre.
+- **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY`). Le pote de Walid avait 259 likes sur 2 ans → import depuis 2019 (2 340 likes, 1 918 titres sortis avant 2021) : ses bacs reflètent ses goûts d'il y a 5 ans. Proposition : élargir année par année (3 ans, 4 ans…) jusqu'à 300 likes au lieu de tout prendre, puis relancer son import et son analyse.
 - Suivre la part de titres « À trier » (cible ~20 %).
 
 ## Façon de travailler
