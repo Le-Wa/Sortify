@@ -28,6 +28,7 @@ export async function coverJpegBase64(bac: {
   color: string;
   axis: string;
   shape: string | null;
+  outline?: boolean | null;
   is_divers: boolean;
 }): Promise<string> {
   const { display, mono } = await loadFonts();

@@ -21,22 +21,24 @@ export function SleeveEditor({ bac }: Props) {
   const [open, setOpen] = useState(false);
   const [shape, setShape] = useState<ShapeName>(bac.mark.shape);
   const [color, setColor] = useState(bac.color);
+  const [outline, setOutline] = useState(bac.mark.outline);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const ink = inkFor(color);
-  const changed = shape !== bac.mark.shape || color !== bac.color;
+  const changed = shape !== bac.mark.shape || color !== bac.color || outline !== bac.mark.outline;
 
   function close() {
     setOpen(false);
     setShape(bac.mark.shape);
     setColor(bac.color);
+    setOutline(bac.mark.outline);
     setError(null);
   }
 
   function save() {
     setError(null);
     startTransition(async () => {
-      const result = await restyle(bac.id, shape, color).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
+      const result = await restyle(bac.id, shape, color, outline).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
       if (result.ok) {
         setOpen(false);
         router.refresh();
@@ -55,7 +57,7 @@ export function SleeveEditor({ bac }: Props) {
 
       <BottomSheet open={open} onClose={close} title="Ta pochette">
         <div className="row" style={{ justifyContent: "center" }}>
-          <Sleeve name={bac.sleeve} color={color} size={150} mark={{ shape, outline: bac.mark.outline }} />
+          <Sleeve name={bac.sleeve} color={color} size={150} mark={{ shape, outline }} />
         </div>
 
         <span className="label">Forme</span>
@@ -71,7 +73,18 @@ export function SleeveEditor({ bac }: Props) {
               style={{ background: color }}
               onClick={() => setShape(s)}
             >
-              <SleeveMarkSvg mark={{ shape: s, outline: bac.mark.outline }} ink={ink} box={28} left={8} top={8} />
+              <SleeveMarkSvg mark={{ shape: s, outline }} ink={ink} box={28} left={8} top={8} />
+            </button>
+          ))}
+        </div>
+
+        <div className="segmented" role="radiogroup" aria-label="Remplissage">
+          {[
+            { value: false, label: "Pleine" },
+            { value: true, label: "Contour" },
+          ].map((o) => (
+            <button key={o.label} type="button" role="radio" aria-checked={outline === o.value} className={`segmented__item ${outline === o.value ? "is-on" : ""}`} onClick={() => setOutline(o.value)}>
+              {o.label}
             </button>
           ))}
         </div>

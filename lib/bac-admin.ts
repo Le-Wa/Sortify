@@ -75,15 +75,15 @@ export async function updateBac(memberId: string, id: string, patch: Partial<Pic
 }
 
 /**
- * Pochette personnalisée (forme et couleur choisies dans les listes de Sortify), renvoyée tout de suite à Spotify.
+ * Pochette personnalisée (forme pleine ou en contour, couleur choisies dans les listes de Sortify), renvoyée tout de suite à Spotify.
  * Renvoie false si Spotify n'a pas pris la pochette : le prochain tri réessaiera.
  */
-export async function restyleBac(memberId: string, id: string, look: { shape: string; color: string }): Promise<boolean> {
+export async function restyleBac(memberId: string, id: string, look: { shape: string; color: string; outline: boolean }): Promise<boolean> {
   const bac = await ownedActive(memberId, id);
   if (!(FICHE_SHAPES as readonly string[]).includes(look.shape)) throw new Error("Forme inconnue.");
   if (!BAC_COLORS.some((c) => c.bg === look.color)) throw new Error("Couleur inconnue.");
   const updated = check(
-    await db().from("bacs").update({ shape: look.shape, color: look.color, cover_uploaded_at: null }).eq("id", bac.id).select("*").single(),
+    await db().from("bacs").update({ shape: look.shape, color: look.color, outline: look.outline, cover_uploaded_at: null }).eq("id", bac.id).select("*").single(),
     "Pochette du bac",
   ) as Bac;
   if (!updated.spotify_playlist_id) return true;

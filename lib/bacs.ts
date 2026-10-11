@@ -19,6 +19,8 @@ export interface Bac {
   axis: Axis;
   /** Forme de la pochette (lib/cover-shapes.ts) ; null pour Divers et les anciens bacs. */
   shape: string | null;
+  /** Forme en contour (true) ou pleine (false) ; null = selon l'axe. */
+  outline: boolean | null;
   color: string;
   position: number;
   status: "proposed" | "active" | "removed";

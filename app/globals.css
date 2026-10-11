@@ -182,7 +182,7 @@ a { color: inherit; }
   flex: none;
   box-shadow: 0 6px 12px rgba(17, 17, 17, 0.18);
 }
-.sleeve { position: relative; }
+.sleeve { position: relative; text-align: left; } /* dans un bouton, le nom resterait centré */
 .sleeve > * { position: relative; }
 .sleeve__code { font-family: var(--font-mono); }
 .sleeve__name {
@@ -824,3 +824,6 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 .shape-grid__item.is-on, .swatches__item.is-on { outline: 3px solid var(--ink); outline-offset: 2px; }
 .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
 .swatches__item { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(17, 17, 17, 0.15); cursor: pointer; }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--ground); }
+.segmented__item { min-height: 44px; border: 0; border-radius: 9px; background: none; color: var(--ink); font-weight: 700; cursor: pointer; }
+.segmented__item.is-on { background: var(--ink); color: var(--card); }

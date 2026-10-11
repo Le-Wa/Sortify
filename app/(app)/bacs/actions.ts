@@ -44,9 +44,9 @@ export async function editBrief(id: string, brief: string): Promise<ActionResult
 }
 
 /** Personnalisation de la pochette (forme, couleur), renvoyée à Spotify. */
-export async function restyle(id: string, shape: string, color: string): Promise<ActionResult> {
+export async function restyle(id: string, shape: string, color: string, outline: boolean): Promise<ActionResult> {
   return run(async (m) => {
-    const sent = await restyleBac(m, uuid.parse(id), { shape: z.string().max(20).parse(shape), color: z.string().max(9).parse(color) });
+    const sent = await restyleBac(m, uuid.parse(id), { shape: z.string().max(20).parse(shape), color: z.string().max(9).parse(color), outline: z.boolean().parse(outline) });
     return sent ? { ok: true } : { ok: false, message: "Pochette enregistrée, mais Spotify ne l'a pas encore prise : on réessaiera au prochain tri." };
   });
 }

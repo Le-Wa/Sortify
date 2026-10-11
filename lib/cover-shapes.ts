@@ -204,7 +204,7 @@ export interface SleeveMark {
   outline: boolean;
 }
 
-export function markFor(bac: { name: string; shape?: string | null; axis: string; is_divers?: boolean }): SleeveMark {
+export function markFor(bac: { name: string; shape?: string | null; outline?: boolean | null; axis: string; is_divers?: boolean }): SleeveMark {
   if (bac.is_divers) return { shape: "asterisk", outline: false };
   let shape: ShapeName;
   if (isShape(bac.shape)) shape = bac.shape;
@@ -213,5 +213,5 @@ export function markFor(bac: { name: string; shape?: string | null; axis: string
     for (const c of bac.name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
     shape = FICHE_SHAPES[h % FICHE_SHAPES.length];
   }
-  return { shape, outline: bac.axis !== "scène" };
+  return { shape, outline: bac.outline ?? bac.axis !== "scène" };
 }
