@@ -1,4 +1,4 @@
-import { inkFor, vinylShades } from "@/lib/bac-colors";
+import { inkFor } from "@/lib/bac-colors";
 import { sleeveLayout } from "@/lib/sleeve-layout";
 
 
@@ -18,7 +18,6 @@ interface SleeveProps {
  */
 export function Sleeve({ name, color, size, code, corner, rotate = 0, className = "" }: SleeveProps) {
   const { lines, fontSize, padding, small } = sleeveLayout(name, size);
-  const v = vinylShades(color);
 
   return (
     <span
@@ -30,10 +29,6 @@ export function Sleeve({ name, color, size, code, corner, rotate = 0, className 
         padding,
         background: color,
         color: inkFor(color),
-        // Vinyle ton sur ton (mêmes teintes que la pochette envoyée à Spotify).
-        ["--disc" as string]: v.disc,
-        ["--groove" as string]: v.groove,
-        ["--label" as string]: v.label,
         transform: rotate ? `rotate(${rotate}deg)` : undefined,
       }}
     >

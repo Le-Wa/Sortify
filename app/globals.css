@@ -183,18 +183,6 @@ a { color: inherit; }
   box-shadow: 0 6px 12px rgba(17, 17, 17, 0.18);
 }
 .sleeve { position: relative; }
-/* Vinyle ton sur ton, plein, qui dépasse en haut à droite : rond central et trou. */
-.sleeve::before {
-  content: "";
-  position: absolute;
-  right: -22%;
-  top: -18%;
-  width: 95%;
-  height: 95%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, var(--groove) 0 1.6%, var(--label) 1.8% 16.5%, var(--disc) 17%);
-}
 .sleeve > * { position: relative; }
 .sleeve__code { font-family: var(--font-mono); }
 .sleeve__name {
@@ -783,13 +771,11 @@ a { color: inherit; }
 .page > :nth-child(5), .bins > :nth-child(5), .recent > :nth-child(5), .proposal > :nth-child(5), .press > :nth-child(5) { animation-delay: 120ms; }
 .page > :nth-child(n + 6), .bins > :nth-child(n + 6), .recent > :nth-child(n + 6), .proposal > :nth-child(n + 6), .press > :nth-child(n + 6) { animation-delay: 150ms; }
 
-/* Le vinyle sort un peu de sa pochette au survol (souris) ou à l'appui (tactile). */
-.sleeve::before { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.3); }
-a:active .sleeve::before,
-button:active .sleeve::before { transform: translate(-8%, 8%) rotate(25deg); }
+/* Les pochettes se soulèvent un peu au survol (souris) ou à l'appui (tactile), comme un disque qu'on sort du bac. */
+.sleeve { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1.3); }
+a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rotate"]) { transform: translateY(-3px) rotate(-2deg); }
 @media (hover: hover) {
-  a:hover .sleeve::before,
-  button:hover .sleeve::before { transform: translate(-8%, 8%) rotate(25deg); }
+  a:hover .sleeve:not([style*="rotate"]), button:hover .sleeve:not([style*="rotate"]) { transform: translateY(-3px) rotate(-2deg); }
 }
 
 /* Le disque à trier se pose sur le comptoir. */

@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
-import { inkFor, vinylShades } from "./bac-colors";
+import { inkFor } from "./bac-colors";
 import { sleeveLayout } from "./sleeve-layout";
 
 const SIZE = 640;
@@ -25,40 +25,10 @@ export async function coverJpegBase64(bac: { name: string; sleeve_name: string |
   const label = bac.sleeve_name ?? bac.name;
   const { lines, fontSize, padding, small } = sleeveLayout(label, SIZE);
   const ink = inkFor(bac.color);
-  const v = vinylShades(bac.color);
 
   const png = new ImageResponse(
     (
       <div style={{ width: SIZE, height: SIZE, position: "relative", display: "flex", background: bac.color, overflow: "hidden" }}>
-        {/* Vinyle ton sur ton, plein (rond central et trou), qui dépasse en haut à droite. */}
-        <div
-            style={{
-              position: "absolute",
-              right: -SIZE * 0.22,
-              top: -SIZE * 0.18,
-              width: SIZE * 0.95,
-              height: SIZE * 0.95,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: v.disc,
-            }}
-          >
-            <div
-              style={{
-                width: SIZE * 0.32,
-                height: SIZE * 0.32,
-                borderRadius: "50%",
-                background: v.label,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div style={{ width: 16, height: 16, borderRadius: "50%", background: bac.color }} />
-            </div>
-          </div>
         <div
           style={{
             position: "relative",
