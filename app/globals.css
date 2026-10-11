@@ -726,3 +726,11 @@ a { color: inherit; }
 @media (max-width: 359px) {
   .wide-only { display: none; }
 }
+
+/* ── Chargement ───────────────────────────────────────────── */
+.skeleton { display: flex; flex-direction: column; gap: 12px; }
+.skeleton > span { display: block; border-radius: 10px; background: var(--card); animation: working 1.4s ease-in-out infinite; }
+.skeleton__title { height: 44px; width: 60%; }
+.skeleton__block { height: 150px; }
+.skeleton__line { height: 60px; }
+.skeleton__line--short { width: 70%; }

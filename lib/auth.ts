@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
@@ -91,12 +92,12 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-/** Membre connecté, ou null. */
-export async function currentMember(): Promise<Member | null> {
+/** Membre connecté, ou null. Mis en cache le temps d'une requête : layout et page ne le relisent pas deux fois. */
+export const currentMember = cache(async (): Promise<Member | null> => {
   const session = await getServerSession(authOptions);
   if (!session?.spotifyId) return null;
   return getMember(session.spotifyId);
-}
+});
 
 /** Membre connecté ; sinon renvoie vers la page de connexion. */
 export async function requireMember(): Promise<Member> {
