@@ -1,0 +1,532 @@
+{
+  "refreshed13": [
+    {
+      "name": "Tech house festival",
+      "axis": "scène",
+      "brief": "House de club musclée et festive : tech house, bass house, electro house, G-house, EDM mainstream (James Hype, Mau P, FISHER, Chris Lake, HUGEL, R3HAB, Dom Dolla, PAWSA, Cloonee, Shermanology, Matroda, Max Styler, Biscits). Énergie très haute (én > .8), dansabilité haute, kick franc, drops, vocaux samplés, remixes de tubes.\nClairement dedans : tout ce qui est pensé pour un mainstage, un pool party ou un club commercial.\nÀ la frontière : la techno sombre va dans « Rave warehouse » et le melodic techno dans « Techno mélodique » ; le garage, bassline et DnB vont dans « Rave warehouse » ; la house douce, deep, french touch ou piano va dans « House solaire » ; les tracks afro house à percus et chant africain/arabe vont dans « Afro house oriental ». Un titre lumineux et souriant peut AUSSI aller dans « Groove joyeux ».",
+      "examples": [
+        "James Hype — Don't Wake Me Up",
+        "Mau P — Drugs From Amsterdam",
+        "FISHER — Stay",
+        "Chris Lake — in2minds",
+        "Dom Dolla — girl$",
+        "PAWSA — Dirty Cash (Money Talks)",
+        "Shermanology — Boyz N Da Club - Radio Edit",
+        "Matroda — Bullshit"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Afrobeats & afro-RnB",
+      "axis": "scène",
+      "brief": "Afrobeats et afropop nigérians/ghanéens (Rema, Burna Boy, Ayra Starr, Omah Lay, Wizkid, CKay, Davido, Fireboy, Asake, Tyla, MOLIY), afroswing UK (NSG, Dave x Burna), afro-RnB francophone (Aya Nakamura, Dadju, Tiakola, Tayc, Joé Dwèt Filé). Tempo moyen, dansabilité haute, chant mélodique, log drum ou percus afro, ambiance chaleureuse.\nClairement dedans : toute chanson à chant afro moderne, même si c'est un feat avec un rappeur ou une remix.\nÀ la frontière : les instrus afro house de club sans chant pop vont dans « Afro house oriental » ; le dancehall et la kompa purs vont dans « Caraïbes & latino » ; la soul UK sans groove afro va dans « Soul nocturne » ; le rap français sans chant afro va dans « Rap français ». Un afrobeat solaire peut AUSSI aller dans « Groove joyeux ».",
+      "examples": [
+        "Rema — AZAMAN",
+        "Burna Boy — Last Last",
+        "Ayra Starr — Bloody Samaritan",
+        "OMAH LAY — soso",
+        "Tyla — Water",
+        "CKay — emiliana",
+        "Aya Nakamura — Djadja",
+        "NSG — Options",
+        "Mckay — BAD"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Soul nocturne",
+      "axis": "scène",
+      "brief": "Soul et RnB contemporains, surtout UK : Jorja Smith, Cleo Sol, SAULT, Pip Millett, Gotts Street Park, Olivia Dean, Mahalia, Joy Crookes, ENNY, IYAMAH, Olympia Vitalis, Alewya, ROZZZQWEEN, RUBII, Kehlani, Naomi Sharon, YellowStraps, LYNN, Re:um, GeeJay, Masego côté RnB. Énergie basse à moyenne, acoustique ou beats discrets, voix en avant, textes intimes, ambiance nuit et introspection.\nClairement dedans : tout RnB/néo-soul calme, alternative RnB, jazz-hop chanté.\nÀ la frontière : la soul rétro à cuivres et le jazz instrumental vont dans « Jazz groove » ; les titres RnB à groove afro vont dans « Afrobeats & afro-RnB » ; les morceaux très lents et planants peuvent aussi vivre dans « Fin de nuit » ; les remixes house de ces voix vont dans « House solaire ».",
+      "examples": [
+        "Jorja Smith — What's Done Is Done",
+        "Cleo Sol — Why Don't You",
+        "Pip Millett — Hard Life",
+        "Gotts Street Park — Are You Still A Friend?",
+        "Olympia Vitalis — Curls",
+        "Alewya — Dragon",
+        "YellowStraps — tnght (i can feel)",
+        "Kehlani — Folded",
+        "Nia Smith — Mr Right"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Rap français",
+      "axis": "scène",
+      "brief": "Rap francophone centré sur le texte et le son indé : BEN plg, Demi Portion, ABSOLEM, Jungle Jack, Keroué, NeS, Peet, Jewel Usain, Yamê, JeanJass, Caballero, Rilès, Yvnnis, Georgio, Luidji, Damso, Swing, Taipan, Seth Gueko, Sameer Ahmad, B.B. Jacques, disiz, Abou Tall, rob, Scylla. Du boom-bap à l'expérimental, énergie variable, production souvent organique ou lo-fi.\nClairement dedans : tout rap français/belge avec kick et flow, sessions live incluses.\nÀ la frontière : l'afro-RnB francophone chanté (Aya, Dadju, Tiakola) va dans « Afrobeats & afro-RnB » ; les remixes house de rap (Trinix x Yamê, Booba remix) vont dans « House solaire » ou « Tech house festival » ; le rap UK/US (Dave, Knucks, Jack Harlow) reste ici seulement si le son est proche, l'afroswing (Dave x Burna) va dans « Afrobeats & afro-RnB ». Un rap posé et acoustique peut AUSSI aller dans « Fin de nuit », un rap qui fait sourire dans « Groove joyeux ».",
+      "examples": [
+        "BEN plg — Prochaine fois",
+        "Demi Portion — Horizon",
+        "ABSOLEM — Bougies",
+        "Keroué — SWEENEY TODD",
+        "Jewel Usain — Poussière",
+        "Yamê — Ayo Mba",
+        "JeanJass — Vongole",
+        "Damso — YOUVOI LIVE",
+        "TIF — PEACE & LOVE",
+        "Willylancien — frozen",
+        "Crown — L'UZINE - 2nd Round"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "House solaire",
+      "axis": "scène",
+      "brief": "House chaleureuse et mélodique : french touch et electro-chill (Trinix, Bon Entendeur, Polo & Pan, Kungs, Synapson, Kazy Lambist, Folamour, Swimming Paul), deep house et house vocale soft (Bakermat, Barry Can't Swim, Charlie Jeer, nimino, Jazzy, oskar med k, Sonny Fodera, dublon, Carlita), remixes chill de chansons, bossa-électro (aupinard, Ladji Mouflet). Énergie moyenne, valence douce, tempo house mais jamais agressif.\nClairement dedans : tout ce qui sonne terrasse, coucher de soleil, piscine en fin de journée.\nÀ la frontière : si ça tape fort et sonne club commercial, c'est « Tech house festival » ; si percus afro et chant africain/arabe, c'est « Afro house oriental » ; si c'est du garage à 2-step, c'est « Rave warehouse » ; si c'est construit sur une montée de synthé hypnotique, c'est « Techno mélodique » ; les titres downtempo sans kick vont dans « Fin de nuit ». Un titre très lumineux peut AUSSI aller dans « Groove joyeux ».",
+      "examples": [
+        "Trinix — Dima",
+        "Bon Entendeur — L'amour, l'amour, l'amour",
+        "Polo & Pan — Petite Etoile",
+        "Barry Can't Swim — Sunsleeper",
+        "Bakermat — Save My Soul (feat. AMANZI)",
+        "Charlie Jeer — Mona Lisa",
+        "nimino — Better",
+        "Kungs — I Feel So Bad"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Afro house oriental",
+      "axis": "scène",
+      "brief": "Afro house, house tribale et remixes électro de musiques nord-africaines et africaines : Ollf, Black9ett, Eljoee, CHAAMA, Zamane, Faylasuf, HVMZA, Idd Aziz, Caiiro, Moojo, Ginton, Francis Mercier, Joezi, Bun Xapa, Mr. ID, Bujaa Beats, Cheb Rayan remixé, Ahmed Saad, Pongo, Vanco, L.B. One x Idir. Énergie moyenne-haute, percussions organiques, chants en arabe, darija, swahili ou langues ouest-africaines, raï et gnawa relus au club.\nAccueille aussi, en bordure, le raï, le gnawa et les racines acoustiques (Cheikha Rimitti, Imarhan, Habib Belk, Daraa Tribes, EMEL) quand il n'y a pas de meilleure maison.\nÀ la frontière : les afrobeats pop nigérians chantés vont dans « Afrobeats & afro-RnB » ; la tech house sans couleur africaine va dans « Tech house festival » ; la house mélodique à montées de synthé sans couleur africaine va dans « Techno mélodique » ; la house douce sans percus va dans « House solaire ».",
+      "examples": [
+        "Ollf — Ouidad Casa (Arabic rMix)",
+        "Black9ett — Enta",
+        "Eljoee — Burakia II",
+        "Faylasuf — Lamouni",
+        "AVÖ — Dana Dana (ft. Rima)",
+        "Mr. ID — Lawah Lawah ( Rework ) - Radio Edit",
+        "Joezi — Amathole",
+        "Moojo — NGWINO"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Rave warehouse",
+      "axis": "scène",
+      "brief": "Les deux visages de la rave : UK garage, 2-step, bassline, speed garage, jungle et drum'n'bass d'un côté (Sammy Virji, Chase & Status, MPH), techno sombre, acid, hard et melodic techno de l'autre (Charlotte de Witte, Sara Landry, Anyma).\nÉnergie très haute, kicks droits ou breakbeats rapides, nappes sombres, montées hypnotiques, valence souvent basse : le cœur de nuit en club ou en warehouse.\nDedans : dubstep et grime dancefloor, dnb liquide ou jump up, techno industrielle, trance techno sombre.\nDehors : le melodic techno, la progressive et la trance à montées mélodiques vont dans « Techno mélodique », la tech house groovy et fédératrice va dans « Tech house festival », la house douce ou mélodique dans « House solaire », les percus afro-orientales dans « Afro house oriental » ; le retour calme va dans « Fin de nuit ».",
+      "examples": [
+        "Sammy Virji — Damager",
+        "Bushbaby — Pumpin Jumpin",
+        "Chase & Status — Baddadan (feat. IRAH, Flowdan, Trigga & Takura)",
+        "Whiney — Stop & Search",
+        "Charlotte de Witte — One Mind",
+        "Marie Vaunt — That Acid",
+        "Anyma — Higher Power",
+        "Sara Landry — Pressure - Indira Paganotto Remix"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Jazz groove",
+      "axis": "scène",
+      "brief": "Jazz et soul joués par des groupes : jazz londonien et afro-jazz (Ezra Collective, Nubiyan Twist, Yussef Dayes, Alfa Mist, Oscar Jerome, Jordan Rakei, Jembaa Groove), funk et nu-disco organique (Jungle, Dabeull, Alastair Lane, Monophonics, Janelle Monáe, KAMAUU, St Germain, Blundetto, Mo' Horizons), soul rétro et blues (Jalen Ngonda, Lady Wray, Black Pumas, Teskey Brothers, Curtis Harding, GoldFord, Pale Jay, Tank and the Bangas, Caity Gyorgy, berlioz). Chaleur, instruments vrais, souvent valence haute.\nClairement dedans : tout ce qui sent le live, la section de cuivres, le piano ou la contrebasse.\nÀ la frontière : le RnB intimiste à beats va dans « Soul nocturne » ; les remixes house de ces groupes vont dans « House solaire » ; les titres jazz-house à kick 4/4 (Jazzwaves) restent ici seulement si l'instrument domine. Un titre dansant et pétillant peut AUSSI aller dans « Groove joyeux », un jazz vocal doux dans « Fin de nuit ».",
+      "examples": [
+        "Ezra Collective — JOY (Life Goes On)",
+        "Nubiyan Twist — Lights Out",
+        "Jembaa Groove — Makoma",
+        "Yussef Dayes — Turquoise Galaxy",
+        "Jungle — Candle Flame",
+        "Alastair Lane — Rouge à lèvres",
+        "Jalen Ngonda — If You Don't Want My Love",
+        "Tank and The Bangas — Remember (feat. Samara Joy, Robert Glasper)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Groove joyeux",
+      "axis": "ambiance",
+      "brief": "Bac d'ambiance : morceaux à valence haute (va > .7) et dansabilité haute, lumineux, légers, souriants, quel que soit le genre. Y vont des afrobeats solaires (P-Square, Darassa, Adekunle Gold), du funk et nu-disco (Deluxe, Dabeull, Purple Disco Machine, Boney M. remix), du rap français qui fait sourire (Georgio « Sans surprise », Demi Portion), du jazz dansant (Ezra « JOY »), de la house joyeuse (Roger Sanchez x HUGEL, Mau P « The Less I Know »), de la soul pétillante (Lady Wray, Jalen Ngonda).\nCritère : tu te surprends à chanter ou à bouger les épaules dès l'intro, avec une sensation de soleil.\nÀ la frontière : les bangers de club sombres ou agressifs restent dans « Tech house festival », « Rave warehouse » ou « Techno mélodique » ; les titres mélancoliques, même dansants, n'y vont pas (voir « Fin de nuit », « Soul nocturne »).",
+      "examples": [
+        "Georgio — Sans surprise",
+        "Deluxe — Pony",
+        "Dabeull — Messages from the Stars",
+        "P-Square — Personally",
+        "Tensnake — Coma Cat - Purple Disco Machine Re-Work",
+        "Lady Wray — Under The Sun",
+        "KARMA — SPRINTER",
+        "Darassa — Muziki"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Fin de nuit",
+      "axis": "ambiance",
+      "brief": "Bac d'ambiance pour les morceaux lents et contemplatifs, toutes scènes confondues : downtempo et trip-hop (Catching Flies, ODESZA, Nesta, Boztown, Kazy Lambist), piano et classique moderne (Sofiane Pamart, berlioz), RnB très calme (Masego & FKJ « Tadow », RUBII, Alewya « Night Drive », IAMDDB), rap français posé et acoustique (BEN plg « Le riz et la sauce », Peet, Yamê, Luidji), jazz vocal doux (Caity Gyorgy), chanson acoustique (Emma Peters, Irma, Billie Eilish, EMEL).\nCritère : énergie basse (én < .55), peu de kick ou kick très discret, écoute au casque, après 2h du matin ou un dimanche pluvieux.\nÀ la frontière : la soul feutrée mais à tempo RnB reste dans « Soul nocturne » ; la deep house, même douce, va dans « House solaire » ; tout ce qui donne envie de danser n'a rien à faire ici.",
+      "examples": [
+        "Masego — Tadow",
+        "Catching Flies — Marseille",
+        "Peet — Joyboy",
+        "RUBII — BOTB",
+        "Sofiane Pamart — Moviestar",
+        "ODESZA — Music of Wellness - ODESZA Severance Remix",
+        "BEN plg — Le riz et la sauce",
+        "Caity Gyorgy — Fly Baby"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Caraïbes & latino",
+      "axis": "scène",
+      "brief": "Scènes caraïbes et latines : reggae et dub (Biga*Ranx, Art-X, Mo'Kalamity, Blundetto, Danitsa, Taste of Pluto), dancehall et shatta (Shenseea, Meryl, Rvssian, MOLIY « Shake It », Poirier x Flavia Coelho, Louis Culture), kompa et pop créole (Joé Dwèt Filé, Naïka, Nia Smith), latino électro et baile funk (Ino Casablanca, Pongo, Francis Mercier « Baianá », Gramophiles, Novalima, Chancha Via Circuito), bossa et MPB (LUIZA, Mari Froes, Leo Middea). Groove chaloupé, chant en créole, espagnol, portugais ou patois jamaïcain.\nClairement dedans : riddim reggae/dancehall, reggaeton, kuduro, cumbia électro.\nÀ la frontière : les afrobeats nigérians vont dans « Afrobeats & afro-RnB » ; la DnB à MC ragga va dans « Rave warehouse » ; la house latine très club (HUGEL « La Verdolaga ») va dans « Tech house festival ». Un titre solaire et souriant peut AUSSI aller dans « Groove joyeux ».",
+      "examples": [
+        "Biga*Ranx — Gotta Learn",
+        "Shenseea — BOSS UP",
+        "Ino Casablanca — ALBUFEIRA",
+        "Pongo — Doudou",
+        "Poirier — Café Com Leite",
+        "Meryl — Mové",
+        "Francis Mercier — Baianá (Boa Noite)",
+        "LUIZA — OXALÁ"
+      ],
+      "counterExamples": [
+        "Nia Smith — Mr Right"
+      ]
+    },
+    {
+      "name": "Pop indé sensible",
+      "axis": "scène",
+      "brief": "Pop et rock indé, chanson pop française et songwriters d'aujourd'hui : FEEL, Jain, Charlotte Cardin, Tame Impala, Oliver Malcolm, Asaf Avidan, Deluxe, Bleu nuage. Énergie moyenne, mélodie et voix au centre, écoute attentive ou de fond, à toute heure. Méfie-toi des tags metal ou rock fantaisistes : juge l'artiste et le titre. Dehors : les voix RnB feutrées (« Soul nocturne »), le rap à texte (« Rap français »), les titres club ou house (« House solaire », « Tech house festival ») et le metal ou hardcore pur. Une ballade acoustique peut AUSSI aller dans « Fin de nuit », un titre lumineux et dansant dans « Groove joyeux ».",
+      "examples": [
+        "Jain — Kill It With The Beat",
+        "Tame Impala — My Old Ways",
+        "Charlotte Cardin — Take Me Back",
+        "Oliver Malcolm — Ghosts",
+        "Deluxe — MICHAEL",
+        "Asaf Avidan — Haunted",
+        "FEEL — Émeraude",
+        "Tash Sultana — Willow Tree (feat. Jerome Farah)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Techno mélodique",
+      "axis": "scène",
+      "brief": "Melodic techno, progressive house et trance moderne : Anyma, Boris Brejcha, Miss Monique, ARTBAT, Argy, Adriatique, Bedouin, RÜFÜS DU SOL remixé, CamelPhat, Layton Giordani, Cassian, KI/KI, deadmau5, Tiësto côté trance, Odymel, W&W. Énergie haute (én > .7) mais valence basse à moyenne : kicks droits, montées hypnotiques, synthés en nappes, breakdowns émotionnels, vocaux éthérés ; sonne mainstage de nuit ou Afterlife plutôt que hangar. Clairement dedans : tout track à 125-135 bpm construit sur une mélodie de synthé et une montée, même sans drop violent. À la frontière : la techno industrielle, acid ou hard (Charlotte de Witte, Sara Landry, 999999999) et tout le garage/DnB restent dans « Rave warehouse » ; le groove tech house à vocaux samplés et drops commerciaux (James Hype, FISHER, Mau P, HUGEL) va dans « Tech house festival » ; l'organic house à percus et chant africain va dans « Afro house oriental » ; la house douce sans montée va dans « House solaire ».",
+      "examples": [
+        "Anyma — Out Of My Body (feat. EJAE)",
+        "Boris Brejcha — New Wave",
+        "Miss Monique — Magnet",
+        "RÜFÜS DU SOL — Wildfire - Colyn Remix",
+        "Bedouin — Better Than This",
+        "KI/KI — Losing Control",
+        "Layton Giordani — Act of God - CamelPhat Remix"
+      ],
+      "counterExamples": []
+    }
+  ],
+  "extra": [
+    {
+      "name": "Route de nuit",
+      "axis": "moment",
+      "brief": "Pour rouler de nuit sur le périph ou l'autoroute vide : groove régulier et hypnotique, basse ronde, ambiance sombre ou mélancolique mais en mouvement. Vient du RnB électronique (Soul nocturne), de la deep house mélancolique (House solaire), de l'afro house lente (Afro house oriental), du rap introspectif à beat lourd, des afrobeats en mineur et de la techno mélodique la moins frontale. Critères : énergie .55 à .85, valence plutôt basse (< .5), tempo stable, pas de drop violent. Ne doit pas accueillir les titres solaires (Groove joyeux), les morceaux sans kick (Fin de nuit), ni la techno industrielle qui cogne.",
+      "examples": [
+        "Alewya — Dragon",
+        "Bakermat — Save My Soul (feat. AMANZI)",
+        "Ollf — Taghazout, Sarah&Ismael",
+        "Yvnnis — BARA",
+        "Burna Boy — Ye",
+        "Boris Brejcha — Save My Soul",
+        "Joy Orbison — flight fm",
+        "YellowStraps — tnght (i can feel)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Avant de sortir",
+      "axis": "moment",
+      "brief": "La playlist de la salle de bain et de l'apéro avant la soirée : titres qui donnent de l'aplomb, de la frime et l'envie d'y aller. Vient des afrobeats et de l'afroswing, du rap français à punchlines, du dancehall, du RnB UK à groove et de la house vocale de club. Critères : énergie .65 à .9, dansabilité haute, voix et refrains qui en imposent, valence moyenne (confiance plutôt que pur sourire). Ce qui n'y va pas : les titres purement joyeux et légers (Groove joyeux), les bangers de peak time trop sombres ou instrumentaux, et tout ce qui est lent ou contemplatif.",
+      "examples": [
+        "Burna Boy — Anybody",
+        "Aya Nakamura — Djadja",
+        "Keroué — SWEENEY TODD",
+        "Fred again.. — Victory Lap",
+        "Shenseea — BOSS UP",
+        "Jelani Blackman — Comfy",
+        "NSG — Options",
+        "Janelle Monáe — Dance or Die (feat. Saul Williams)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Focus instrumental",
+      "axis": "ambiance",
+      "brief": "Pour travailler, coder ou lire : morceaux instrumentaux ou presque, à motif répétitif, qui tiennent l'attention sans la capter. Vient du jazz-hop et du jazz londonien (Jazz groove), des beats de la beat scene, de la house breakbeat (House solaire), de l'afro house et des productions orientales instrumentales, et de la techno minimale la plus douce. Critères : énergie .4 à .8, peu ou pas de paroles en avant, pas de refrain, pas de drop. Ce qui n'y va pas : le chant au centre, les montées de mainstage, et les pièces trop lentes et ambiantes qui relèvent de Fin de nuit.",
+      "examples": [
+        "Alfa Mist — Brian",
+        "Yussef Dayes — Turquoise Galaxy",
+        "IAMNOBODI — Savior",
+        "Okvsho — Rasheed",
+        "Barry Can't Swim — Childhood",
+        "Argy — Sierra",
+        "Bujaa Beats — Arabesca",
+        "Mokado — THE PARK // 6:42AM"
+      ],
+      "counterExamples": []
+    }
+  ],
+  "refreshed16": [
+    {
+      "name": "Tech house festival",
+      "axis": "scène",
+      "brief": "House de club musclée et festive : tech house, bass house, electro house, G-house, EDM mainstream (James Hype, Mau P, FISHER, Chris Lake, HUGEL, R3HAB, Dom Dolla, PAWSA, Cloonee, Shermanology, Matroda, Max Styler, Biscits). Énergie très haute (én > .8), dansabilité haute, kick franc, drops, vocaux samplés, remixes de tubes.\nClairement dedans : tout ce qui est pensé pour un mainstage, un pool party ou un club commercial.\nÀ la frontière : la techno sombre, acid ou hard va dans « Rave warehouse » et le melodic techno dans « Techno mélodique » ; le garage, bassline et DnB vont dans « Rave warehouse » ; la house douce, deep, french touch ou piano va dans « House solaire » ; les tracks afro house à percus et chant africain/arabe vont dans « Afro house oriental ». Un titre peut AUSSI aller dans « Avant de sortir » (house vocale de club qui en impose) ou dans « Groove joyeux » s'il est lumineux et souriant.",
+      "examples": [
+        "James Hype — Don't Wake Me Up",
+        "Mau P — Drugs From Amsterdam",
+        "FISHER — Stay",
+        "Chris Lake — in2minds",
+        "Dom Dolla — girl$",
+        "PAWSA — Dirty Cash (Money Talks)",
+        "Shermanology — Boyz N Da Club - Radio Edit",
+        "Matroda — Bullshit"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Afrobeats & afro-RnB",
+      "axis": "scène",
+      "brief": "Afrobeats et afropop nigérians/ghanéens (Rema, Burna Boy, Ayra Starr, Omah Lay, Wizkid, CKay, Davido, Fireboy, Asake, Tyla, MOLIY), afroswing UK (NSG, Dave x Burna), afro-RnB francophone (Aya Nakamura, Dadju, Tiakola, Tayc, Joé Dwèt Filé). Tempo moyen, dansabilité haute, chant mélodique, log drum ou percus afro, ambiance chaleureuse.\nClairement dedans : toute chanson à chant afro moderne, même si c'est un feat avec un rappeur ou une remix.\nÀ la frontière : les instrus afro house de club sans chant pop vont dans « Afro house oriental » ; le dancehall et la kompa purs vont dans « Caraïbes & latino » ; la soul UK sans groove afro va dans « Soul nocturne » ; le rap français sans chant afro va dans « Rap français ». Un titre peut AUSSI aller dans « Avant de sortir » (afrobeats et afroswing qui donnent de l'aplomb), dans « Groove joyeux » s'il est solaire, ou dans « Route de nuit » s'il est en mineur.",
+      "examples": [
+        "Rema — AZAMAN",
+        "Burna Boy — Last Last",
+        "Ayra Starr — Bloody Samaritan",
+        "OMAH LAY — soso",
+        "Tyla — Water",
+        "CKay — emiliana",
+        "Aya Nakamura — Djadja",
+        "NSG — Options",
+        "Mckay — BAD"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Soul nocturne",
+      "axis": "scène",
+      "brief": "Soul et RnB contemporains, surtout UK : Jorja Smith, Cleo Sol, SAULT, Pip Millett, Gotts Street Park, Olivia Dean, Mahalia, Joy Crookes, ENNY, IYAMAH, Olympia Vitalis, Alewya, ROZZZQWEEN, RUBII, Kehlani, Naomi Sharon, YellowStraps, LYNN, Re:um, GeeJay, Masego côté RnB. Énergie basse à moyenne, acoustique ou beats discrets, voix en avant, textes intimes, ambiance nuit et introspection.\nClairement dedans : tout RnB/néo-soul calme, alternative RnB, jazz-hop chanté.\nÀ la frontière : la soul rétro à cuivres et le jazz instrumental vont dans « Jazz groove » ; les titres RnB à groove afro vont dans « Afrobeats & afro-RnB » ; les morceaux très lents et planants peuvent aussi vivre dans « Fin de nuit » ; les remixes house de ces voix vont dans « House solaire ». Un titre peut AUSSI aller dans « Route de nuit » (RnB électronique en mouvement) ou dans « Avant de sortir » (RnB UK à groove).",
+      "examples": [
+        "Jorja Smith — What's Done Is Done",
+        "Cleo Sol — Why Don't You",
+        "Pip Millett — Hard Life",
+        "Gotts Street Park — Are You Still A Friend?",
+        "Olympia Vitalis — Curls",
+        "Alewya — Dragon",
+        "YellowStraps — tnght (i can feel)",
+        "Kehlani — Folded",
+        "Nia Smith — Mr Right"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Rap français",
+      "axis": "scène",
+      "brief": "Rap francophone centré sur le texte et le son indé : BEN plg, Demi Portion, ABSOLEM, Jungle Jack, Keroué, NeS, Peet, Jewel Usain, Yamê, JeanJass, Caballero, Rilès, Yvnnis, Georgio, Luidji, Damso, Swing, Taipan, Seth Gueko, Sameer Ahmad, B.B. Jacques, disiz, Abou Tall, rob, Scylla. Du boom-bap à l'expérimental, énergie variable, production souvent organique ou lo-fi.\nClairement dedans : tout rap français/belge avec kick et flow, sessions live incluses.\nÀ la frontière : l'afro-RnB francophone chanté (Aya, Dadju, Tiakola) va dans « Afrobeats & afro-RnB » ; les remixes house de rap (Trinix x Yamê, Booba remix) vont dans « House solaire » ou « Tech house festival » ; le rap UK/US (Dave, Knucks, Jack Harlow) reste ici seulement si le son est proche, sinon il n'a pas sa place dans ce bac. Un titre peut AUSSI aller dans « Avant de sortir » (punchlines), « Route de nuit » (rap introspectif à beat lourd), « Fin de nuit » (rap posé et acoustique) ou « Groove joyeux » s'il fait sourire.",
+      "examples": [
+        "BEN plg — Prochaine fois",
+        "Demi Portion — Horizon",
+        "ABSOLEM — Bougies",
+        "Keroué — SWEENEY TODD",
+        "Jewel Usain — Poussière",
+        "Yamê — Ayo Mba",
+        "JeanJass — Vongole",
+        "Damso — YOUVOI LIVE",
+        "TIF — PEACE & LOVE",
+        "Willylancien — frozen",
+        "Crown — L'UZINE - 2nd Round"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "House solaire",
+      "axis": "scène",
+      "brief": "House chaleureuse et mélodique : french touch et electro-chill (Trinix, Bon Entendeur, Polo & Pan, Kungs, Synapson, Kazy Lambist, Folamour, Swimming Paul), deep house et house vocale soft (Bakermat, Barry Can't Swim, Charlie Jeer, nimino, Jazzy, oskar med k, Sonny Fodera, dublon, Carlita), remixes chill de chansons, bossa-électro (aupinard, Ladji Mouflet). Énergie moyenne, valence douce, tempo house mais jamais agressif.\nClairement dedans : tout ce qui sonne terrasse, coucher de soleil, piscine en fin de journée.\nÀ la frontière : si ça tape fort et sonne club commercial, c'est « Tech house festival » ; si percus afro et chant africain/arabe, c'est « Afro house oriental » ; si c'est du garage à 2-step, c'est « Rave warehouse » ; si c'est construit sur une montée de synthé hypnotique, c'est « Techno mélodique » ; les titres downtempo sans kick vont dans « Fin de nuit ». Un titre peut AUSSI aller dans « Groove joyeux » s'il est lumineux, « Route de nuit » (deep house mélancolique) ou « Focus instrumental » (house breakbeat sans chant).",
+      "examples": [
+        "Trinix — Dima",
+        "Bon Entendeur — L'amour, l'amour, l'amour",
+        "Polo & Pan — Petite Etoile",
+        "Barry Can't Swim — Sunsleeper",
+        "Bakermat — Save My Soul (feat. AMANZI)",
+        "Charlie Jeer — Mona Lisa",
+        "nimino — Better",
+        "Kungs — I Feel So Bad"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Afro house oriental",
+      "axis": "scène",
+      "brief": "Afro house, house tribale et remixes électro de musiques nord-africaines et africaines : Ollf, Black9ett, Eljoee, CHAAMA, Zamane, Faylasuf, HVMZA, Idd Aziz, Caiiro, Moojo, Ginton, Francis Mercier, Joezi, Bun Xapa, Mr. ID, Bujaa Beats, Cheb Rayan remixé, Ahmed Saad, Pongo, Vanco, L.B. One x Idir. Énergie moyenne-haute, percussions organiques, chants en arabe, darija, swahili ou langues ouest-africaines, raï et gnawa relus au club.\nAccueille aussi, en bordure, le raï, le gnawa et les racines acoustiques (Cheikha Rimitti, Imarhan, Habib Belk, Daraa Tribes, EMEL) quand il n'y a pas de meilleure maison.\nÀ la frontière : les afrobeats pop nigérians chantés vont dans « Afrobeats & afro-RnB » ; la tech house sans couleur africaine va dans « Tech house festival » ; la house douce sans percus va dans « House solaire » ; la melodic techno sans percus afro va dans « Techno mélodique ». Un titre peut AUSSI aller dans « Route de nuit » (afro house lente) ou « Focus instrumental » (productions instrumentales).",
+      "examples": [
+        "Ollf — Ouidad Casa (Arabic rMix)",
+        "Black9ett — Enta",
+        "Eljoee — Burakia II",
+        "Faylasuf — Lamouni",
+        "AVÖ — Dana Dana (ft. Rima)",
+        "Mr. ID — Lawah Lawah ( Rework ) - Radio Edit",
+        "Joezi — Amathole",
+        "Moojo — NGWINO"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Rave warehouse",
+      "axis": "scène",
+      "brief": "Les deux visages de la rave : UK garage, 2-step, bassline, speed garage, jungle et drum'n'bass d'un côté (Sammy Virji, Chase & Status, MPH), techno sombre, acid, hard et melodic techno de l'autre (Charlotte de Witte, Sara Landry, Anyma).\nÉnergie très haute, kicks droits ou breakbeats rapides, nappes sombres, montées hypnotiques, valence souvent basse : le cœur de nuit en club ou en warehouse.\nDedans : dubstep et grime dancefloor, dnb liquide ou jump up, techno industrielle, trance techno sombre.\nDehors : la melodic techno et la trance mainstage (Anyma) vont dans « Techno mélodique », la tech house groovy et fédératrice va dans « Tech house festival », la house douce ou mélodique dans « House solaire », les percus afro-orientales dans « Afro house oriental » ; le retour calme va dans « Fin de nuit ».",
+      "examples": [
+        "Sammy Virji — Damager",
+        "Bushbaby — Pumpin Jumpin",
+        "Chase & Status — Baddadan (feat. IRAH, Flowdan, Trigga & Takura)",
+        "Whiney — Stop & Search",
+        "Charlotte de Witte — One Mind",
+        "Marie Vaunt — That Acid",
+        "Anyma — Higher Power",
+        "Sara Landry — Pressure - Indira Paganotto Remix"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Jazz groove",
+      "axis": "scène",
+      "brief": "Jazz et soul joués par des groupes : jazz londonien et afro-jazz (Ezra Collective, Nubiyan Twist, Yussef Dayes, Alfa Mist, Oscar Jerome, Jordan Rakei, Jembaa Groove), funk et nu-disco organique (Jungle, Dabeull, Alastair Lane, Monophonics, Janelle Monáe, KAMAUU, St Germain, Blundetto, Mo' Horizons), soul rétro et blues (Jalen Ngonda, Lady Wray, Black Pumas, Teskey Brothers, Curtis Harding, GoldFord, Pale Jay, Tank and the Bangas, Caity Gyorgy, berlioz). Chaleur, instruments vrais, souvent valence haute.\nClairement dedans : tout ce qui sent le live, la section de cuivres, le piano ou la contrebasse.\nÀ la frontière : le RnB intimiste à beats va dans « Soul nocturne » ; les remixes house de ces groupes vont dans « House solaire » ; les titres jazz-house à kick 4/4 (Jazzwaves) restent ici seulement si l'instrument domine. Un titre peut AUSSI aller dans « Groove joyeux » (funk, jazz dansant, soul pétillante), « Focus instrumental » (jazz-hop et jazz londonien instrumental) ou « Fin de nuit » (jazz vocal doux).",
+      "examples": [
+        "Ezra Collective — JOY (Life Goes On)",
+        "Nubiyan Twist — Lights Out",
+        "Jembaa Groove — Makoma",
+        "Yussef Dayes — Turquoise Galaxy",
+        "Jungle — Candle Flame",
+        "Alastair Lane — Rouge à lèvres",
+        "Jalen Ngonda — If You Don't Want My Love",
+        "Tank and The Bangas — Remember (feat. Samara Joy, Robert Glasper)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Groove joyeux",
+      "axis": "ambiance",
+      "brief": "Bac d'ambiance : morceaux à valence haute (va > .7) et dansabilité haute, lumineux, légers, souriants, quel que soit le genre. Y vont des afrobeats solaires (P-Square, Darassa, Adekunle Gold), du funk et nu-disco (Deluxe, Dabeull, Purple Disco Machine, Boney M. remix), du rap français qui fait sourire (Georgio « Sans surprise », Demi Portion), du jazz dansant (Ezra « JOY »), de la house joyeuse (Roger Sanchez x HUGEL, Mau P « The Less I Know »), de la soul pétillante (Lady Wray, Jalen Ngonda).\nCritère : tu te surprends à chanter ou à bouger les épaules dès l'intro, avec une sensation de soleil.\nÀ la frontière : les bangers de club sombres ou agressifs restent dans « Tech house festival », « Rave warehouse » ou « Techno mélodique » ; les titres qui misent sur la frime plus que le sourire vont dans « Avant de sortir » ; les titres mélancoliques, même dansants, n'y vont pas (voir « Fin de nuit », « Soul nocturne », « Route de nuit »).",
+      "examples": [
+        "Georgio — Sans surprise",
+        "Deluxe — Pony",
+        "Dabeull — Messages from the Stars",
+        "P-Square — Personally",
+        "Tensnake — Coma Cat - Purple Disco Machine Re-Work",
+        "Lady Wray — Under The Sun",
+        "KARMA — SPRINTER",
+        "Darassa — Muziki"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Fin de nuit",
+      "axis": "ambiance",
+      "brief": "Bac d'ambiance pour les morceaux lents et contemplatifs, toutes scènes confondues : downtempo et trip-hop (Catching Flies, ODESZA, Nesta, Boztown, Kazy Lambist), piano et classique moderne (Sofiane Pamart, berlioz), RnB très calme (Masego & FKJ « Tadow », RUBII, Alewya « Night Drive », IAMDDB), rap français posé et acoustique (BEN plg « Le riz et la sauce », Peet, Yamê, Luidji), jazz vocal doux (Caity Gyorgy), chanson acoustique (Emma Peters, Irma, Billie Eilish, EMEL).\nCritère : énergie basse (én < .55), peu de kick ou kick très discret, écoute au casque, après 2h du matin ou un dimanche pluvieux.\nÀ la frontière : la soul feutrée mais à tempo RnB reste dans « Soul nocturne » ; la deep house, même douce, va dans « House solaire » ; le groove sombre mais en mouvement va dans « Route de nuit » ; tout ce qui donne envie de danser n'a rien à faire ici.",
+      "examples": [
+        "Masego — Tadow",
+        "Catching Flies — Marseille",
+        "Peet — Joyboy",
+        "RUBII — BOTB",
+        "Sofiane Pamart — Moviestar",
+        "ODESZA — Music of Wellness - ODESZA Severance Remix",
+        "BEN plg — Le riz et la sauce",
+        "Caity Gyorgy — Fly Baby"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Caraïbes & latino",
+      "axis": "scène",
+      "brief": "Scènes caraïbes et latines : reggae et dub (Biga*Ranx, Art-X, Mo'Kalamity, Blundetto, Danitsa, Taste of Pluto), dancehall et shatta (Shenseea, Meryl, Rvssian, MOLIY « Shake It », Poirier x Flavia Coelho, Louis Culture), kompa et pop créole (Joé Dwèt Filé, Naïka, Nia Smith), latino électro et baile funk (Ino Casablanca, Pongo, Francis Mercier « Baianá », Gramophiles, Novalima, Chancha Via Circuito), bossa et MPB (LUIZA, Mari Froes, Leo Middea). Groove chaloupé, chant en créole, espagnol, portugais ou patois jamaïcain.\nClairement dedans : riddim reggae/dancehall, reggaeton, kuduro, cumbia électro.\nÀ la frontière : les afrobeats nigérians vont dans « Afrobeats & afro-RnB » ; la DnB à MC ragga va dans « Rave warehouse » ; la house latine très club (HUGEL « La Verdolaga ») va dans « Tech house festival ». Un titre peut AUSSI aller dans « Avant de sortir » (dancehall qui en impose) ou « Groove joyeux » s'il est solaire.",
+      "examples": [
+        "Biga*Ranx — Gotta Learn",
+        "Shenseea — BOSS UP",
+        "Ino Casablanca — ALBUFEIRA",
+        "Pongo — Doudou",
+        "Poirier — Café Com Leite",
+        "Meryl — Mové",
+        "Francis Mercier — Baianá (Boa Noite)",
+        "LUIZA — OXALÁ"
+      ],
+      "counterExamples": [
+        "Nia Smith — Mr Right"
+      ]
+    },
+    {
+      "name": "Pop indé sensible",
+      "axis": "scène",
+      "brief": "Pop et rock indé, chanson pop française et songwriters d'aujourd'hui : FEEL, Jain, Charlotte Cardin, Tame Impala, Oliver Malcolm, Asaf Avidan, Deluxe, Bleu nuage. Énergie moyenne, mélodie et voix au centre, écoute attentive ou de fond, à toute heure. Méfie-toi des tags metal ou rock fantaisistes : juge l'artiste et le titre. Dehors : les voix RnB feutrées (« Soul nocturne »), le rap à texte (« Rap français »), les titres club ou house (« House solaire », « Tech house festival ») et le metal ou hardcore pur. Un titre peut AUSSI aller dans « Fin de nuit » s'il est acoustique et lent, ou dans « Groove joyeux » s'il est lumineux et dansant.",
+      "examples": [
+        "Jain — Kill It With The Beat",
+        "Tame Impala — My Old Ways",
+        "Charlotte Cardin — Take Me Back",
+        "Oliver Malcolm — Ghosts",
+        "Deluxe — MICHAEL",
+        "Asaf Avidan — Haunted",
+        "FEEL — Émeraude",
+        "Tash Sultana — Willow Tree (feat. Jerome Farah)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Techno mélodique",
+      "axis": "scène",
+      "brief": "Melodic techno, progressive house et trance moderne : Anyma, Boris Brejcha, Miss Monique, ARTBAT, Argy, Adriatique, Bedouin, RÜFÜS DU SOL remixé, CamelPhat, Layton Giordani, Cassian, KI/KI, deadmau5, Tiësto côté trance, Odymel, W&W. Énergie haute (én > .7) mais valence basse à moyenne : kicks droits, montées hypnotiques, synthés en nappes, breakdowns émotionnels, vocaux éthérés ; sonne mainstage de nuit ou Afterlife plutôt que hangar. Clairement dedans : tout track à 125-135 bpm construit sur une mélodie de synthé et une montée, même sans drop violent. À la frontière : la techno industrielle, acid ou hard (Charlotte de Witte, Sara Landry, 999999999) et tout le garage/DnB restent dans « Rave warehouse » ; le groove tech house à vocaux samplés et drops commerciaux (James Hype, FISHER, Mau P, HUGEL) va dans « Tech house festival » ; l'organic house à percus et chant africain va dans « Afro house oriental » ; la house douce sans montée va dans « House solaire ». Un titre peut AUSSI aller dans « Route de nuit » s'il est parmi les moins frontaux.",
+      "examples": [
+        "Anyma — Out Of My Body (feat. EJAE)",
+        "Boris Brejcha — New Wave",
+        "Miss Monique — Magnet",
+        "RÜFÜS DU SOL — Wildfire - Colyn Remix",
+        "Bedouin — Better Than This",
+        "KI/KI — Losing Control",
+        "Layton Giordani — Act of God - CamelPhat Remix"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Route de nuit",
+      "axis": "moment",
+      "brief": "Pour rouler de nuit sur le périph ou l'autoroute vide : groove régulier et hypnotique, basse ronde, ambiance sombre ou mélancolique mais en mouvement. Vient du RnB électronique (« Soul nocturne »), de la deep house mélancolique (« House solaire »), de l'afro house lente (« Afro house oriental »), du rap introspectif à beat lourd (« Rap français »), des afrobeats en mineur (« Afrobeats & afro-RnB ») et de la techno mélodique la moins frontale (« Techno mélodique »). Critères : énergie .55 à .85, valence plutôt basse (< .5), tempo stable, pas de drop violent. Ne doit pas accueillir les titres solaires (« Groove joyeux »), les morceaux sans kick (« Fin de nuit »), ni la techno industrielle qui cogne (« Rave warehouse »).",
+      "examples": [
+        "Alewya — Dragon",
+        "Bakermat — Save My Soul (feat. AMANZI)",
+        "Ollf — Taghazout, Sarah&Ismael",
+        "Yvnnis — BARA",
+        "Burna Boy — Ye",
+        "Boris Brejcha — Save My Soul",
+        "Joy Orbison — flight fm",
+        "YellowStraps — tnght (i can feel)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Avant de sortir",
+      "axis": "moment",
+      "brief": "La playlist de la salle de bain et de l'apéro avant la soirée : titres qui donnent de l'aplomb, de la frime et l'envie d'y aller. Vient des afrobeats et de l'afroswing (« Afrobeats & afro-RnB »), du rap français à punchlines (« Rap français »), du dancehall (« Caraïbes & latino »), du RnB UK à groove (« Soul nocturne ») et de la house vocale de club (« Tech house festival »). Critères : énergie .65 à .9, dansabilité haute, voix et refrains qui en imposent, valence moyenne (confiance plutôt que pur sourire). Ce qui n'y va pas : les titres purement joyeux et légers (« Groove joyeux »), les bangers de peak time trop sombres ou instrumentaux (« Rave warehouse », « Techno mélodique »), et tout ce qui est lent ou contemplatif (« Fin de nuit »).",
+      "examples": [
+        "Burna Boy — Anybody",
+        "Aya Nakamura — Djadja",
+        "Keroué — SWEENEY TODD",
+        "Fred again.. — Victory Lap",
+        "Shenseea — BOSS UP",
+        "Jelani Blackman — Comfy",
+        "NSG — Options",
+        "Janelle Monáe — Dance or Die (feat. Saul Williams)"
+      ],
+      "counterExamples": []
+    },
+    {
+      "name": "Focus instrumental",
+      "axis": "ambiance",
+      "brief": "Pour travailler, coder ou lire : morceaux instrumentaux ou presque, à motif répétitif, qui tiennent l'attention sans la capter. Vient du jazz-hop et du jazz londonien (« Jazz groove »), des beats de la beat scene, de la house breakbeat (« House solaire »), de l'afro house et des productions orientales instrumentales (« Afro house oriental »), et de la techno minimale la plus douce. Critères : énergie .4 à .8, peu ou pas de paroles en avant, pas de refrain, pas de drop. Ce qui n'y va pas : le chant au centre, les montées de mainstage (« Techno mélodique », « Tech house festival »), et les pièces trop lentes et ambiantes qui relèvent de « Fin de nuit ».",
+      "examples": [
+        "Alfa Mist — Brian",
+        "Yussef Dayes — Turquoise Galaxy",
+        "IAMNOBODI — Savior",
+        "Okvsho — Rasheed",
+        "Barry Can't Swim — Childhood",
+        "Argy — Sierra",
+        "Bujaa Beats — Arabesca",
+        "Mokado — THE PARK // 6:42AM"
+      ],
+      "counterExamples": []
+    }
+  ]
+}
