@@ -6,7 +6,7 @@ import { initialTri } from "@/lib/tri";
 export const maxDuration = 60;
 
 /**
- * Tri quotidien (Vercel Cron, plan Hobby : une fois par jour, même heure pour tout le monde).
+ * Tri hebdomadaire (Vercel Cron, chaque lundi 6 h UTC, même heure pour tout le monde).
  * Lance un job « tri » par membre qui a des bacs et n'a pas mis le tri en pause.
  */
 export async function GET(req: Request) {
@@ -26,6 +26,6 @@ export async function GET(req: Request) {
     }),
   );
   const failed = results.filter((r) => r.status === "rejected");
-  for (const f of failed) console.error("Tri quotidien : lancement impossible", (f as PromiseRejectedResult).reason);
+  for (const f of failed) console.error("Tri du lundi : lancement impossible", (f as PromiseRejectedResult).reason);
   return Response.json({ members: ids.length, failed: failed.length });
 }

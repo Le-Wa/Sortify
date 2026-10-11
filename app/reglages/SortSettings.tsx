@@ -9,7 +9,7 @@ interface Props {
   unlikeAction: "retirer" | "garder";
 }
 
-/** `cronHour` : heure de Paris du tri quotidien (fixe pour tout le monde sur le plan Vercel Hobby). */
+/** `cronHour` : heure de Paris du tri du lundi (fixe pour tout le monde sur le plan Vercel Hobby). */
 export function SortSettings({ cronHour, ...initial }: Props & { cronHour: string }) {
   const [values, setValues] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function SortSettings({ cronHour, ...initial }: Props & { cronHour: strin
     <>
       <div className="list">
         <div className="list__row">
-          <span>Tri chaque matin</span>
+          <span>Tri chaque lundi</span>
           <span className="mono muted">vers {cronHour}</span>
         </div>
         <Toggle label="Mettre en pause" checked={values.sortPaused} disabled={saving} onChange={(v) => change({ sortPaused: v })} />

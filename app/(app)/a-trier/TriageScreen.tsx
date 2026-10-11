@@ -43,7 +43,7 @@ export function TriageScreen({ queue, bacs }: { queue: PendingItem[]; bacs: BacC
       <>
         <h1 className="display">Tout est rangé.</h1>
         <p className="muted" style={{ margin: 0 }}>
-          Plus rien sur le comptoir. Sortify range tes prochains likes chaque matin.
+          Plus rien sur le comptoir. Sortify range tes prochains likes lundi.
         </p>
         {toast ? <p className="small muted">{toast}</p> : null}
         <Link href="/accueil" className="btn btn--ghost">

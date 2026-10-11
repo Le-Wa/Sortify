@@ -95,7 +95,7 @@ export function NewLikesButton({ paused }: { paused: boolean }) {
       {message ? (
         <p className="toast" role="status">
           {message}
-          {paused ? " (Le tri quotidien est en pause.)" : ""}
+          {paused ? " (Le tri du lundi est en pause.)" : ""}
         </p>
       ) : null}
     </>

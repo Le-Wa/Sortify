@@ -79,7 +79,7 @@ export default async function AccueilPage() {
           </Link>
         ) : member.sort_paused ? (
           <p className="small muted" style={{ margin: 0 }}>
-            Le tri quotidien est en pause (Réglages).
+            Le tri du lundi est en pause (Réglages).
           </p>
         ) : null}
       </section>
@@ -102,7 +102,7 @@ export default async function AccueilPage() {
         <p className="small muted" style={{ margin: "0 4px" }}>
           {lastDone
             ? `Pas de nouveau like au dernier tri. Prochain tri ${relativeDay(next)} vers ${hourOf(next)}.`
-            : "Sortify range tes nouveaux likes chaque matin. Tu peux aussi lancer un tri avec « Nouveaux likes ? »."}
+            : "Sortify range tes nouveaux likes chaque lundi. Tu peux aussi lancer un tri avec « Nouveaux likes ? »."}
         </p>
       )}
 

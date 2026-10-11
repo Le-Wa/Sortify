@@ -213,7 +213,7 @@ a { color: inherit; }
   bottom: max(16px, env(safe-area-inset-bottom));
   width: min(448px, calc(100% - 32px));
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   background: var(--card);
   border-radius: 14px;
@@ -827,3 +827,29 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--ground); }
 .segmented__item { min-height: 44px; border: 0; border-radius: 9px; background: none; color: var(--ink); font-weight: 700; cursor: pointer; }
 .segmented__item.is-on { background: var(--ink); color: var(--card); }
+
+/* ── Arrivages (likes de la semaine, dépliables) ──────────── */
+.arrival { background: var(--card); border-radius: 14px; }
+.arrival__head {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.arrival__head::-webkit-details-marker { display: none; }
+.arrival__sleeves { display: flex; }
+.arrival__sleeves .sleeve + .sleeve { margin-left: -12px; }
+.arrival__chevron { font-size: 20px; transition: transform 0.2s; }
+.arrival[open] .arrival__chevron { transform: rotate(90deg); }
+.arrival__body { padding: 0 14px 14px; gap: 14px; }
+.arrival__bac { gap: 10px; min-height: 44px; text-decoration: none; color: inherit; font-weight: 700; }
+.arrival__tracks { list-style: none; margin: 0; padding: 0 0 0 46px; display: flex; flex-direction: column; gap: 6px; }
+.arrival__tracks li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.arrival__cover { width: 32px; height: 32px; }
+.arrival__crate {
+  width: 36px; height: 36px; flex: none; border-radius: 3px; background: #C9A878; color: #111111;
+  font-size: 8px; font-weight: 900; text-transform: uppercase; display: grid; place-items: center;
+}
