@@ -1,28 +1,30 @@
-# Prochaine session — passage de relais (11 oct. 2026)
+# Prochaine session — passage de relais (11 oct. 2026, soir)
 
 ## État
-Sortify V2 est **en production** (https://sortify-mauve.vercel.app), branche `v2` = `main`.
-Phases 1 à 5 faites (voir `docs/specs/04-plan-technique.md`, section « État »), plus :
-- rangement par **Claude Sonnet 5.5** et **repli Deezer** pour les titres sans tag (banc d'essai : `docs/bench/2026-10-10-banc-essai.md`) ; bibliothèque de Walid entièrement re-rangée ;
-- **changements faits dans Spotify** pris en compte à chaque tri (`lib/reconcile.ts`) : like retiré (réglage retirer/garder), retrait à la main = correction, ajout à la main = exemple ;
-- **revue de sécurité** : dépendances à jour, codes d'invitation à 6 caractères, en-têtes, prompts protégés contre l'injection (`cleanForPrompt`, `DATA_RULE` dans `lib/corpus.ts`) ;
-- **perf** : fonctions Vercel à Paris (`cdg1`, à côté de Supabase), squelette de chargement ;
-- **design** : pochettes brutes (couleur + nom, sans code SRT, mots longs coupés « AFRO-/BEATS »), fiche de bac repliée, animations CSS légères.
+Sortify V2 est **en production** (https://sortify-mauve.vercel.app), branche `v2` (en avance sur `origin/v2`, pas encore poussée).
+Fait aujourd'hui :
+- **Pochettes à formes** (variante B choisie sur planche, `docs/design/pochettes-formes*.png`) : une forme par bac, pleine (scène) ou en contour (ambiance / moment). **Toucher la pochette** d'un bac → choix de la forme, plein / contour et couleur, renvoyée à Spotify. Walid a déjà personnalisé Tech house (noir + éclair), Afro orient (orange + soleil), Fin de nuit (lune en contour).
+- **Algorithme** mesuré au banc (`docs/bench/2026-10-11-banc-essai.md`) puis appliqué :
+  - Deezer remplace Last.fm quand ils se contredisent (homonymes Last.fm : 139 likes) ;
+  - rangement en deux familles (scène / transversal), seuil 0,6 pour les transversaux ;
+  - frontières des fiches rafraîchies (plus de « Techno nocturne » / « Bass UK garage »), automatiquement après ajout / retrait de bac ; Ino Casablanca retiré de la fiche Caraïbes ;
+  - 3 bacs transversaux créés : **Route de nuit** (19), **Avant de sortir** (32), **Focus instrumental** (17).
+  - Bibliothèque re-rangée (`scripts/migrate-algo-2026-10-11.mts`) : 304 titres déplacés, Divers 151 → 140, 17 playlists vérifiées identiques à la base. Sauvegarde : `backups/` (hors git).
+- Walid va tester avec un ami (code d'invitation dans Réglages ; ajouter son compte dans le Spotify Developer Dashboard, mode développement).
+
+## Points d'attention
+- **Le partage n'a pas augmenté** (17 % → 16 % des titres dans plusieurs bacs) : le seuil 0,6 a vidé Groove joyeux (124 → 84) et Fin de nuit (43 → 25) des titres douteux, compensé par les 3 nouveaux bacs. « Avant de sortir » est surtout de l'afrobeats (Rema, Burna Boy) : à surveiller, le juge le trouvait flou. Si Walid veut plus de partage : bacs transversaux à critère net (comme Focus instrumental), pas de seuil plus bas (45 % de justes à 0,5).
+- L'analyse initiale (Fable) n'a pas été retouchée : elle propose toujours ~2/3 de scènes. À revoir si l'ami obtient peu de bacs transversaux.
 
 ## À faire, dans l'ordre
-1. **Pochettes : une ou des formes simples selon la playlist** (demande de Walid). Il aime les couleurs brutes (repère dans Spotify) ; il a refusé le vinyle (avec ou sans sillons) et le code SRT. Proposer 2–3 variantes en planche (`scripts/lab/cover-variants.mts`, rendu `lib/cover.tsx` + `app/ui/Sleeve.tsx` / CSS `.sleeve`), le laisser choisir, puis renvoyer les pochettes (`scripts/reupload-covers.mts`).
-2. **Plan pour l'algorithme** (validé dans le principe, à mesurer au banc avant de déployer) :
-   - remettre le principe **scène / moment-ambiance** : deux familles de bacs rangées séparément (scène : 1 bac principal, 2 max ; moment/ambiance : 0 à 2, transversaux) pour créer du partage — aujourd'hui 11 bacs « scène » sur 13 ;
-   - **tags d'artiste douteux** : ex. Ino Casablanca tagué « baile funk, reggaeton… » par Last.fm → rangé dans Caraïbes au lieu de Rap français / Groove / oriental ; montrer Deezer en plus quand il contredit Last.fm ;
-   - **rafraîchir les frontières des fiches** après ajout / fusion / retrait de bac (la fiche Tech house cite encore « Techno nocturne », « Bass UK garage » qui n'existent plus) ;
-   - plus tard : affiner les fiches à partir des corrections.
-   Mesurer avec `scripts/lab/algo-bench.mts` (juge Opus, même échantillon), puis re-ranger avec `scripts/resort-library.mts` (essai à blanc, puis `--apply`).
-3. **Petites features proposées** : toucher une pochette lance un extrait ; Accueil : n'afficher que les bacs qui ont reçu des titres au dernier tri ; renommer un bac (et sa playlist Spotify) + choisir sa couleur dans la palette ; choix clair / sombre / auto dans les Réglages.
-4. **Plus tard** : réordonner par glisser-déposer (appui long sur mobile ?), onboarding « power user » (clés Spotify + Anthropic perso), alerte en cas d'échec du tri, tests automatisés, ranger les anciennes migrations V1 de `supabase/migrations`.
+1. Retours du test avec l'ami (onboarding, analyse, création des playlists).
+2. Plus tard pour l'algo : affiner les fiches à partir des corrections.
+3. **Petites features proposées** : toucher une pochette lance un extrait (attention : sur la fiche d'un bac, toucher la pochette ouvre maintenant la personnalisation) ; Accueil : n'afficher que les bacs qui ont reçu des titres au dernier tri ; renommer un bac (et sa playlist Spotify) ; choix clair / sombre / auto dans les Réglages.
+4. **Plus tard** : réordonner par glisser-déposer, onboarding « power user », alerte en cas d'échec du tri, tests automatisés, ranger les anciennes migrations V1.
 
 ## En attente de Walid
 - Tester un retrait / ajout fait directement dans Spotify, puis « Nouveaux likes ? ».
-- Décider de la limite de 3 bacs par titre (remise en question).
+- Décider de la limite de 3 bacs par titre.
 - Suivre la part de titres « À trier » (cible ~20 %).
 
 ## Façon de travailler
@@ -30,5 +32,6 @@ Phases 1 à 5 faites (voir `docs/specs/04-plan-technique.md`, section « État �
 - Avant toute action de masse sur ses playlists : **essai à blanc**, résumé, puis validation.
 - Commit après chaque tâche ; `main` avance en fast-forward sur `v2` ; déploiement : `npx vercel@latest deploy --prod --yes` (projet non relié à GitHub ; un « Not authorized » passager se règle en relançant).
 - Migrations : `psql "$POSTGRES_URL_NON_POOLING" -f supabase/migrations/<fichier>.sql` (après `set -a; source .env.local`), appliquées tout de suite.
-- Scripts hors app : `npm run try -- scripts/<fichier>.mts [options]` — **le `--` est indispensable**, sinon npm avale les options (ex. `--apply`). Ou directement `npx tsx --tsconfig tsconfig.json --conditions=react-server …`.
+- Scripts hors app : `npm run try -- scripts/<fichier>.mts [options]` — **le `--` est indispensable** ; charger `.env.local` avant (`set -a; source .env.local; set +a`).
+- Bancs d'essai : `scripts/lab/algo-bench3.mts` (échantillon fixe et verdicts du juge dans `docs/bench/2026-10-11/`).
 - Le panneau navigateur masqué met les animations en pause (ce n'est pas un bug).

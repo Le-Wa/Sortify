@@ -21,10 +21,13 @@ export function inkFor(bg: string): string {
   return BAC_COLORS.find((c) => c.bg.toUpperCase() === bg.toUpperCase())?.ink ?? "#111111";
 }
 
-/** Prochaine couleur libre pour un nouveau bac (on recycle quand tout est pris). */
+/** Prochaine couleur libre pour un nouveau bac ; quand tout est pris, la moins utilisée (dans l'ordre de la palette). */
 export function nextColor(used: string[]): string {
-  const taken = new Set(used.map((c) => c.toUpperCase()));
-  const free = BAC_COLORS.find((c) => !taken.has(c.bg.toUpperCase()));
-  return (free ?? BAC_COLORS[used.length % BAC_COLORS.length]).bg;
+  const uses = new Map(BAC_COLORS.map((c) => [c.bg, 0]));
+  for (const color of used) {
+    const key = color.toUpperCase();
+    if (uses.has(key)) uses.set(key, uses.get(key)! + 1);
+  }
+  const least = Math.min(...uses.values());
+  return BAC_COLORS.find((c) => uses.get(c.bg) === least)!.bg;
 }
-

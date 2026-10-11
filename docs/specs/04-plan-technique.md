@@ -8,11 +8,13 @@
   - analyse : **Claude Fable 5.1** (spec 02 : « le plus capable »), effort `medium`, sortie structurée, repli serveur `fallbacks: "default"` ;
   - retouches (autre idée, fusion, sur mesure, passe « compléter », ajustement d'une fiche) : **Claude Opus 5.5** ;
   - rangement : **Claude Sonnet 5.5** en effort `low` depuis le banc d'essai du 10/10/2026 (`docs/bench/`) : 86 % de premier bac juste contre 76 % pour Haiku 5.5, décisions stables à 94 %. Lots de 20 (100 pour remplir un seul bac), 6 en parallèle, fiches en cache.
+    Depuis le banc du 11/10/2026 (`docs/bench/2026-10-11-banc-essai.md`) : **deux familles** rangées séparément (1 bac de scène principal, 2 au plus ; 0 à 2 bacs transversaux ambiance / moment) ; seuil de placement **0,5 pour une scène, 0,6 pour un transversal** (`placeThreshold`, `lib/bacs.ts`).
+  - frontières des fiches : **rafraîchies par Opus** en arrière-plan après l'acceptation d'une suggestion ou le retrait d'un bac (`refreshBriefs`).
 - Vercel (plan Hobby) + Cron quotidien `0 6 * * *` → `/api/cron/tri` (`vercel.json`), protégé par `CRON_SECRET`.
 - Enrichissement (mesuré le 10/10/2026 sur 1 154 likes, ~3 min 30) :
   - **Last.fm** : tags de l'artiste principal (cache partagé `artist_tags`), tags du titre en repli. 85 % des titres ont des genres. Limite 5 req/s respectée.
   - **ReccoBeats** : énergie, dansabilité, valence, acoustique, instrumental, tempo, par lots de 40 **identifiants Spotify** (les ISRC ne marchent pas — le code V1 ne récupérait rien). ~55 % de couverture, à toutes les époques.
-  - **Deezer** : extraits audio (résolus par ISRC au moment de l'écoute) et, depuis le banc d'essai, **repli pour les titres que Last.fm ne connaît pas** : genres d'album préfixés `deezer:` (`lib/enrichment/deezer.ts`), 90 % de couverture sur ces titres. Il ne reste que 17 likes sans tag sur 1 159.
+  - **Deezer** : extraits audio (résolus par ISRC au moment de l'écoute) et, depuis le banc d'essai, **repli pour les titres que Last.fm ne connaît pas** : genres d'album préfixés `deezer:` (`lib/enrichment/deezer.ts`), 90 % de couverture sur ces titres. Il ne reste que 17 likes sans tag sur 1 159. Depuis le 11/10/2026, Deezer est aussi demandé pour les titres tagués : **si ses genres contredisent ceux de Last.fm, on prend Deezer** (`lib/enrichment/families.ts`). Last.fm confond des homonymes (HUGEL → rappeur finlandais, FEEL → rock polonais) : 15 % des likes touchés, premier bac juste de 70 à 83 % sur ces titres.
 
 ## Base de données V2
 Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`… restent en place, inutilisées) :
@@ -39,6 +41,9 @@ Nouvelles tables, **sans toucher aux tables V1** (`users`, `tracks`, `playlists`
 
 ## Jobs de fond
 Un job (`lib/jobs.ts`, `lib/run-job.ts`) avance par passages de 240 s au plus, dans `after()` de la route `POST /api/jobs/[id]/run` (protégée par `CRON_SECRET`, `maxDuration` 300). Un passage prend un bail (`lease_until`), fait au moins une unité de travail, sauvegarde sa progression à chaque unité (battement de cœur) puis se relance lui-même s'il reste du travail. Un job sans battement de cœur depuis 90 s est relancé par l'écran qui le suit. L'utilisateur peut fermer l'app.
+
+## Pochettes (11/10/2026)
+Couleur du bac + nom + **une forme** (18 au choix, `lib/cover-shapes.ts`) en haut à droite, qui déborde : pleine pour une scène, en contour pour une ambiance / un moment par défaut. L'IA choisit la forme avec la fiche (colonne `bacs.shape`, sans doublon) ; toucher la pochette sur la fiche d'un bac permet de changer forme, plein / contour (`bacs.outline`) et couleur, renvoyée aussitôt à Spotify. Même rendu à l'écran (`app/ui/Sleeve.tsx`) et dans l'image Spotify (`lib/cover.tsx`).
 
 ## État au 10/10/2026
 - **Phase 1 — Socle** : faite. Connexion Spotify testée de bout en bout (premier compte = propriétaire). Base `sortify-v2` créée via l'intégration Vercel Marketplace (Paris `eu-west-3`, Postgres 17) ; migrations appliquées avec `psql "$POSTGRES_URL_NON_POOLING" -f …`.
