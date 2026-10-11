@@ -207,7 +207,7 @@ export async function createActiveBac(
 }
 
 /** Les titres qui ont trouvé un bac quittent la caisse Divers (base et playlist). */
-async function leaveDivers(memberId: string, trackIds: string[]): Promise<void> {
+export async function leaveDivers(memberId: string, trackIds: string[]): Promise<void> {
   if (trackIds.length === 0) return;
   const divers = await ensureDivers(memberId);
   const inDivers = (

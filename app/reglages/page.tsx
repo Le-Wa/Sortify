@@ -26,7 +26,12 @@ export default async function ReglagesPage() {
       <h1 className="display">Réglages</h1>
 
       <div className="label section-label">Le tri</div>
-      <SortSettings cronHour={hourOf(nextCron())} sortPaused={member.sort_paused} suggestBacs={member.suggest_bacs} />
+      <SortSettings
+        cronHour={hourOf(nextCron())}
+        sortPaused={member.sort_paused}
+        suggestBacs={member.suggest_bacs}
+        unlikeAction={member.unlike_action}
+      />
 
       {hasBacs ? (
         <>

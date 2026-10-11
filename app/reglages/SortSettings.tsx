@@ -6,6 +6,7 @@ import { saveSettings } from "./actions";
 interface Props {
   sortPaused: boolean;
   suggestBacs: boolean;
+  unlikeAction: "retirer" | "garder";
 }
 
 /** `cronHour` : heure de Paris du tri quotidien (fixe pour tout le monde sur le plan Vercel Hobby). */
@@ -22,6 +23,7 @@ export function SortSettings({ cronHour, ...initial }: Props & { cronHour: strin
       const result = await saveSettings({
         sort_paused: patch.sortPaused,
         suggest_bacs: patch.suggestBacs,
+        unlike_action: patch.unlikeAction,
       }).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur inconnue." }));
       if (!result.ok) {
         setValues(previous);
@@ -44,6 +46,20 @@ export function SortSettings({ cronHour, ...initial }: Props & { cronHour: strin
           disabled={saving}
           onChange={(v) => change({ suggestBacs: v })}
         />
+        <div className="list__row">
+          <label htmlFor="unlike">Like retiré sur Spotify</label>
+          <select
+            id="unlike"
+            className="select"
+            style={{ fontFamily: "var(--font-display)" }}
+            value={values.unlikeAction}
+            disabled={saving}
+            onChange={(e) => change({ unlikeAction: e.target.value as Props["unlikeAction"] })}
+          >
+            <option value="retirer">Retirer des playlists</option>
+            <option value="garder">Garder</option>
+          </select>
+        </div>
       </div>
       {error ? (
         <p className="notice notice--error" role="alert">

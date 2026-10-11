@@ -145,7 +145,7 @@ export async function bacsOfTrack(memberId: string, trackId: string): Promise<st
   return rows.map((r) => r.bac_id);
 }
 
-async function addExample(memberId: string, bacId: string, trackId: string, polarity: "positive" | "negative"): Promise<void> {
+export async function addExample(memberId: string, bacId: string, trackId: string, polarity: "positive" | "negative"): Promise<void> {
   check(
     await db()
       .from("bac_examples")

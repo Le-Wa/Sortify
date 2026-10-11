@@ -5,6 +5,7 @@ import type { CorpusTrack } from "./corpus";
 import { check, db } from "./db";
 import { enrichNext, toRow, type SavedTracksPage } from "./import";
 import { saveProgress, type Job } from "./jobs";
+import { reconcileSpotify } from "./reconcile";
 import { spotify } from "./spotify/client";
 import { syncMember } from "./sync";
 
@@ -18,7 +19,8 @@ const SORT_UNIT = 120;
 const MAX_PAGES = 20; // 1 000 nouveaux likes au plus par tri
 
 export interface TriProgress {
-  phase: "likes" | "enrich" | "rangement" | "sync" | "done";
+  /** spotify : prise en compte des changements faits dans Spotify (likes retirés, retraits et ajouts à la main). */
+  phase: "spotify" | "likes" | "enrich" | "rangement" | "sync" | "done";
   source: "cron" | "bouton";
   /** Like le plus récent déjà connu au début du tri : tout ce qui est plus récent est nouveau. */
   since: string | null;
@@ -29,10 +31,13 @@ export interface TriProgress {
   pending: number;
   divers: number;
   synced: number;
+  unliked?: number;
+  removedInSpotify?: number;
+  addedInSpotify?: number;
 }
 
 export function initialTri(source: TriProgress["source"]): TriProgress {
-  return { phase: "likes", source, since: null, cursor: null, pages: 0, fetched: 0, placed: 0, pending: 0, divers: 0, synced: 0 };
+  return { phase: "spotify", source, since: null, cursor: null, pages: 0, fetched: 0, placed: 0, pending: 0, divers: 0, synced: 0 };
 }
 
 export async function runTriStep(job: Job<TriProgress>, deadline: number): Promise<TriProgress> {
@@ -46,6 +51,10 @@ export async function runTriStep(job: Job<TriProgress>, deadline: number): Promi
 
 async function triUnit(memberId: string, progress: TriProgress): Promise<TriProgress> {
   switch (progress.phase) {
+    case "spotify": {
+      const r = await reconcileSpotify(memberId);
+      return { ...progress, phase: "likes", unliked: r.unliked, removedInSpotify: r.removedInSpotify, addedInSpotify: r.addedInSpotify };
+    }
     case "likes":
       return fetchNewLikes(memberId, progress);
     case "enrich": {
@@ -115,6 +124,7 @@ async function unsortedLikes(memberId: string): Promise<CorpusTrack[]> {
         .select("track_id, title, artists, released_year, genres, audio, cover_url")
         .eq("member_id", memberId)
         .not("enriched_at", "is", null)
+        .eq("excluded", false)
         .order("liked_at", { ascending: false })
         .range(from, from + 999),
       "Lecture des likes",

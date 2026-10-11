@@ -13,6 +13,7 @@ const settingsSchema = z
   .object({
     sort_paused: z.boolean(),
     suggest_bacs: z.boolean(),
+    unlike_action: z.enum(["retirer", "garder"]),
   })
   .partial();
 

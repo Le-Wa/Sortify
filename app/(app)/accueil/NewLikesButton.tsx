@@ -29,11 +29,16 @@ export function NewLikesButton({ paused }: { paused: boolean }) {
           if (job.status === "failed") setMessage(`Le tri a échoué : ${job.error ?? "erreur inconnue"}`);
           else {
             const p = job.progress;
-            setMessage(
+            const spotifyChanges = [
+              p.unliked ? `${p.unliked} like${p.unliked > 1 ? "s" : ""} retiré${p.unliked > 1 ? "s" : ""}` : null,
+              p.removedInSpotify ? `${p.removedInSpotify} retrait${p.removedInSpotify > 1 ? "s" : ""} fait${p.removedInSpotify > 1 ? "s" : ""} dans Spotify` : null,
+              p.addedInSpotify ? `${p.addedInSpotify} ajout${p.addedInSpotify > 1 ? "s" : ""} fait${p.addedInSpotify > 1 ? "s" : ""} dans Spotify` : null,
+            ].filter(Boolean);
+            const likes =
               p.fetched === 0
                 ? "Pas de nouveau like."
-                : `${p.fetched} nouveau${p.fetched > 1 ? "x" : ""} like${p.fetched > 1 ? "s" : ""} : ${p.placed} rangé${p.placed > 1 ? "s" : ""}, ${p.pending} à trier.`,
-            );
+                : `${p.fetched} nouveau${p.fetched > 1 ? "x" : ""} like${p.fetched > 1 ? "s" : ""} : ${p.placed} rangé${p.placed > 1 ? "s" : ""}, ${p.pending} à trier.`;
+            setMessage(spotifyChanges.length ? `${likes} Pris en compte : ${spotifyChanges.join(", ")}.` : likes);
           }
           router.refresh();
           return;

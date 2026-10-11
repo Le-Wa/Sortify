@@ -13,6 +13,8 @@ export interface Member {
   sort_hour: number;
   sort_paused: boolean;
   suggest_bacs: boolean;
+  /** Like retiré sur Spotify : le retirer des playlists Sortify, ou l'y garder. */
+  unlike_action: "retirer" | "garder";
   last_sorted_at: string | null;
   created_at: string;
 }
@@ -66,7 +68,7 @@ export async function saveTokens(spotifyId: string, tokens: SpotifyTokens): Prom
 
 export async function updateSettings(
   spotifyId: string,
-  settings: Partial<Pick<Member, "sort_paused" | "suggest_bacs">>,
+  settings: Partial<Pick<Member, "sort_paused" | "suggest_bacs" | "unlike_action">>,
 ): Promise<void> {
   check(await db().from("members").update(settings).eq("spotify_id", spotifyId), "Mise à jour des réglages");
 }
