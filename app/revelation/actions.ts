@@ -6,6 +6,7 @@ import { alternativeFiche, customFiche, mergedFiche, type FicheContext } from "@
 import { currentMember } from "@/lib/auth";
 import { getBac, insertFiches, listBacs, setExamples, type Bac } from "@/lib/bacs";
 import { loadCorpus, sampleCorpus } from "@/lib/corpus";
+import { uniqueShape } from "@/lib/cover-shapes";
 import { startCreation } from "@/lib/creation";
 import { check, db } from "@/lib/db";
 import { revelationState } from "@/lib/revelation";
@@ -69,6 +70,7 @@ export async function otherIdea(id: string): Promise<ActionResult> {
           pitch: fiche.pitch,
           brief: fiche.brief,
           axis: fiche.axis,
+          shape: uniqueShape(fiche.shape, others.map((o) => o.shape)),
           status: "proposed",
           needs_fill: true,
         })
@@ -93,6 +95,7 @@ export async function mergeBacs(firstId: string, secondId: string): Promise<Acti
     const [merged] = await insertFiches(memberId, [fiche], corpus, {
       startPosition: Math.min(a.position, b.position),
       usedColors: others.map((o) => o.color),
+      usedShapes: others.map((o) => o.shape),
       needsFill: false,
     });
     check(await db().from("bacs").update({ color: a.color }).eq("id", merged.id), "Couleur du bac fusionné");
@@ -122,6 +125,7 @@ export async function addCustomBac(request: string): Promise<ActionResult> {
     await insertFiches(memberId, [fiche], corpus, {
       startPosition: all.length,
       usedColors: all.map((b) => b.color),
+      usedShapes: all.map((b) => b.shape),
       needsFill: true,
     });
     await revelationState(memberId);

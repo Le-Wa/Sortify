@@ -4,7 +4,9 @@ import path from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { inkFor } from "./bac-colors";
-import { sleeveLayout } from "./sleeve-layout";
+import { markFor } from "./cover-shapes";
+import { SleeveMarkSvg } from "./sleeve-mark";
+import { shapeBox, sleeveLayout } from "./sleeve-layout";
 
 const SIZE = 640;
 /** Limite Spotify pour une image de playlist (JPEG encodé en base64). */
@@ -20,15 +22,24 @@ function loadFonts() {
 }
 
 /** Pochette Sortify d'un bac, en JPEG encodé base64 (prête pour PUT /playlists/{id}/images). */
-export async function coverJpegBase64(bac: { name: string; sleeve_name: string | null; color: string }): Promise<string> {
+export async function coverJpegBase64(bac: {
+  name: string;
+  sleeve_name: string | null;
+  color: string;
+  axis: string;
+  shape: string | null;
+  is_divers: boolean;
+}): Promise<string> {
   const { display, mono } = await loadFonts();
   const label = bac.sleeve_name ?? bac.name;
   const { lines, fontSize, padding, small } = sleeveLayout(label, SIZE);
   const ink = inkFor(bac.color);
+  const { box, left, top } = shapeBox(label, SIZE);
 
   const png = new ImageResponse(
     (
       <div style={{ width: SIZE, height: SIZE, position: "relative", display: "flex", background: bac.color, overflow: "hidden" }}>
+        <SleeveMarkSvg mark={markFor(bac)} ink={ink} box={box} left={left} top={top} />
         <div
           style={{
             position: "relative",

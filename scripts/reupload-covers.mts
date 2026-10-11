@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { coverJpegBase64 } from "@/lib/cover";
 import { spotify } from "@/lib/spotify/client";
 
-const { data: bacs, error } = await db().from("bacs").select("id, member_id, name, sleeve_name, color, spotify_playlist_id").eq("status", "active").not("spotify_playlist_id", "is", null);
+const { data: bacs, error } = await db().from("bacs").select("id, member_id, name, sleeve_name, color, axis, shape, is_divers, spotify_playlist_id").eq("status", "active").not("spotify_playlist_id", "is", null);
 if (error) throw new Error(error.message);
 let ok = 0;
 for (const bac of bacs ?? []) {

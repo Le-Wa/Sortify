@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Sleeve } from "../../ui/Sleeve";
 import { move } from "./actions";
+import type { SleeveMark } from "@/lib/cover-shapes";
 
 interface Item {
   id: string;
   name: string;
   sleeve: string;
   color: string;
+  mark: SleeveMark;
   autoFill: boolean;
   total: number;
   week: number;
@@ -80,12 +82,12 @@ export function BacList({ bacs }: { bacs: Item[] }) {
           return reordering ? (
             <div key={b.id} className="bin" style={{ zIndex: i + 1 }}>
               {body}
-              <Sleeve name={b.sleeve} color={b.color} size={60} className="bin__sleeve" />
+              <Sleeve name={b.sleeve} color={b.color} size={60} mark={b.mark} className="bin__sleeve" />
             </div>
           ) : (
             <Link key={b.id} href={`/bacs/${b.id}`} className="bin" style={{ zIndex: i + 1 }}>
               {body}
-              <Sleeve name={b.sleeve} color={b.color} size={60} className="bin__sleeve" />
+              <Sleeve name={b.sleeve} color={b.color} size={60} mark={b.mark} className="bin__sleeve" />
             </Link>
           );
         })}

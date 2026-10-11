@@ -5,6 +5,7 @@ import type { Job } from "./jobs";
 import { removeFromPlaylist } from "./spotify/playlists";
 import { syncMember } from "./sync";
 import type { TriProgress } from "./tri";
+import { markFor, type SleeveMark } from "./cover-shapes";
 
 /** Exemples gardés par bac et par polarité : assez pour guider l'IA, sans alourdir chaque rangement. */
 const MAX_EXAMPLES = 20;
@@ -14,6 +15,7 @@ export interface BacChip {
   name: string;
   sleeve: string;
   color: string;
+  mark: SleeveMark;
   is_divers: boolean;
 }
 
@@ -36,7 +38,7 @@ export interface RecentItem extends TrackInfo {
   corrected: boolean;
 }
 
-const chip = (b: Bac): BacChip => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, is_divers: b.is_divers });
+export const chip = (b: Bac): BacChip => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, mark: markFor(b), is_divers: b.is_divers });
 
 /** Bacs actifs du membre (Divers compris, en dernier). */
 export async function activeBacs(memberId: string): Promise<Bac[]> {

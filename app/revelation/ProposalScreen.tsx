@@ -8,11 +8,13 @@ import { Sleeve } from "../ui/Sleeve";
 import { usePreview } from "../ui/usePreview";
 import { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept, type ActionResult } from "./actions";
 import { useRevelation } from "./useRevelation";
+import type { SleeveMark } from "@/lib/cover-shapes";
 
 export interface ProposalBac {
   id: string;
   name: string;
   sleeve: string;
+  mark: SleeveMark;
   pitch: string;
   axis: string;
   color: string;
@@ -204,6 +206,7 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
               <Sleeve
                 name={bac.sleeve}
                 color={bac.kept ? bac.color : "#8E8F89"}
+                mark={bac.mark}
                 size={expanded ? 72 : 56}
                 className="bin__sleeve"
               />
@@ -264,7 +267,7 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
                     });
                   }}
                 >
-                  <Sleeve name={b.sleeve} color={b.color} size={36} />
+                  <Sleeve name={b.sleeve} color={b.color} size={36} mark={b.mark} />
                   <span className="grow">{b.name}</span>
                 </button>
               ))}

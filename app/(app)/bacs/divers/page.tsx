@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { diversTracks } from "@/lib/bac-admin";
 import { listBacs } from "@/lib/bacs";
+import { chip } from "@/lib/daily";
 import { DiversList } from "./DiversList";
 
 const SHOWN = 100;
@@ -27,7 +28,7 @@ export default async function DiversPage() {
       </div>
       <DiversList
         tracks={divers.tracks}
-        bacs={bacs.map((b) => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, is_divers: false }))}
+        bacs={bacs.map((b) => ({ ...chip(b), is_divers: false }))}
       />
       {divers.total > SHOWN ? (
         <p className="small muted" style={{ margin: 0, textAlign: "center" }}>

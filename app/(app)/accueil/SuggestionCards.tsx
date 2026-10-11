@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { Suggestion } from "@/lib/suggestions";
 import { Sleeve } from "../../ui/Sleeve";
 import { accept, refuse } from "../bacs/actions";
+import { markFor } from "@/lib/cover-shapes";
 
 const WORKING: Record<Suggestion["kind"], string> = {
   ajouter: "L'IA remplit le nouveau bac et crée la playlist…",
@@ -39,7 +40,7 @@ export function SuggestionCards({ suggestions }: { suggestions: Suggestion[] }) 
               : `Fusionner « ${p.bacNames?.[0]} » et « ${p.bacNames?.[1]} » ?`;
         return (
           <section key={s.id} className={`suggestion card ${working ? "is-working" : ""}`} aria-busy={working}>
-            {p.fiche ? <Sleeve name={p.fiche.sleeve_name ?? p.fiche.name} color="#111111" size={64} code="NOUVEAU" /> : null}
+            {p.fiche ? <Sleeve name={p.fiche.sleeve_name ?? p.fiche.name} color="#111111" size={64} mark={markFor(p.fiche)} code="NOUVEAU" /> : null}
             <div className="grow stack" style={{ gap: 6 }}>
               <b style={{ fontSize: 15, lineHeight: 1.25 }}>{title}</b>
               <span style={{ fontSize: 13, lineHeight: 1.35 }}>{p.reason}</span>

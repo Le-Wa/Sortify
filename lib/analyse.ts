@@ -57,6 +57,7 @@ async function writeFiches(memberId: string): Promise<AnalyseProgress> {
   await insertFiches(memberId, fiches, sample, {
     startPosition: active.length,
     usedColors: active.map((b) => b.color),
+    usedShapes: active.map((b) => b.shape),
     needsFill: false,
   });
   return { phase: "rangement", sorted: 0, total: corpus.length };
@@ -109,6 +110,7 @@ async function complementUnit(memberId: string, progress: AnalyseProgress): Prom
     await insertFiches(memberId, fiches, orphans, {
       startPosition: bacs.length,
       usedColors: bacs.map((b) => b.color),
+      usedShapes: bacs.map((b) => b.shape),
       needsFill: true,
     });
   }

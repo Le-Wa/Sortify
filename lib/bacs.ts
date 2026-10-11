@@ -2,6 +2,7 @@ import "server-only";
 import type { Axis, Fiche } from "./ai/fiches";
 import type { SortFiche } from "./ai/sort";
 import { DIVERS_COLOR, nextColor } from "./bac-colors";
+import { uniqueShape } from "./cover-shapes";
 import type { CorpusTrack } from "./corpus";
 import { check, db } from "./db";
 
@@ -16,6 +17,8 @@ export interface Bac {
   pitch: string;
   brief: string;
   axis: Axis;
+  /** Forme de la pochette (lib/cover-shapes.ts) ; null pour Divers et les anciens bacs. */
+  shape: string | null;
   color: string;
   position: number;
   status: "proposed" | "active" | "removed";
@@ -54,12 +57,15 @@ export async function insertFiches(
   memberId: string,
   fiches: Fiche[],
   corpus: CorpusTrack[],
-  opts: { startPosition: number; usedColors: string[]; needsFill: boolean },
+  opts: { startPosition: number; usedColors: string[]; usedShapes: (string | null)[]; needsFill: boolean },
 ): Promise<Bac[]> {
   const used = [...opts.usedColors];
+  const shapes = [...opts.usedShapes];
   const rows = fiches.map((f, i) => {
     const color = nextColor(used);
     used.push(color);
+    const shape = uniqueShape(f.shape, shapes);
+    shapes.push(shape);
     return {
       member_id: memberId,
       name: f.name,
@@ -67,6 +73,7 @@ export async function insertFiches(
       pitch: f.pitch,
       brief: f.brief,
       axis: f.axis,
+      shape,
       color,
       position: opts.startPosition + i,
       status: "proposed",

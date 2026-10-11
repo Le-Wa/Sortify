@@ -1,5 +1,5 @@
 import { requireMember } from "@/lib/auth";
-import { activeBacs, pendingQueue } from "@/lib/daily";
+import { activeBacs, chip, pendingQueue } from "@/lib/daily";
 import { TriageScreen } from "./TriageScreen";
 
 export default async function ATrierPage() {
@@ -10,7 +10,7 @@ export default async function ATrierPage() {
       queue={queue}
       bacs={bacs
         .filter((b) => !b.is_divers)
-        .map((b) => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, is_divers: false }))}
+        .map((b) => ({ ...chip(b), is_divers: false }))}
     />
   );
 }

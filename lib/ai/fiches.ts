@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ANALYSIS_MODEL, claude, EDIT_MODEL, responseText } from "../claude";
+import { FICHE_SHAPES, SHAPE_MEANINGS } from "../cover-shapes";
 import { cleanForPrompt, DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
 
 export const AXES = ["scène", "ambiance", "moment"] as const;
@@ -16,6 +17,7 @@ const ficheSchema = z.object({
   pitch: z.string().describe("Une phrase pour l'humain, 12 mots max."),
   brief: z.string().describe("3 à 5 lignes pour le rangement : voir les règles."),
   axis: z.enum(AXES),
+  shape: z.enum(FICHE_SHAPES).describe("Forme dessinée sur la pochette : voir les règles."),
   examples: z.array(z.number().int()).describe("Numéros de 5 à 8 titres du corpus qui incarnent le bac, artistes variés."),
 });
 export type Fiche = z.infer<typeof ficheSchema>;
@@ -27,6 +29,8 @@ const RULES = `Un bac est une playlist que Sortify remplit tout seul avec les no
 - pitch : une phrase pour la personne, qui donne envie.
 - brief : 3 à 5 lignes relues par l'IA à chaque rangement. Scène(s) et genres, énergie, ambiance, moment d'écoute ; ce qui est clairement dedans ; ce qui est à la frontière ou dehors (en nommant les bacs voisins avec lesquels il ne faut pas confondre).
 - axis : « scène » (un genre ou une scène + une couleur), « ambiance » (une énergie, une humeur) ou « moment » (un usage : soirée, travail, route…).
+- shape : la forme dessinée sur la pochette, celle qui évoque le mieux le bac, différente pour chaque bac :
+${Object.entries(SHAPE_MEANINGS).map(([k, v]) => `  ${k} = ${v}`).join("\n")}
 
 Ce qui marche (appris sur de vraies bibliothèques) :
 - Le meilleur format est « une scène + une couleur » (« Soul nocturne », « Électro solaire »). Un bac de pure ambiance (« Mélancolie ») est trop flou pour ranger de façon fiable ; un bac de pure scène trop large (« Électro ») ne sert à rien.

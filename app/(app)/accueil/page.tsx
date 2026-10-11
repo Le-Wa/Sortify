@@ -1,13 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
-import { activeBacs, lastTri, pendingQueue, recentlySorted } from "@/lib/daily";
+import { activeBacs, chip, lastTri, pendingQueue, recentlySorted } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { Sleeve } from "../../ui/Sleeve";
 import { NewLikesButton } from "./NewLikesButton";
 import { openSuggestions } from "@/lib/suggestions";
 import { RecentList } from "./RecentList";
 import { SuggestionCards } from "./SuggestionCards";
+import { markFor } from "@/lib/cover-shapes";
 
 export default async function AccueilPage() {
   const member = await requireMember();
@@ -95,7 +96,7 @@ export default async function AccueilPage() {
               prochain tri {relativeDay(next)} {hourOf(next)}
             </span>
           </div>
-          <RecentList items={recent} bacs={bacs.filter((b) => !b.is_divers).map((b) => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, is_divers: false }))} />
+          <RecentList items={recent} bacs={bacs.filter((b) => !b.is_divers).map((b) => ({ ...chip(b), is_divers: false }))} />
         </section>
       ) : (
         <p className="small muted" style={{ margin: "0 4px" }}>
@@ -110,7 +111,7 @@ export default async function AccueilPage() {
           .filter((b) => !b.is_divers)
           .map((b) => (
             <Link key={b.id} href={`/bacs/${b.id}`} className="bin-row__item" aria-label={`${b.name}${added.get(b.id) ? `, ${added.get(b.id)} nouveaux` : ""}`}>
-              <Sleeve name={b.sleeve_name ?? b.name} color={b.color} size={76} code={added.get(b.id) ? `+${added.get(b.id)}` : undefined} />
+              <Sleeve name={b.sleeve_name ?? b.name} color={b.color} size={76} mark={markFor(b)} code={added.get(b.id) ? `+${added.get(b.id)}` : undefined} />
             </Link>
           ))}
       </nav>

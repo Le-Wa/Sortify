@@ -34,7 +34,7 @@ export function BacPicker({
             <span className="pick__check" aria-hidden="true">
               {on ? "✓" : ""}
             </span>
-            <Sleeve name={b.sleeve} color={b.color} size={32} />
+            <Sleeve name={b.sleeve} color={b.color} size={32} mark={b.mark} />
             <span className="pick__name">{b.name}</span>
             {hint?.(b.id) ? <span className="mono small">{hint(b.id)}</span> : null}
           </button>

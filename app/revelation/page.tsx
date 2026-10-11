@@ -7,6 +7,7 @@ import { revelationState } from "@/lib/revelation";
 import { CreationScreen } from "./CreationScreen";
 import { ProposalScreen, type ProposalBac } from "./ProposalScreen";
 import { WaitScreen } from "./WaitScreen";
+import { markFor } from "@/lib/cover-shapes";
 
 /** Première visite : import, analyse, proposition des bacs, puis création dans Spotify. */
 export default async function RevelationPage() {
@@ -39,6 +40,7 @@ export default async function RevelationPage() {
     id: b.id,
     name: b.name,
     sleeve: b.sleeve_name ?? b.name,
+    mark: markFor(b),
     pitch: b.pitch,
     axis: b.axis,
     color: b.color,

@@ -69,3 +69,24 @@ export function sleeveLayout(name: string, size: number) {
   return { lines, fontSize, padding, small };
 }
 
+
+/**
+ * Place de la forme : la plus grande boîte carrée ancrée en haut à droite (débordant d'un cinquième)
+ * qui ne touche ni le nom ni la mention du coin gauche.
+ */
+export function shapeBox(name: string, size: number) {
+  const { lines, fontSize, padding, small } = sleeveLayout(name, size);
+  const BLEED = 0.2;
+  const gap = size * 0.035;
+  const lineH = 0.94 * fontSize;
+  const textTop = size - padding - lines.length * lineH;
+  const blocks = lines.map((line, i) => ({ top: textTop + i * lineH + fontSize * 0.08, bottom: textTop + (i + 1) * lineH, right: padding + lineWidthEm(line) * fontSize }));
+  blocks.push({ top: padding, bottom: padding + small, right: padding + small * 0.62 * 7 }); // « sortify »
+  let box = size * 0.7;
+  for (; box > size * 0.12; box -= size / 160) {
+    const left = size - box * (1 - BLEED);
+    const bottom = box * (1 - BLEED);
+    if (!blocks.some((b) => bottom + gap > b.top && left - gap < b.right)) break;
+  }
+  return { box, left: size - box * (1 - BLEED), top: -box * BLEED };
+}

@@ -2,6 +2,7 @@ import "server-only";
 import type { Fiche } from "./ai/fiches";
 import { fillBac } from "./ai/sort";
 import { nextColor } from "./bac-colors";
+import { uniqueShape } from "./cover-shapes";
 import { ensureDivers, getBac, INITIAL_PLACE_THRESHOLD, listBacs, setExamples, sortFichesFor, type Bac } from "./bacs";
 import { loadCorpus } from "./corpus";
 import { createPlaylist, uploadCover } from "./creation";
@@ -175,6 +176,7 @@ export async function createActiveBac(
         pitch: fiche.pitch,
         brief: fiche.brief,
         axis: fiche.axis,
+        shape: uniqueShape(fiche.shape, active.map((b) => b.shape)),
         color: nextColor(active.map((b) => b.color)),
         position: active.length,
         status: "active",

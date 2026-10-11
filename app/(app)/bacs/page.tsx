@@ -3,6 +3,7 @@ import { requireMember } from "@/lib/auth";
 import { bacStats, diversTracks } from "@/lib/bac-admin";
 import { listBacs } from "@/lib/bacs";
 import { BacList } from "./BacList";
+import { markFor } from "@/lib/cover-shapes";
 
 export default async function BacsPage() {
   const member = await requireMember();
@@ -26,6 +27,7 @@ export default async function BacsPage() {
           name: b.name,
           sleeve: b.sleeve_name ?? b.name,
           color: b.color,
+          mark: markFor(b),
           autoFill: b.auto_fill,
           total: stats.get(b.id)?.total ?? 0,
           week: stats.get(b.id)?.week ?? 0,
