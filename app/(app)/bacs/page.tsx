@@ -3,7 +3,11 @@ import { requireMember } from "@/lib/auth";
 import { bacStats, diversTracks } from "@/lib/bac-admin";
 import { listBacs } from "@/lib/bacs";
 import { BacList } from "./BacList";
+import { NewBac } from "./NewBac";
 import { markFor } from "@/lib/cover-shapes";
+
+// « Nouveau bac » : fiche par l'IA, remplissage de toute la bibliothèque et playlist Spotify dans la même action.
+export const maxDuration = 300;
 
 export default async function BacsPage() {
   const member = await requireMember();
@@ -33,6 +37,7 @@ export default async function BacsPage() {
           week: stats.get(b.id)?.week ?? 0,
         }))}
       />
+      <NewBac />
       <Link href="/bacs/divers" className="crate-card">
         <span className="crate-card__label">
           Caisse

@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { adjustFiche } from "@/lib/ai/fiches";
 import { currentMember } from "@/lib/auth";
-import { detachBac, moveBac, refreshBriefs, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
+import { createCustomBac, detachBac, moveBac, refreshBriefs, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
 import { getBac, listBacs } from "@/lib/bacs";
 import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
@@ -82,6 +82,17 @@ function refreshBriefsLater(memberId: string) {
     } catch (error) {
       console.error("Frontières des fiches non rafraîchies :", error);
     }
+  });
+}
+
+/** « Nouveau bac » : décrit librement, créé par l'IA avec sa playlist. */
+export async function createBac(description: string): Promise<ActionResult> {
+  return run(async (m) => {
+    const text = description.trim();
+    if (text.length < 3) return { ok: false, message: "Décris le bac en quelques mots." };
+    const { bac, count } = await createCustomBac(m, text.slice(0, 500));
+    refreshBriefsLater(m);
+    return { ok: true, message: `« ${bac.name} » est créé avec ${count} titre${count > 1 ? "s" : ""}, et sa playlist est dans Spotify.` };
   });
 }
 
