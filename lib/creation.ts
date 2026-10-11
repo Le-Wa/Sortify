@@ -2,6 +2,7 @@ import "server-only";
 import { ensureDivers, listBacs, placementCounts, type Bac } from "./bacs";
 import { loadCorpus } from "./corpus";
 import { coverJpegBase64 } from "./cover";
+import { markFor, type SleeveMark } from "./cover-shapes";
 import { check, db } from "./db";
 import { kickJob, saveProgress, startJob, type Job } from "./jobs";
 import { spotify } from "./spotify/client";
@@ -11,6 +12,7 @@ export interface CreationBac {
   id: string;
   name: string;
   sleeve: string;
+  mark: SleeveMark;
   color: string;
   position: number;
   is_divers: boolean;
@@ -52,6 +54,7 @@ export async function startCreation(memberId: string): Promise<Job<CreationProgr
       id: b.id,
       name: b.name,
       sleeve: b.sleeve_name ?? b.name,
+      mark: markFor(b),
       color: b.color,
       position: b.position,
       is_divers: b.is_divers,

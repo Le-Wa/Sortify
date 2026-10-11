@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { inkFor } from "@/lib/bac-colors";
-import { sleeveLayout } from "@/lib/sleeve-layout";
+import { SleeveMarkSvg } from "@/lib/sleeve-mark";
+import { shapeBox, sleeveLayout } from "@/lib/sleeve-layout";
 import type { CreationBac } from "@/lib/creation";
 import { useRevelation } from "./useRevelation";
 
@@ -74,10 +75,19 @@ function PressTile({ bac, active }: { bac: CreationBac; active: boolean }) {
   return (
     <div className={`press__tile ${active ? "is-active" : ""} ${bac.done ? "is-done" : ""}`} style={{ padding }}>
       <span className="press__fill" style={{ height: `${ratio * 100}%`, background: bac.color }} />
+      {/* Anciennes progressions enregistrées sans forme : pochette nue. */}
+      {bac.mark ? (
+        <span style={{ color: lit ? inkFor(bac.color) : "var(--mid)", transition: "color 0.3s" }}>
+          <SleeveMarkSvg mark={bac.mark} ink="currentColor" {...shapeBox(bac.sleeve, 104)} />
+        </span>
+      ) : null}
       <span className="press__text" style={{ color: lit ? inkFor(bac.color) : undefined }}>
         <span className="row between mono" style={{ fontSize: small + 2 }}>
-          <span>{bac.is_divers ? "caisse" : ""}</span>
-          <span>{bac.done ? `✓ ${bac.total}` : active ? `${bac.added} / ${bac.total}` : ""}</span>
+          {/* Compteur à gauche : le coin droit est pour la forme. */}
+          <span>
+            {bac.is_divers ? "caisse " : ""}
+            {bac.done ? `✓ ${bac.total}` : active ? `${bac.added} / ${bac.total}` : ""}
+          </span>
         </span>
         <span className="sleeve__name" style={{ fontSize }}>
           {lines.map((l, i) => (
