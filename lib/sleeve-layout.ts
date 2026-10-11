@@ -12,9 +12,36 @@ export function lineWidthEm(line: string): number {
   return em;
 }
 
+const VOWELS = "AEIOUYÀÂÄÉÈÊËÎÏÔÖÙÛÜ";
+
+/**
+ * Coupe un mot long en deux à une frontière de syllabe proche du milieu,
+ * avec un trait d'union : « AFROBEATS » → « AFRO- » + « BEATS ».
+ */
+function hyphenate(word: string): [string, string] {
+  const up = word.toUpperCase();
+  const mid = word.length / 2;
+  let best = Math.round(mid);
+  let bestScore = Infinity;
+  for (let i = 3; i <= word.length - 3; i++) {
+    // La seconde partie commence par une syllabe : consonne puis voyelle (« Mélan-colie », pas « Méla-ncolie »).
+    const syllable = !VOWELS.includes(up[i]) && VOWELS.includes(up[i + 1] ?? "");
+    const score = Math.abs(i - mid) + (syllable ? 0 : 2);
+    if (score < bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return [`${word.slice(0, best)}-`, word.slice(best)];
+}
+
+/** Un nom d'un seul mot de 9 lettres ou plus est coupé en deux lignes (plus gros sur la pochette). */
+const LONG_WORD = 9;
+
 /** Répartit les mots sur 3 lignes au plus, en équilibrant leur longueur. */
 export function splitLines(name: string): string[] {
   const words = name.split(/\s+/).filter(Boolean);
+  if (words.length === 1 && words[0].length >= LONG_WORD) return hyphenate(words[0]);
   if (words.length <= 3) return words.length ? words : [""];
   const target = words.join(" ").length / 3;
   const lines: string[] = [];
