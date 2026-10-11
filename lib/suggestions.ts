@@ -2,7 +2,7 @@ import "server-only";
 import { complementFiches, reanalyse, type Fiche } from "./ai/fiches";
 import { fillBac } from "./ai/sort";
 import { createActiveBac, detachBac, diversTracks, mergeActive } from "./bac-admin";
-import { ensureDivers, INITIAL_PLACE_THRESHOLD, listBacs, placementCounts } from "./bacs";
+import { ensureDivers, listBacs, placeThreshold, placementCounts } from "./bacs";
 import { loadCorpus, sampleCorpus, type CorpusTrack } from "./corpus";
 import { check, db } from "./db";
 import { saveProgress, type Job } from "./jobs";
@@ -83,7 +83,7 @@ export async function suggestFromDivers(memberId: string): Promise<void> {
   if (!fiche) return noteEmptyCheck(memberId, "Aucun groupe assez cohérent dans Divers.");
   const matches = (
     await fillBac({ name: fiche.name, axis: fiche.axis, brief: fiche.brief, examples: [] }, bacs.map((b) => b.name), orphans)
-  ).filter((m) => m.confidence >= INITIAL_PLACE_THRESHOLD);
+  ).filter((m) => m.confidence >= placeThreshold(fiche.axis));
   if (matches.length < MIN_FROM_DIVERS) return noteEmptyCheck(memberId, `Seulement ${matches.length} titres pour « ${fiche.name} ».`);
   await insertSuggestion(memberId, {
     kind: "ajouter",

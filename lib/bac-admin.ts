@@ -1,9 +1,9 @@
 import "server-only";
-import type { Fiche } from "./ai/fiches";
+import { refreshFrontiers, type Fiche } from "./ai/fiches";
 import { fillBac } from "./ai/sort";
 import { BAC_COLORS, nextColor } from "./bac-colors";
 import { FICHE_SHAPES, uniqueShape } from "./cover-shapes";
-import { ensureDivers, getBac, INITIAL_PLACE_THRESHOLD, listBacs, setExamples, sortFichesFor, type Bac } from "./bacs";
+import { ensureDivers, getBac, listBacs, placeThreshold, setExamples, sortFichesFor, type Bac } from "./bacs";
 import { loadCorpus } from "./corpus";
 import { createPlaylist, uploadCover } from "./creation";
 import { bacsOfTrack, setTrackBacs, type TrackInfo } from "./daily";
@@ -72,6 +72,20 @@ export async function moveBac(memberId: string, id: string, direction: -1 | 1): 
 export async function updateBac(memberId: string, id: string, patch: Partial<Pick<Bac, "brief" | "pitch" | "auto_fill">>): Promise<void> {
   const bac = await ownedActive(memberId, id);
   check(await db().from("bacs").update(patch).eq("id", bac.id), "Mise à jour du bac");
+}
+
+/** Frontières des fiches remises à jour après un changement dans la liste des bacs (Opus, ~30 s). */
+export async function refreshBriefs(memberId: string): Promise<number> {
+  const bacs = await listBacs(memberId, ["active"]);
+  if (bacs.length < 2) return 0;
+  const briefs = await refreshFrontiers(bacs);
+  let changed = 0;
+  for (const [i, bac] of bacs.entries()) {
+    if (briefs[i] === bac.brief) continue;
+    check(await db().from("bacs").update({ brief: briefs[i] }).eq("id", bac.id), "Frontières de la fiche");
+    changed++;
+  }
+  return changed;
 }
 
 /**
@@ -209,7 +223,7 @@ export async function createActiveBac(
   if (!tracks) {
     const [sortFiche] = await sortFichesFor([bac]);
     tracks = (await fillBac(sortFiche, active.map((b) => b.name), await loadCorpus(memberId))).filter(
-      (t) => t.confidence >= INITIAL_PLACE_THRESHOLD,
+      (t) => t.confidence >= placeThreshold(bac.axis),
     );
   }
   const all = new Map(tracks.map((t) => [t.track_id, t.confidence]));

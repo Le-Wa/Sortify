@@ -36,7 +36,8 @@ export interface SortOptions {
   batch?: number;
   /**
    * Deux familles rangées séparément : un bac de scène principal (2 au plus),
-   * puis 0 à 2 bacs transversaux (ambiance / moment). En essai au banc.
+   * puis 0 à 2 bacs transversaux (ambiance / moment). Par défaut depuis le banc d'essai du 11/10/2026
+   * (bacs de scène : 85 → 90 % de rangements justes) ; false pour l'ancien rangement.
    */
   families?: boolean;
   /** Cumul des tokens consommés, pour mesurer le coût. */
@@ -217,7 +218,8 @@ export async function sortTracks(
   onBatch?: (done: Sorted[]) => Promise<void>,
   opts: SortOptions = {},
 ): Promise<Sorted[]> {
-  const system = opts.families ? familiesPrompt(fiches) : systemPrompt(fiches);
+  const families = opts.families ?? true;
+  const system = families ? familiesPrompt(fiches) : systemPrompt(fiches);
   const batches: { tracks: CorpusTrack[]; offset: number }[] = [];
   const size = opts.batch ?? BATCH;
   for (let i = 0; i < tracks.length; i += size) batches.push({ tracks: tracks.slice(i, i + size), offset: i });
@@ -227,7 +229,7 @@ export async function sortTracks(
   async function worker() {
     while (next < batches.length) {
       const batch = batches[next++];
-      const sorted = await sortWithSplit(system, batch.tracks, batch.offset, fiches, opts);
+      const sorted = await sortWithSplit(system, batch.tracks, batch.offset, fiches, { ...opts, families });
       results.push(...sorted);
       await onBatch?.(sorted);
     }

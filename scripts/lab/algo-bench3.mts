@@ -12,7 +12,6 @@ import { ensureDivers, listBacs, sortFichesFor } from "@/lib/bacs";
 import { claude, responseText } from "@/lib/claude";
 import { loadCorpus, trackLine, type CorpusTrack } from "@/lib/corpus";
 import { db } from "@/lib/db";
-import { contradicts } from "./tag-families";
 
 const out = process.argv[2];
 const HIGH = 0.6, PLACE = 0.5, LOW = 0.4;

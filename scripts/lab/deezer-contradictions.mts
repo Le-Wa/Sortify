@@ -4,7 +4,7 @@ import { writeFileSync } from "node:fs";
 import { loadCorpus } from "@/lib/corpus";
 import { db } from "@/lib/db";
 import { deezerGenres } from "@/lib/enrichment/deezer";
-import { contradicts } from "./tag-families";
+import { contradicts } from "@/lib/enrichment/families";
 
 const out = process.argv[2];
 const { data: member } = await db().from("members").select("spotify_id").limit(1).single();

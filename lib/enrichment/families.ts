@@ -1,4 +1,5 @@
-// Grandes familles de genres, pour repérer un désaccord entre les tags Last.fm (souvent ceux de l'artiste) et Deezer.
+// Grandes familles de genres, pour repérer un désaccord entre les tags Last.fm (ceux de l'artiste, souvent un homonyme)
+// et les genres d'album Deezer. Banc d'essai du 11/10/2026 : 15 % des likes, top 1 de 70 à 83 % en prenant Deezer.
 
 const FAMILIES: [string, RegExp][] = [
   ["oriental", /raï|\brai\b|arab|maghreb|oriental|gnawa|chaabi|maghrib/],

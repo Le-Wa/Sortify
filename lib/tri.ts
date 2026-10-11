@@ -1,6 +1,6 @@
 import "server-only";
 import { sortTracks } from "./ai/sort";
-import { ensureDivers, INITIAL_PLACE_THRESHOLD, listBacs, sortFichesFor } from "./bacs";
+import { ensureDivers, listBacs, placeThreshold, sortFichesFor } from "./bacs";
 import type { CorpusTrack } from "./corpus";
 import { check, db } from "./db";
 import { enrichNext, toRow, type SavedTracksPage } from "./import";
@@ -150,7 +150,7 @@ async function sortUnit(memberId: string, progress: TriProgress): Promise<TriPro
   for (const s of sorted) {
     // Titre sûr : il va aussi dans ses autres bacs plausibles (même règle qu'à la création).
     const top = s.suggestions[0]?.confidence ?? 0;
-    const sure = top >= HIGH_CONFIDENCE ? s.suggestions.filter((x) => x.confidence >= INITIAL_PLACE_THRESHOLD) : [];
+    const sure = top >= HIGH_CONFIDENCE ? s.suggestions.filter((x) => x.confidence >= placeThreshold(bacs[x.bac].axis)) : [];
     if (sure.length > 0) {
       placed++;
       for (const x of sure) placements.push({ bac_id: bacs[x.bac].id, member_id: memberId, track_id: s.track_id, confidence: x.confidence, source: "ia" });

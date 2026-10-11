@@ -8,6 +8,16 @@ import { check, db } from "./db";
 
 /** Seuil de placement lors de la création (pas encore de « À trier ») : à calibrer sur de vraies bibliothèques. */
 export const INITIAL_PLACE_THRESHOLD = 0.5;
+/**
+ * Seuil des bacs transversaux (ambiance / moment) : sous 0,6, un rangement sur deux y était contesté
+ * par le juge au banc d'essai du 11/10/2026.
+ */
+export const TRANSVERSAL_PLACE_THRESHOLD = 0.6;
+
+/** Confiance minimale pour placer un titre dans un bac, selon sa famille. */
+export function placeThreshold(axis: Axis): number {
+  return axis === "scène" ? INITIAL_PLACE_THRESHOLD : TRANSVERSAL_PLACE_THRESHOLD;
+}
 
 export interface Bac {
   id: string;
@@ -177,8 +187,12 @@ export async function addPlacements(
   memberId: string,
   placements: { bac_id: string; track_id: string; confidence: number }[],
 ): Promise<void> {
+  const ids = [...new Set(placements.map((p) => p.bac_id))];
+  const axes = new Map(
+    (check(await db().from("bacs").select("id, axis").in("id", ids), "Lecture des axes") as { id: string; axis: Axis }[]).map((b) => [b.id, b.axis]),
+  );
   const rows = placements
-    .filter((p) => p.confidence >= INITIAL_PLACE_THRESHOLD)
+    .filter((p) => p.confidence >= placeThreshold(axes.get(p.bac_id) ?? "scène"))
     .map((p) => ({ ...p, member_id: memberId, source: "ia" }));
   for (let i = 0; i < rows.length; i += 500) {
     check(

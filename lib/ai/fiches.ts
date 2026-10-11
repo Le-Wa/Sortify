@@ -214,6 +214,30 @@ Tout le texte est en français, tutoiement.`,
   return { pitch: adjusted.pitch.trim().slice(0, 200), brief: adjusted.brief.trim().slice(0, 1500) };
 }
 
+const frontiersSchema = z.object({ bacs: z.array(z.object({ name: z.string(), brief: z.string() })) });
+
+/**
+ * Remet à jour les frontières des fiches après un ajout, une fusion ou un retrait de bac :
+ * seules les phrases qui renvoient vers d'autres bacs sont réécrites, le reste est gardé mot pour mot.
+ * Renvoie le nouveau brief de chaque bac (même ordre).
+ */
+export async function refreshFrontiers(fiches: { name: string; axis: Axis; brief: string }[]): Promise<string[]> {
+  const message = await claude().beta.messages.create({
+    model: EDIT_MODEL,
+    max_tokens: 16000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "medium", format: zodOutputFormat(frontiersSchema) },
+    system: `Tu tiens à jour les fiches des bacs (playlists) d'une personne. Des bacs ont été ajoutés, fusionnés ou retirés : certaines fiches citent, dans leurs frontières, des bacs qui n'existent plus, ou ignorent des bacs nouveaux.
+Pour chaque fiche, réécris seulement les phrases de frontière (« À la frontière », « Dehors », « vont dans… ») pour qu'elles ne citent que des bacs de la liste, avec leur nom exact entre « », et qu'elles renvoient au bon voisin. Pour un bac de scène, tu peux ajouter qu'un titre peut AUSSI aller dans un bac transversal (ambiance / moment) qui lui correspond. Garde tout le reste mot pour mot. Renvoie toutes les fiches, dans le même ordre, avec leur nom exact.
+
+${DATA_RULE}`,
+    messages: [{ role: "user", content: fiches.map((f) => `### ${f.name} (${f.axis})\n${f.brief}`).join("\n\n") }],
+  });
+  const parsed = frontiersSchema.parse(JSON.parse(responseText(message, "Frontières des fiches")));
+  return fiches.map((f) => parsed.bacs.find((b) => b.name === f.name)?.brief.trim().slice(0, 2000) || f.brief);
+}
+
 const reanalysisSchema = z.object({
   changements: z.array(
     z.object({

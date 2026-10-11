@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { adjustFiche } from "@/lib/ai/fiches";
 import { currentMember } from "@/lib/auth";
-import { detachBac, moveBac, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
+import { detachBac, moveBac, refreshBriefs, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
 import { getBac, listBacs } from "@/lib/bacs";
 import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
@@ -73,8 +74,22 @@ export async function removeFromBac(bacId: string, track: string): Promise<Actio
   return run((m) => removeTrack(m, uuid.parse(bacId), trackId.parse(track)));
 }
 
+/** Après un changement dans la liste des bacs, les fiches voisines sont remises à jour en arrière-plan. */
+function refreshBriefsLater(memberId: string) {
+  after(async () => {
+    try {
+      await refreshBriefs(memberId);
+    } catch (error) {
+      console.error("Frontières des fiches non rafraîchies :", error);
+    }
+  });
+}
+
 export async function detach(id: string): Promise<ActionResult> {
-  return run((m) => detachBac(m, uuid.parse(id)));
+  return run(async (m) => {
+    await detachBac(m, uuid.parse(id));
+    refreshBriefsLater(m);
+  });
 }
 
 /** Divers : ranger un titre à la main. */
@@ -87,7 +102,11 @@ export async function placeFromDivers(track: string, bacIds: string[]): Promise<
 }
 
 export async function accept(id: string): Promise<ActionResult> {
-  return run(async (m) => ({ ok: true, message: await acceptSuggestion(m, uuid.parse(id)) }));
+  return run(async (m) => {
+    const message = await acceptSuggestion(m, uuid.parse(id));
+    refreshBriefsLater(m);
+    return { ok: true, message };
+  });
 }
 
 export async function refuse(id: string): Promise<ActionResult> {
