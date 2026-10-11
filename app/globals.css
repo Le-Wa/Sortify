@@ -215,7 +215,7 @@ a { color: inherit; }
   border-radius: 14px;
   padding: 6px;
   box-shadow: var(--shadow);
-  z-index: 10;
+  z-index: 30;
 }
 .tabbar a {
   min-height: 48px;
@@ -443,7 +443,7 @@ a { color: inherit; }
 }
 
 /* ── Proposition : intercalaires dépliables ───────────────── */
-.proposal { display: flex; flex-direction: column; }
+.proposal { display: flex; flex-direction: column; isolation: isolate; }
 .proposal .bin { padding-top: 16px; }
 .proposal .bin__card {
   display: flex;
@@ -697,7 +697,8 @@ a { color: inherit; }
 .play-btn:disabled { opacity: 0.35; }
 
 /* ── Bacs ─────────────────────────────────────────────────── */
-.bins { display: flex; flex-direction: column; }
+/* isolation : les z-index des intercalaires restent internes à la liste (sinon ils passent devant la barre d'onglets). */
+.bins { display: flex; flex-direction: column; isolation: isolate; }
 .bins .bin { padding-top: 16px; }
 .bins .bin + .bin { margin-top: -6px; }
 .bins .bin__card { min-height: 60px; padding: 8px 10px 8px 86px; }
