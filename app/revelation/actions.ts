@@ -10,6 +10,7 @@ import { uniqueShape } from "@/lib/cover-shapes";
 import { startCreation } from "@/lib/creation";
 import { check, db } from "@/lib/db";
 import { revelationState } from "@/lib/revelation";
+import { withUsage } from "@/lib/ai-usage";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -20,7 +21,7 @@ async function run(action: (memberId: string) => Promise<ActionResult | void>): 
   const member = await currentMember();
   if (!member) return SESSION_EXPIRED;
   try {
-    const result = await action(member.spotify_id);
+    const result = await withUsage(member.spotify_id, "proposition", () => action(member.spotify_id));
     revalidatePath("/revelation");
     return result ?? { ok: true };
   } catch (error) {

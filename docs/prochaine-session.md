@@ -20,6 +20,9 @@ Fait aujourd'hui :
 ## Nouveau bac (11/10/2026)
 Page Bacs → « + Nouveau bac » : description libre → job « bac » en tâche de fond (`lib/new-bac.ts`) : fiche par l'IA (`customFiche`, Opus) → recherche des titres dans toute la bibliothèque par paquets de 600 → playlist + pochette, titres sortis de Divers (`createActiveBac`) → frontières des autres fiches rafraîchies. Suivi dans la page (jauge, titres écoutés / trouvés) via `POST /api/bac` ; l'app peut être fermée. Plafond 25 bacs actifs. **Pas encore testé de bout en bout** (crée une vraie playlist) : premier essai à faire par Walid ou Jérémy (ex. « rap US des années 2000 »).
 
+## Coût de l'IA (depuis le 11/10/2026)
+Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, modèle, tokens, coût au tarif public), via `responseText` (`lib/claude.ts`) et le contexte `withUsage` (`lib/ai-usage.ts`) posé par les jobs et les actions. Rapport : `npm run try -- scripts/ai-costs.mts [jours]`. Avant cette date, rien n'est enregistré : l'onboarding de Jérémy est estimé à ~7–9 $ (rangement de 2 340 titres ~4 $, fiches Fable ~2 $).
+
 ## Points d'attention
 - **Le partage n'a pas augmenté** (17 % → 16 % des titres dans plusieurs bacs) : le seuil 0,6 a vidé Groove joyeux (124 → 84) et Fin de nuit (43 → 25) des titres douteux, compensé par les 3 nouveaux bacs. « Avant de sortir » est surtout de l'afrobeats (Rema, Burna Boy) : à surveiller, le juge le trouvait flou. Si Walid veut plus de partage : bacs transversaux à critère net (comme Focus instrumental), pas de seuil plus bas (45 % de justes à 0,5).
 - L'analyse initiale (Fable) n'a pas été retouchée : elle propose toujours ~2/3 de scènes. À revoir si l'ami obtient peu de bacs transversaux.

@@ -6,6 +6,7 @@ import { refreshBriefs } from "./bac-admin";
 import { runNewBacStep, type NewBacProgress } from "./new-bac";
 import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
+import { withUsage } from "./ai-usage";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
 /**
@@ -15,6 +16,12 @@ import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGE
 export async function runJob(id: string): Promise<void> {
   const job = await claimJob(id);
   if (!job) return; // déjà pris par un autre worker, ou terminé
+  // Consommation de l'IA rattachée au membre et à la tâche.
+  await withUsage(job.member_id, job.kind, () => runClaimed(job));
+}
+
+async function runClaimed(job: Job<unknown>): Promise<void> {
+  const id = job.id;
 
   const deadline = Date.now() + STEP_BUDGET_MS;
   try {

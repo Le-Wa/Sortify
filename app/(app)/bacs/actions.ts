@@ -11,6 +11,7 @@ import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { kickJob, startJob } from "@/lib/jobs";
 import { newBacProgress } from "@/lib/new-bac";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
+import { withUsage } from "@/lib/ai-usage";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -18,7 +19,7 @@ async function run(action: (memberId: string) => Promise<ActionResult | void>): 
   const member = await currentMember();
   if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
   try {
-    const result = await action(member.spotify_id);
+    const result = await withUsage(member.spotify_id, "bacs", () => action(member.spotify_id));
     revalidatePath("/", "layout");
     return result ?? { ok: true };
   } catch (error) {
@@ -80,7 +81,7 @@ export async function removeFromBac(bacId: string, track: string): Promise<Actio
 function refreshBriefsLater(memberId: string) {
   after(async () => {
     try {
-      await refreshBriefs(memberId);
+      await withUsage(memberId, "fiches", () => refreshBriefs(memberId));
     } catch (error) {
       console.error("Frontières des fiches non rafraîchies :", error);
     }

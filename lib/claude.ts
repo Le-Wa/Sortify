@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { recordUsage, type UsageLike } from "./ai-usage";
 
 /** Analyse de la bibliothèque : appel rare, la qualité prime (spec 02 — « le plus capable »). */
 export const ANALYSIS_MODEL = "claude-fable-5-1";
@@ -19,11 +20,12 @@ export function claude(): Anthropic {
   return client;
 }
 
-/** Texte d'une réponse, après vérification qu'elle est complète. */
+/** Texte d'une réponse, après vérification qu'elle est complète. Enregistre aussi la consommation de l'appel. */
 export function responseText(
-  message: { content: Array<{ type: string; text?: string }>; stop_reason: string | null },
+  message: { content: Array<{ type: string; text?: string }>; stop_reason: string | null } & UsageLike,
   context: string,
 ): string {
+  recordUsage(message, context); // un refus ou une réponse tronquée sont facturés aussi
   if (message.stop_reason === "refusal") throw new Error(`${context} : le modèle a refusé de répondre`);
   if (message.stop_reason === "max_tokens") throw new Error(`${context} : réponse tronquée (max_tokens)`);
   const text = message.content

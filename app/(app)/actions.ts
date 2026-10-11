@@ -6,6 +6,7 @@ import { currentMember } from "@/lib/auth";
 import { acceptAllPending, bacsOfTrack, pendingQueue, setTrackBacs } from "@/lib/daily";
 import { kickJob, startJob } from "@/lib/jobs";
 import { initialTri } from "@/lib/tri";
+import { withUsage } from "@/lib/ai-usage";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -13,7 +14,7 @@ async function run(action: (memberId: string) => Promise<ActionResult | void>): 
   const member = await currentMember();
   if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
   try {
-    const result = await action(member.spotify_id);
+    const result = await withUsage(member.spotify_id, "accueil", () => action(member.spotify_id));
     revalidatePath("/", "layout");
     return result ?? { ok: true };
   } catch (error) {
