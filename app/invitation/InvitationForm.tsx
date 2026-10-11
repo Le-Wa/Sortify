@@ -28,7 +28,7 @@ export function InvitationForm() {
         key={state.status === "error" ? state.code : "vide"}
         defaultValue={state.status === "error" ? state.code : ""}
         className="code-input"
-        placeholder="DISQ-XXXX"
+        placeholder="DISQ-XXXXXX"
         autoComplete="off"
         autoCapitalize="characters"
         spellCheck={false}

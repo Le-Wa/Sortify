@@ -1,12 +1,12 @@
 import { after } from "next/server";
-import { env } from "@/lib/env";
+import { hasCronSecret } from "@/lib/env";
 import { runJob } from "@/lib/run-job";
 
 export const maxDuration = 300;
 
 /** Fait avancer un job en arrière-plan. Appelé par l'app elle-même, avec le secret du cron. */
 export async function POST(req: Request, ctx: RouteContext<"/api/jobs/[id]/run">) {
-  if (req.headers.get("authorization") !== `Bearer ${env.cronSecret}`) {
+  if (!hasCronSecret(req.headers.get("authorization"))) {
     return Response.json({ error: "Non autorisé" }, { status: 401 });
   }
   const { id } = await ctx.params;

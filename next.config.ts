@@ -5,6 +5,21 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/jobs/[id]/run": ["./assets/fonts/**"],
   },
+  // En-têtes de sécurité (revue du 11/10/2026).
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "i.scdn.co" },

@@ -73,7 +73,8 @@ async function topTags(params: Record<string, string>, exclude: string): Promise
     return (data.toptags?.tag ?? [])
       .filter((t) => t.count >= MIN_COUNT)
       .map((t) => t.name.trim().toLowerCase())
-      .filter((t) => t && t !== lower && !NOISE.has(t))
+      // Tags Last.fm = texte libre d'inconnus (et partagé entre membres via le cache) : courts et sans caractères spéciaux.
+      .filter((t) => t && t.length <= 40 && /^[\p{L}\p{N} &'’./+-]+$/u.test(t) && t !== lower && !NOISE.has(t))
       .filter((t, i, all) => all.indexOf(t) === i)
       .slice(0, MAX_TAGS);
   }

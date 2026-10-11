@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+import { hasCronSecret } from "@/lib/env";
 import { check, db } from "@/lib/db";
 import { kickJob, startJob } from "@/lib/jobs";
 import { initialTri } from "@/lib/tri";
@@ -10,7 +10,7 @@ export const maxDuration = 60;
  * Lance un job « tri » par membre qui a des bacs et n'a pas mis le tri en pause.
  */
 export async function GET(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${env.cronSecret}`) {
+  if (!hasCronSecret(req.headers.get("authorization"))) {
     return Response.json({ error: "Non autorisé" }, { status: 401 });
   }
   const members = check(

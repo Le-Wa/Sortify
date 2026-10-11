@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "node:crypto";
+
 function required(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Variable d'environnement manquante : ${name}`);
@@ -31,3 +33,10 @@ export const env = {
     return process.env.LASTFM_API_KEY;
   },
 };
+
+/** En-tête « Authorization: Bearer <CRON_SECRET> » valide ? Comparaison en temps constant. */
+export function hasCronSecret(authorization: string | null): boolean {
+  const expected = Buffer.from(`Bearer ${env.cronSecret}`);
+  const given = Buffer.from(authorization ?? "");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}

@@ -10,8 +10,8 @@ export type InvitationState = { status: "idle" } | { status: "ok" } | { status: 
 export async function checkInvitation(_prev: InvitationState, formData: FormData): Promise<InvitationState> {
   const raw = formData.get("code");
   const code = typeof raw === "string" ? normalizeCode(raw) : "";
-  if (!/^DISQ-[A-Z0-9]{4}$/.test(code)) {
-    return { status: "error", message: "Un code ressemble à DISQ-7K2P.", code };
+  if (!/^DISQ-([A-Z0-9]{4}|[A-Z0-9]{6})$/.test(code)) {
+    return { status: "error", message: "Un code ressemble à DISQ-7K2P4M.", code };
   }
   if (!(await isInvitationUsable(code))) {
     return { status: "error", message: "Ce code n'existe pas ou a déjà servi.", code };

@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { claude, responseText, SORT_MODEL } from "../claude";
-import { trackLine, type CorpusTrack } from "../corpus";
+import { DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
 import type { Axis } from "./fiches";
 
 export interface SortFiche {
@@ -75,7 +75,9 @@ Juge l'ensemble (artiste, titre, époque, énergie, tags) et respecte les fronti
 « raison » : 12 mots au plus, en français, pour expliquer ton choix principal (ou l'absence de bac).
 « bac » est le numéro du bac (1 à ${fiches.length}), « id » le numéro du titre.
 
-Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique). Les tags « deezer: » sont des genres d'album Deezer, plus grossiers que les autres.`;
+Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique). Les tags « deezer: » sont des genres d'album Deezer, plus grossiers que les autres.
+
+${DATA_RULE}`;
 }
 
 async function sortBatch(
@@ -95,7 +97,7 @@ async function sortBatch(
     output_config: { effort: opts.effort ?? "low", format: zodOutputFormat(sortSchema) },
     // Les fiches sont identiques pour tous les lots : on les met en cache.
     system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: lines }],
+    messages: [{ role: "user", content: titlesBlock(lines) }],
   });
   if (opts.usage) {
     opts.usage.input += message.usage.input_tokens + (message.usage.cache_read_input_tokens ?? 0) + (message.usage.cache_creation_input_tokens ?? 0);
@@ -112,7 +114,7 @@ async function sortBatch(
       .filter((s, k, all) => all.findIndex((o) => o.bac === s.bac) === k)
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, MAX_BACS_PER_TRACK);
-    return { track_id: track.track_id, suggestions, reason: answer?.raison.trim() ?? "" };
+    return { track_id: track.track_id, suggestions, reason: (answer?.raison.trim() ?? "").slice(0, 160) };
   });
 }
 
@@ -193,7 +195,9 @@ ${fichesBlock([fiche])}
 Les autres bacs de la personne (pour situer les frontières) : ${neighbours.join(", ") || "aucun"}.
 
 Parmi les titres donnés, renvoie ceux qui ont leur place dans ce bac, avec une confiance entre 0 et 1 (0.9 : évident ; 0.6 à 0.9 : bonne place ; 0.3 à 0.6 : plausible). N'indique pas les autres. Un titre peut aussi aller dans d'autres bacs : juge seulement s'il est à sa place dans celui-ci.
-Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique). Les tags « deezer: » sont des genres d'album Deezer, plus grossiers que les autres.`;
+Format des titres : numéro | artistes — titre | année | tags | én(ergie) da(nsabilité) va(lence) ac(oustique). Les tags « deezer: » sont des genres d'album Deezer, plus grossiers que les autres.
+
+${DATA_RULE}`;
 
   const batches: { tracks: CorpusTrack[]; offset: number }[] = [];
   for (let i = 0; i < tracks.length; i += FILL_BATCH) batches.push({ tracks: tracks.slice(i, i + FILL_BATCH), offset: i });
@@ -210,7 +214,7 @@ Format des titres : numéro | artistes — titre | année | tags | én(ergie) da
         max_tokens: 8000,
         output_config: { effort: "low", format: zodOutputFormat(fillSchema) },
         system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: batch.map((t, i) => trackLine(t, offset + i)).join("\n") }],
+        messages: [{ role: "user", content: titlesBlock(batch.map((t, i) => trackLine(t, offset + i)).join("\n")) }],
       });
       const parsed = fillSchema.parse(JSON.parse(responseText(message, "Remplissage d'un bac")));
       for (const t of parsed.titres) {

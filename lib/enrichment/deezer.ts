@@ -38,7 +38,10 @@ export async function deezerGenres(isrc: string | null): Promise<string[]> {
   const cached = albumCache.get(albumId);
   if (cached) return cached;
   const album = await get<{ genres?: { data: { name: string }[] } }>(`https://api.deezer.com/album/${albumId}`);
-  const genres = (album?.genres?.data ?? []).map((g) => `deezer:${g.name.trim().toLowerCase()}`);
+  const genres = (album?.genres?.data ?? [])
+    .map((g) => g.name.trim().toLowerCase())
+    .filter((g) => g.length <= 40 && /^[\p{L}\p{N} &'’./+-]+$/u.test(g))
+    .map((g) => `deezer:${g}`);
   albumCache.set(albumId, genres);
   return genres;
 }

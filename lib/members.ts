@@ -80,11 +80,12 @@ export const MAX_MEMBERS = 25; // limite Spotify en mode développement
 
 export function normalizeCode(raw: string): string {
   const code = raw.trim().toUpperCase().replace(/[\s_]+/g, "");
-  return code.replace(/^DISQ-?([A-Z0-9]{4})$/, "DISQ-$1");
+  return code.replace(/^DISQ-?([A-Z0-9]{4}|[A-Z0-9]{6})$/, "DISQ-$1");
 }
 
 export async function createInvitation(createdBy: string): Promise<string> {
-  const suffix = Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
+  // 6 caractères (32^6 ≈ 1 milliard) : impossible à deviner en essayant. Les anciens codes à 4 restent valables.
+  const suffix = Array.from({ length: 6 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
   const code = `DISQ-${suffix}`;
   check(await db().from("invitations").insert({ code, created_by: createdBy }), "Création du code");
   return code;

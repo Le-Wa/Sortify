@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ANALYSIS_MODEL, claude, EDIT_MODEL, responseText } from "../claude";
-import { trackLine, type CorpusTrack } from "../corpus";
+import { cleanForPrompt, DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
 
 export const AXES = ["scène", "ambiance", "moment"] as const;
 export type Axis = (typeof AXES)[number];
@@ -32,7 +32,9 @@ Ce qui marche (appris sur de vraies bibliothèques) :
 - Le meilleur format est « une scène + une couleur » (« Soul nocturne », « Électro solaire »). Un bac de pure ambiance (« Mélancolie ») est trop flou pour ranger de façon fiable ; un bac de pure scène trop large (« Électro ») ne sert à rien.
 - Mélange les trois axes : environ deux tiers de bacs « scène », et au moins deux bacs « ambiance » ou « moment » qui traversent plusieurs scènes (un même titre de rap, d'électro ou de soul peut y aller). Ce sont eux qui permettent à un titre de vivre dans plusieurs bacs, et c'est ce que la personne veut.
 - Les genres sont des indices, pas des règles : un titre a souvent 4 ou 5 tags, juge l'ensemble (artiste, titre, époque, énergie).
-- Un titre peut aller dans plusieurs bacs (3 au plus), c'est voulu, mais deux bacs ne doivent pas se recouvrir largement.`;
+- Un titre peut aller dans plusieurs bacs (3 au plus), c'est voulu, mais deux bacs ne doivent pas se recouvrir largement.
+
+${DATA_RULE}`;
 
 /**
  * Analyse de la bibliothèque : propose les bacs qui la résument.
@@ -60,17 +62,26 @@ Ta mission :
 - Tout le texte est en français, tutoiement.
 
 Format du corpus, un titre par ligne : numéro | artistes — titre | année de sortie | tags de genre | én(ergie) da(nsabilité) va(lence) ac(oustique) entre 0 et 1 quand on les connaît. Les tags « deezer: » sont des genres d'album Deezer, plus grossiers.`,
-    messages: [{ role: "user", content: `Corpus (${corpus.length} titres) :\n${lines}` }],
+    messages: [{ role: "user", content: `Corpus (${corpus.length} titres) :\n${titlesBlock(lines)}` }],
   });
   const message = await stream.finalMessage();
   const parsed = analysisSchema.parse(JSON.parse(responseText(message, "Analyse de la bibliothèque")));
   return parsed.bacs.map((f) => cleanFiche(f, corpus.length));
 }
 
+/** Bornes de sécurité sur le texte produit par l'IA (affiché, puis relu à chaque rangement). */
 function cleanFiche(f: Fiche, corpusSize: number): Fiche {
   const examples = [...new Set(f.examples.filter((i) => i >= 0 && i < corpusSize))].slice(0, 8);
-  const sleeve = f.sleeve_name?.trim();
-  return { ...f, name: f.name.trim(), sleeve_name: sleeve && f.name.trim().length > 16 ? sleeve : null, examples };
+  const name = f.name.trim().slice(0, 40);
+  const sleeve = f.sleeve_name?.trim().slice(0, 16);
+  return {
+    ...f,
+    name,
+    sleeve_name: sleeve && name.length > 16 ? sleeve : null,
+    pitch: f.pitch.trim().slice(0, 200),
+    brief: f.brief.trim().slice(0, 1500),
+    examples,
+  };
 }
 
 export interface FicheContext {
@@ -99,7 +110,7 @@ ${neighbours || "(aucun)"}
 
 Tout le texte est en français, tutoiement. Les exemples sont des numéros de titres du corpus.
 Format du corpus : numéro | artistes — titre | année | tags | én da va ac.`,
-    messages: [{ role: "user", content: `Corpus :\n${lines}\n\n${instruction}` }],
+    messages: [{ role: "user", content: `Corpus :\n${titlesBlock(lines)}\n\n${instruction}` }],
   });
   const parsed = singleSchema.parse(JSON.parse(responseText(message, "Retouche d'un bac")));
   return cleanFiche(parsed.bac, corpus.length);
@@ -126,7 +137,7 @@ export function mergedFiche(a: FicheContext, b: FicheContext, others: FicheConte
 /** « Il manque un bac ? » : bac sur mesure à partir d'une description libre. */
 export function customFiche(request: string, others: FicheContext[], corpus: CorpusTrack[]) {
   return editFiche(
-    `La personne demande un bac sur mesure : « ${request.slice(0, 500)} ». Écris sa fiche (garde l'esprit de la demande, trouve un nom évocateur) et choisis des exemples dans le corpus.`,
+    `La personne demande un bac sur mesure : <demande>${cleanForPrompt(request, 500)}</demande>. Écris sa fiche (garde l'esprit de la demande, trouve un nom évocateur) et choisis des exemples dans le corpus.`,
     others,
     corpus,
   );
@@ -158,7 +169,7 @@ Format des titres : numéro | artistes — titre | année | tags | én da va ac.
     messages: [
       {
         role: "user",
-        content: `Ces ${orphans.length} titres n'ont trouvé leur place dans aucun bac :\n${lines}\n\nPropose 0, 1 ou 2 nouveaux bacs, uniquement si un groupe cohérent d'au moins ${minPerBac} de ces titres le justifie et qu'il ne double aucun bac existant. Sinon renvoie une liste vide : ces titres iront dans la caisse « Divers », c'est très bien. Les exemples sont des numéros de cette liste.`,
+        content: `Ces ${orphans.length} titres n'ont trouvé leur place dans aucun bac :\n${titlesBlock(lines)}\n\nPropose 0, 1 ou 2 nouveaux bacs, uniquement si un groupe cohérent d'au moins ${minPerBac} de ces titres le justifie et qu'il ne double aucun bac existant. Sinon renvoie une liste vide : ces titres iront dans la caisse « Divers », c'est très bien. Les exemples sont des numéros de cette liste.`,
       },
     ],
   });
@@ -191,11 +202,12 @@ Tout le texte est en français, tutoiement.`,
     messages: [
       {
         role: "user",
-        content: `Bac « ${current.name} » (${current.axis}).\nPitch actuel : ${current.pitch}\nBrief actuel :\n${current.brief}\n\nLa personne demande : « ${instruction.slice(0, 500)} ».\nRéécris le pitch et le brief en tenant compte de sa demande, sans changer l'esprit du bac au-delà de ce qu'elle demande.`,
+        content: `Bac « ${current.name} » (${current.axis}).\nPitch actuel : ${current.pitch}\nBrief actuel :\n${current.brief}\n\nLa personne demande : <demande>${cleanForPrompt(instruction, 500)}</demande>.\nRéécris le pitch et le brief en tenant compte de sa demande, sans changer l'esprit du bac au-delà de ce qu'elle demande.`,
       },
     ],
   });
-  return adjustSchema.parse(JSON.parse(responseText(message, "Ajustement d'un bac")));
+  const adjusted = adjustSchema.parse(JSON.parse(responseText(message, "Ajustement d'un bac")));
+  return { pitch: adjusted.pitch.trim().slice(0, 200), brief: adjusted.brief.trim().slice(0, 1500) };
 }
 
 const reanalysisSchema = z.object({
@@ -243,7 +255,7 @@ Propose seulement les changements qui valent vraiment le coup (souvent 0 à 3) :
 - « fusionner » : deux bacs qui se recouvrent trop.
 Si tout va bien, renvoie une liste vide. Tout le texte est en français, tutoiement. Les exemples des fiches sont des numéros de titres du corpus.
 Format du corpus : numéro | artistes — titre | année | tags | én da va ac.`,
-    messages: [{ role: "user", content: `Bacs actuels :\n${bacs}\n\nCorpus (${corpus.length} titres) :\n${lines}` }],
+    messages: [{ role: "user", content: `Bacs actuels :\n${bacs}\n\nCorpus (${corpus.length} titres) :\n${titlesBlock(lines)}` }],
   });
   const parsed = reanalysisSchema.parse(JSON.parse(responseText(await stream.finalMessage(), "Ré-analyse")));
   const valid: Change[] = [];
