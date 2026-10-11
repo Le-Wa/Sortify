@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { arrivals, WEEKS, type ArrivalTrack } from "@/lib/arrivages";
 import { requireMember } from "@/lib/auth";
-import { hourOf, nextCron, relativeDay, weekKey, weekLabel } from "@/lib/dates";
+import { hourOf, nextCron, relativeDay } from "@/lib/dates";
+import { weekKey, weekLabel } from "@/lib/weeks";
 import { Sleeve } from "../../ui/Sleeve";
 
 const SHOWN = 5;

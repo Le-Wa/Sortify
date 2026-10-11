@@ -30,13 +30,3 @@ export function nextCron(now = new Date()): Date {
   if (next <= now) next.setUTCDate(next.getUTCDate() + 7);
   return next;
 }
-
-/** Lundi (date de Paris, « AAAA-MM-JJ ») de la semaine d'une date. */
-export function weekKey(d: Date): string {
-  const day = new Date(dayKey.format(d)); // minuit UTC du jour de Paris
-  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
-  return day.toISOString().slice(0, 10);
-}
-
-/** « Semaine du 6 oct. » à partir d'une clé de semaine. */
-export const weekLabel = (key: string) => `Semaine du ${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(key))}`;

@@ -2,7 +2,7 @@ import "server-only";
 import { listBacs } from "./bacs";
 import { markFor, type SleeveMark } from "./cover-shapes";
 import { check, db } from "./db";
-import { weekKey } from "./dates";
+import { weekKey } from "./weeks";
 
 /** Nombre de semaines montrées dans l'onglet Arrivages. */
 export const WEEKS = 8;

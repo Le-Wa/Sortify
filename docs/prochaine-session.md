@@ -20,6 +20,11 @@ Fait aujourd'hui :
 ## Nouveau bac (11/10/2026)
 Page Bacs → « + Nouveau bac » : description libre → job « bac » en tâche de fond (`lib/new-bac.ts`) : fiche par l'IA (`customFiche`, Opus) → recherche des titres dans toute la bibliothèque par paquets de 600 → playlist + pochette, titres sortis de Divers (`createActiveBac`) → frontières des autres fiches rafraîchies. Suivi dans la page (jauge, titres écoutés / trouvés) via `POST /api/bac` ; l'app peut être fermée. Plafond 25 bacs actifs. **Pas encore testé de bout en bout** (crée une vraie playlist) : premier essai à faire par Walid ou Jérémy (ex. « rap US des années 2000 »).
 
+## Tri hebdomadaire et Arrivages (11/10/2026)
+- Le tri automatique passe **chaque lundi à 6 h UTC** (8 h à Paris l'été) au lieu de chaque matin (`vercel.json`, `nextCron` dans `lib/dates.ts`) ; « Nouveaux likes ? » reste disponible à la main.
+- 4e onglet **Arrivages** (`app/(app)/arrivages`, `lib/arrivages.ts`, `lib/weeks.ts`) : les likes des 8 dernières semaines, une fiche dépliable par semaine (cette semaine ouverte), par bac avec ses titres, plus À trier et Divers.
+- Le serveur de dev Turbopack garde parfois l'ancienne liste d'exports d'un module modifié (« X is not a function ») : relancer le serveur, ou mettre les nouvelles fonctions dans un nouveau module.
+
 ## Coût de l'IA (depuis le 11/10/2026)
 Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, modèle, tokens, coût au tarif public), via `responseText` (`lib/claude.ts`) et le contexte `withUsage` (`lib/ai-usage.ts`) posé par les jobs et les actions. Rapport : `npm run try -- scripts/ai-costs.mts [jours]`. Avant cette date, rien n'est enregistré : l'onboarding de Jérémy est estimé à ~7–9 $ (rangement de 2 340 titres ~4 $, fiches Fable ~2 $).
 

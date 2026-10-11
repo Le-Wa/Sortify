@@ -10,7 +10,7 @@
   - rangement : **Claude Sonnet 5.5** en effort `low` depuis le banc d'essai du 10/10/2026 (`docs/bench/`) : 86 % de premier bac juste contre 76 % pour Haiku 5.5, décisions stables à 94 %. Lots de 20 (100 pour remplir un seul bac), 6 en parallèle, fiches en cache.
     Depuis le banc du 11/10/2026 (`docs/bench/2026-10-11-banc-essai.md`) : **deux familles** rangées séparément (1 bac de scène principal, 2 au plus ; 0 à 2 bacs transversaux ambiance / moment) ; seuil de placement **0,5 pour une scène, 0,6 pour un transversal** (`placeThreshold`, `lib/bacs.ts`).
   - frontières des fiches : **rafraîchies par Opus** en arrière-plan après l'acceptation d'une suggestion ou le retrait d'un bac (`refreshBriefs`).
-- Vercel (plan Hobby) + Cron quotidien `0 6 * * *` → `/api/cron/tri` (`vercel.json`), protégé par `CRON_SECRET`.
+- Vercel (plan Hobby) + Cron hebdomadaire `0 6 * * 1` (lundi, depuis le 11/10/2026) → `/api/cron/tri` (`vercel.json`), protégé par `CRON_SECRET`.
 - Enrichissement (mesuré le 10/10/2026 sur 1 154 likes, ~3 min 30) :
   - **Last.fm** : tags de l'artiste principal (cache partagé `artist_tags`), tags du titre en repli. 85 % des titres ont des genres. Limite 5 req/s respectée.
   - **ReccoBeats** : énergie, dansabilité, valence, acoustique, instrumental, tempo, par lots de 40 **identifiants Spotify** (les ISRC ne marchent pas — le code V1 ne récupérait rien). ~55 % de couverture, à toutes les époques.

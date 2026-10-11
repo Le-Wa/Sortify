@@ -59,7 +59,7 @@ export default async function ConnexionPage(props: PageProps<"/">) {
         <li>
           <span className="mono">03</span>
           <span>
-            <b>Elle range chaque nouveau like</b>, tous les jours.
+            <b>Elle range chaque nouveau like</b>, chaque semaine.
           </span>
         </li>
       </ol>
