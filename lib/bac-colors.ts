@@ -23,7 +23,7 @@ export function inkFor(bg: string): string {
 
 /** Prochaine couleur libre pour un nouveau bac ; quand tout est pris, la moins utilisée (dans l'ordre de la palette). */
 export function nextColor(used: string[]): string {
-  const uses = new Map(BAC_COLORS.map((c) => [c.bg, 0]));
+  const uses = new Map<string, number>(BAC_COLORS.map((c) => [c.bg, 0]));
   for (const color of used) {
     const key = color.toUpperCase();
     if (uses.has(key)) uses.set(key, uses.get(key)! + 1);
