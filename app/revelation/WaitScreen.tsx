@@ -5,6 +5,23 @@ import { useEffect, useState } from "react";
 import { useRevelation } from "./useRevelation";
 
 const SEGMENTS = 30;
+
+/**
+ * Part de la jauge de chaque étape de l'analyse, et durée typique des étapes faites d'un seul appel à l'IA :
+ * elles avancent au temps écoulé (en ralentissant, sans jamais finir avant l'étape suivante).
+ */
+const ANALYSE_STEPS = {
+  fiches: { from: 0, to: 0.4, seconds: 150, text: "L'IA écoute l'ensemble et imagine tes bacs…" },
+  rangement: { from: 0.4, to: 0.85, seconds: 0, text: "On essaie les bacs sur tes titres…" },
+  complement: { from: 0.85, to: 0.92, seconds: 60, text: "On cherche une maison aux titres restants…" },
+  remplissage: { from: 0.92, to: 1, seconds: 60, text: "On remplit les derniers bacs…" },
+} as const;
+
+function timeShare(startedAt: string | undefined, seconds: number): number {
+  if (!startedAt) return 0;
+  const elapsed = Math.max(0, (Date.now() - Date.parse(startedAt)) / 1000);
+  return 1 - Math.exp(-elapsed / seconds);
+}
 const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 
 function likedOn(iso: string): string {
@@ -51,14 +68,18 @@ export function WaitScreen({ stage }: { stage: "import" | "analyse" }) {
     }
   } else if (ana) {
     const p = ana.progress;
-    if (p.phase === "fiches" || p.phase === "complement" || p.phase === "remplissage") {
-      step = "L'IA écoute l'ensemble et imagine tes bacs…";
-      ratio = 0.5;
+    if (p.phase === "done") {
+      ratio = 1;
     } else {
-      count = p.sorted;
-      suffix = `/ ${p.total.toLocaleString("fr-FR")} rangés`;
-      ratio = p.total ? 0.5 + (0.5 * p.sorted) / p.total : 0.5;
-      step = "On essaie les bacs sur tes titres…";
+      const s = ANALYSE_STEPS[p.phase];
+      step = s.text;
+      let share = timeShare(p.phaseStartedAt, s.seconds || 1);
+      if (p.phase === "rangement") {
+        count = p.sorted;
+        suffix = `/ ${p.total.toLocaleString("fr-FR")} rangés`;
+        share = p.total ? p.sorted / p.total : 0;
+      }
+      ratio = s.from + (s.to - s.from) * share;
     }
   }
   const filled = Math.round(ratio * SEGMENTS);

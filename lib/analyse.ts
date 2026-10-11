@@ -11,6 +11,8 @@ export interface AnalyseProgress {
   phase: "fiches" | "rangement" | "complement" | "remplissage" | "done";
   sorted: number;
   total: number;
+  /** Début de l'étape en cours (ISO) : la jauge avance au temps pendant les longs appels à l'IA. */
+  phaseStartedAt?: string;
 }
 
 export const initialAnalyse: AnalyseProgress = { phase: "fiches", sorted: 0, total: 0 };
@@ -22,8 +24,14 @@ const TARGET_COVERAGE = 0.85;
 
 export async function runAnalyseStep(job: Job<AnalyseProgress>, deadline: number): Promise<AnalyseProgress> {
   let progress = job.progress;
+  if (!progress.phaseStartedAt) {
+    progress = { ...progress, phaseStartedAt: new Date().toISOString() };
+    await saveProgress(job.id, progress);
+  }
   do {
+    const before = progress.phase;
     progress = await analyseUnit(job.member_id, progress);
+    if (progress.phase !== before) progress = { ...progress, phaseStartedAt: new Date().toISOString() };
     await saveProgress(job.id, progress);
   } while (Date.now() < deadline && progress.phase !== "done");
   return progress;
