@@ -30,7 +30,7 @@ export async function coverJpegBase64(bac: { name: string; sleeve_name: string |
   const png = new ImageResponse(
     (
       <div style={{ width: SIZE, height: SIZE, position: "relative", display: "flex", background: bac.color, overflow: "hidden" }}>
-        {/* Vinyle ton sur ton (sillons, rond central, trou) qui dépasse en haut à droite. */}
+        {/* Vinyle ton sur ton, plein (rond central et trou), qui dépasse en haut à droite. */}
         <div
             style={{
               position: "absolute",
@@ -42,7 +42,7 @@ export async function coverJpegBase64(bac: { name: string; sleeve_name: string |
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: `repeating-radial-gradient(circle, ${v.disc} 0, ${v.disc} 7px, ${v.groove} 8px, ${v.disc} 10px)`,
+              background: v.disc,
             }}
           >
             <div
