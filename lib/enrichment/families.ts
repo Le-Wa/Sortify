@@ -21,6 +21,11 @@ export function families(tags: string[]): Set<string> {
   return out;
 }
 
+/** Les tags disent-ils un style (et pas seulement un pays ou « female vocalists ») ? */
+export function hasStyle(tags: string[]): boolean {
+  return families(tags).size > 0;
+}
+
 /** Deezer et Last.fm ne partagent aucune famille (« pop » seul chez Deezer est trop vague pour trancher). */
 export function contradicts(lastfm: string[], deezer: string[]): boolean {
   const a = families(lastfm);

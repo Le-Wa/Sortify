@@ -1,7 +1,7 @@
 import "server-only";
 import { complementFiches, proposeFiches } from "./ai/fiches";
 import { fillBac, sortTracks } from "./ai/sort";
-import { addPlacements, insertFiches, listBacs, replacePlacements, sortFichesFor, type Bac, examplesFor } from "./bacs";
+import { addPlacements, insertFiches, listBacs, replacePlacements, sortFichesFor, SURE_THRESHOLD, type Bac, examplesFor } from "./bacs";
 import { loadCorpus, sampleCorpus } from "./corpus";
 import { check, db } from "./db";
 import { saveProgress, type Job } from "./jobs";
@@ -77,9 +77,13 @@ async function sortUnit(memberId: string, progress: AnalyseProgress): Promise<An
   const slice = corpus.slice(progress.sorted, progress.sorted + SORT_UNIT);
   if (slice.length > 0 && bacs.length > 0) {
     const sorted = await sortTracks(await sortFichesFor(bacs), slice);
+    // Comme au tri quotidien : un titre dont le meilleur bac reste sous 0,6 n'est pas rangé (il ira dans Divers),
+    // sinon une simple supposition (Larusso dans « Rap FR old school » à 0,5) finit dans une playlist.
     await addPlacements(
       memberId,
-      sorted.flatMap((s) => s.suggestions.map((x) => ({ bac_id: bacs[x.bac].id, track_id: s.track_id, confidence: x.confidence }))),
+      sorted
+        .filter((s) => (s.suggestions[0]?.confidence ?? 0) >= SURE_THRESHOLD)
+        .flatMap((s) => s.suggestions.map((x) => ({ bac_id: bacs[x.bac].id, track_id: s.track_id, confidence: x.confidence }))),
     );
   }
   const done = progress.sorted + slice.length;

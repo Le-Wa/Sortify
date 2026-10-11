@@ -12,6 +12,11 @@ Fait aujourd'hui :
   - Bibliothèque re-rangée (`scripts/migrate-algo-2026-10-11.mts`) : 304 titres déplacés, Divers 151 → 140, 17 playlists vérifiées identiques à la base. Sauvegarde : `backups/` (hors git).
 - Walid va tester avec un ami (code d'invitation dans Réglages ; ajouter son compte dans le Spotify Developer Dashboard, mode développement).
 
+## Test avec Jérémy (ami de Walid, 2e membre)
+- 2 340 likes importés (fenêtre élargie à tout l'historique, voir « En attente »). Enrichissement meilleur que Walid (Last.fm 87 %, audio 82 %) car bibliothèque plus ancienne ; 139 titres passés sur Deezer (homonymes : Kima, DaniLeigh, Warped, SDM, Naza).
+- **Divers = 1 264 titres sur 2 340 (54 %)** : il a retiré lui-même sur l'écran Proposition les bacs de sa scène principale (rap US, rap FR actuel, Kalash / Martinique, afrobeats). Idée : lui proposer plus tard de les récupérer (les bacs retirés sont effacés à la création, `lib/creation.ts`) ; en attendant, « Relancer l'analyse » dans Réglages proposera des bacs depuis Divers.
+- Corrigé suite au cas Larusso (rangée dans « Rap FR old school » à 0,5 avec les seuls tags « french, female vocalists ») : genres Deezer ajoutés quand les tags Last.fm n'ont aucun style (`hasStyle`), et à la création un titre n'est rangé que si son meilleur bac atteint 0,6 (`SURE_THRESHOLD`), comme au tri quotidien. Pas de re-rangement des bibliothèques existantes (à faire avec essai à blanc si voulu).
+
 ## Points d'attention
 - **Le partage n'a pas augmenté** (17 % → 16 % des titres dans plusieurs bacs) : le seuil 0,6 a vidé Groove joyeux (124 → 84) et Fin de nuit (43 → 25) des titres douteux, compensé par les 3 nouveaux bacs. « Avant de sortir » est surtout de l'afrobeats (Rema, Burna Boy) : à surveiller, le juge le trouvait flou. Si Walid veut plus de partage : bacs transversaux à critère net (comme Focus instrumental), pas de seuil plus bas (45 % de justes à 0,5).
 - L'analyse initiale (Fable) n'a pas été retouchée : elle propose toujours ~2/3 de scènes. À revoir si l'ami obtient peu de bacs transversaux.

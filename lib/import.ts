@@ -1,7 +1,7 @@
 import "server-only";
 import { check, db } from "./db";
 import { deezerGenres } from "./enrichment/deezer";
-import { contradicts } from "./enrichment/families";
+import { contradicts, hasStyle } from "./enrichment/families";
 import { artistTags, trackTags } from "./enrichment/lastfm";
 import { audioFeatures, RECCOBEATS_BATCH, type AudioFeatures } from "./enrichment/reccobeats";
 import { saveProgress, type Job } from "./jobs";
@@ -214,8 +214,9 @@ async function genresFor(likes: PendingLike[]): Promise<Map<string, string[]>> {
       if (tags.length > 0) {
         // Les tags Last.fm sont ceux de l'artiste, parfois d'un homonyme (HUGEL → rappeur finlandais) :
         // si les genres Deezer de l'album les contredisent, on prend Deezer.
+        // Tags sans style (« french, female vocalists ») : on ajoute les genres Deezer.
         const deezer = await deezerGenres(like.isrc);
-        result.set(like.track_id, contradicts(tags, deezer) ? deezer : tags);
+        result.set(like.track_id, contradicts(tags, deezer) ? deezer : hasStyle(tags) ? tags : [...tags, ...deezer]);
         return;
       }
       const fromTrack = artist ? ((await trackTags(artist, like.title)) ?? []) : [];

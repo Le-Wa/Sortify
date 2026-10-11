@@ -13,6 +13,8 @@ export const INITIAL_PLACE_THRESHOLD = 0.5;
  * par le juge au banc d'essai du 11/10/2026.
  */
 export const TRANSVERSAL_PLACE_THRESHOLD = 0.6;
+/** Un titre n'est rangé que si son meilleur bac atteint ce seuil (tri quotidien et création). */
+export const SURE_THRESHOLD = 0.6;
 
 /** Confiance minimale pour placer un titre dans un bac, selon sa famille. */
 export function placeThreshold(axis: Axis): number {

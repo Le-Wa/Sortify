@@ -1,6 +1,6 @@
 import "server-only";
 import { sortTracks } from "./ai/sort";
-import { ensureDivers, listBacs, placeThreshold, sortFichesFor } from "./bacs";
+import { ensureDivers, listBacs, placeThreshold, sortFichesFor, SURE_THRESHOLD } from "./bacs";
 import type { CorpusTrack } from "./corpus";
 import { check, db } from "./db";
 import { enrichNext, toRow, type SavedTracksPage } from "./import";
@@ -13,7 +13,7 @@ import { syncMember } from "./sync";
  * Au-dessus : rangé directement. Entre les deux : « À trier ». En dessous : Divers (spec 02).
  * Mesuré sur 240 titres (oct. 2026) : 74 % rangés, 15 % À trier, 10 % Divers.
  */
-export const HIGH_CONFIDENCE = 0.6;
+export const HIGH_CONFIDENCE = SURE_THRESHOLD;
 export const LOW_CONFIDENCE = 0.4;
 const SORT_UNIT = 120;
 const MAX_PAGES = 20; // 1 000 nouveaux likes au plus par tri
