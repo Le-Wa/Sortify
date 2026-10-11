@@ -4,8 +4,8 @@ import { requireMember } from "@/lib/auth";
 import { bacStats, bacTracks } from "@/lib/bac-admin";
 import { getBac } from "@/lib/bacs";
 import { markFor } from "@/lib/cover-shapes";
-import { Sleeve } from "../../../ui/Sleeve";
 import { BacDetail } from "./BacDetail";
+import { SleeveEditor } from "./SleeveEditor";
 
 export default async function BacPage(props: PageProps<"/bacs/[id]">) {
   const member = await requireMember();
@@ -22,7 +22,7 @@ export default async function BacPage(props: PageProps<"/bacs/[id]">) {
         ‹ Bacs
       </Link>
       <div className="row" style={{ gap: 16, alignItems: "flex-end" }}>
-        <Sleeve name={bac.sleeve_name ?? bac.name} color={bac.color} size={128} mark={markFor(bac)} />
+        <SleeveEditor bac={{ id: bac.id, name: bac.name, sleeve: bac.sleeve_name ?? bac.name, color: bac.color, mark: markFor(bac) }} />
         <div className="grow stack" style={{ gap: 6 }}>
           <h1 className="display display--s" style={{ fontSize: 24 }}>
             {bac.name}

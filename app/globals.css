@@ -791,3 +791,36 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 
 /* Messages et suggestions arrivent du bas. */
 .toast, .notice, .ai-status, .suggestion { animation: rise 0.28s ease-out backwards; }
+
+/* ── Personnalisation de la pochette (fiche d'un bac) ─────── */
+.sleeve-edit { position: relative; border: 0; padding: 0; background: none; cursor: pointer; flex: none; border-radius: 3px; }
+.sleeve-edit__hint {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(17, 17, 17, 0.25);
+  font-size: 15px;
+}
+.shape-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.shape-grid__item {
+  position: relative;
+  aspect-ratio: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.shape-grid__item svg { position: static !important; }
+.shape-grid__item.is-on, .swatches__item.is-on { outline: 3px solid var(--ink); outline-offset: 2px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatches__item { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(17, 17, 17, 0.15); cursor: pointer; }

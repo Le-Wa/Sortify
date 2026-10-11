@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { adjustFiche } from "@/lib/ai/fiches";
 import { currentMember } from "@/lib/auth";
-import { detachBac, moveBac, removeTrack, updateBac } from "@/lib/bac-admin";
+import { detachBac, moveBac, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
 import { getBac, listBacs } from "@/lib/bacs";
 import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
@@ -40,6 +40,14 @@ export async function editBrief(id: string, brief: string): Promise<ActionResult
     const text = brief.trim();
     if (text.length < 10) return { ok: false, message: "Décris le bac en une ou deux phrases au moins." };
     await updateBac(m, uuid.parse(id), { brief: text.slice(0, 2000) });
+  });
+}
+
+/** Personnalisation de la pochette (forme, couleur), renvoyée à Spotify. */
+export async function restyle(id: string, shape: string, color: string): Promise<ActionResult> {
+  return run(async (m) => {
+    const sent = await restyleBac(m, uuid.parse(id), { shape: z.string().max(20).parse(shape), color: z.string().max(9).parse(color) });
+    return sent ? { ok: true } : { ok: false, message: "Pochette enregistrée, mais Spotify ne l'a pas encore prise : on réessaiera au prochain tri." };
   });
 }
 

@@ -1,8 +1,8 @@
 import "server-only";
 import type { Fiche } from "./ai/fiches";
 import { fillBac } from "./ai/sort";
-import { nextColor } from "./bac-colors";
-import { uniqueShape } from "./cover-shapes";
+import { BAC_COLORS, nextColor } from "./bac-colors";
+import { FICHE_SHAPES, uniqueShape } from "./cover-shapes";
 import { ensureDivers, getBac, INITIAL_PLACE_THRESHOLD, listBacs, setExamples, sortFichesFor, type Bac } from "./bacs";
 import { loadCorpus } from "./corpus";
 import { createPlaylist, uploadCover } from "./creation";
@@ -72,6 +72,24 @@ export async function moveBac(memberId: string, id: string, direction: -1 | 1): 
 export async function updateBac(memberId: string, id: string, patch: Partial<Pick<Bac, "brief" | "pitch" | "auto_fill">>): Promise<void> {
   const bac = await ownedActive(memberId, id);
   check(await db().from("bacs").update(patch).eq("id", bac.id), "Mise à jour du bac");
+}
+
+/**
+ * Pochette personnalisée (forme et couleur choisies dans les listes de Sortify), renvoyée tout de suite à Spotify.
+ * Renvoie false si Spotify n'a pas pris la pochette : le prochain tri réessaiera.
+ */
+export async function restyleBac(memberId: string, id: string, look: { shape: string; color: string }): Promise<boolean> {
+  const bac = await ownedActive(memberId, id);
+  if (!(FICHE_SHAPES as readonly string[]).includes(look.shape)) throw new Error("Forme inconnue.");
+  if (!BAC_COLORS.some((c) => c.bg === look.color)) throw new Error("Couleur inconnue.");
+  const updated = check(
+    await db().from("bacs").update({ shape: look.shape, color: look.color, cover_uploaded_at: null }).eq("id", bac.id).select("*").single(),
+    "Pochette du bac",
+  ) as Bac;
+  if (!updated.spotify_playlist_id) return true;
+  await uploadCover(memberId, updated);
+  const after = check(await db().from("bacs").select("cover_uploaded_at").eq("id", bac.id).single(), "Pochette envoyée") as { cover_uploaded_at: string | null };
+  return Boolean(after.cover_uploaded_at);
 }
 
 export interface BacTrack extends TrackInfo {
