@@ -6,9 +6,6 @@ import { BacList } from "./BacList";
 import { NewBac } from "./NewBac";
 import { markFor } from "@/lib/cover-shapes";
 
-// « Nouveau bac » : fiche par l'IA, remplissage de toute la bibliothèque et playlist Spotify dans la même action.
-export const maxDuration = 300;
-
 export default async function BacsPage() {
   const member = await requireMember();
   const bacs = await listBacs(member.spotify_id, ["active"]);

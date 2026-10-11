@@ -1,10 +1,10 @@
 import "server-only";
-import { customFiche, refreshFrontiers, type Fiche } from "./ai/fiches";
+import { refreshFrontiers, type Fiche } from "./ai/fiches";
 import { fillBac } from "./ai/sort";
 import { BAC_COLORS, nextColor } from "./bac-colors";
 import { FICHE_SHAPES, uniqueShape } from "./cover-shapes";
 import { ensureDivers, getBac, listBacs, placeThreshold, setExamples, sortFichesFor, type Bac } from "./bacs";
-import { loadCorpus, sampleCorpus } from "./corpus";
+import { loadCorpus } from "./corpus";
 import { createPlaylist, uploadCover } from "./creation";
 import { bacsOfTrack, setTrackBacs, type TrackInfo } from "./daily";
 import { check, db } from "./db";
@@ -76,22 +76,6 @@ export async function updateBac(memberId: string, id: string, patch: Partial<Pic
 
 /** Plafond de bacs actifs par membre (au-delà, le rangement devient flou). */
 export const MAX_ACTIVE_BACS = 25;
-
-/**
- * « Nouveau bac » depuis la page Bacs : l'IA écrit la fiche à partir d'une description libre,
- * puis le bac est rempli dans toute la bibliothèque et sa playlist créée (1 à 2 min).
- */
-export async function createCustomBac(memberId: string, request: string): Promise<{ bac: Bac; count: number }> {
-  const active = await listBacs(memberId, ["active"]);
-  if (active.length >= MAX_ACTIVE_BACS) throw new Error(`Tu as déjà ${active.length} bacs : retires-en un avant d'en créer un autre.`);
-  const corpus = sampleCorpus(await loadCorpus(memberId));
-  const fiche = await customFiche(request, active.map((b) => ({ name: b.name, pitch: b.pitch, axis: b.axis })), corpus);
-  const examples = fiche.examples.map((k) => corpus[k]?.track_id).filter((id): id is string => Boolean(id));
-  const bac = await createActiveBac(memberId, fiche, examples);
-  const { count, error } = await db().from("placements").select("track_id", { count: "exact", head: true }).eq("bac_id", bac.id);
-  if (error) throw new Error(`Comptage du nouveau bac : ${error.message}`);
-  return { bac, count: count ?? 0 };
-}
 
 /** Frontières des fiches remises à jour après un changement dans la liste des bacs (Opus, ~30 s). */
 export async function refreshBriefs(memberId: string): Promise<number> {

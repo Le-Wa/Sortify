@@ -2,6 +2,8 @@ import "server-only";
 import { initialAnalyse, runAnalyseStep, type AnalyseProgress } from "./analyse";
 import { runCreationStep, type CreationProgress } from "./creation";
 import { runImportStep, type ImportProgress } from "./import";
+import { refreshBriefs } from "./bac-admin";
+import { runNewBacStep, type NewBacProgress } from "./new-bac";
 import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
@@ -54,6 +56,19 @@ export async function runJob(id: string): Promise<void> {
           // Ré-analyse automatique (spec 02 §2.5) : un échec ne doit pas faire échouer le tri.
           await suggestFromDivers(job.member_id).catch((error: unknown) =>
             console.error("Suggestion depuis Divers impossible :", error instanceof Error ? error.message : error),
+          );
+          return;
+        }
+        await releaseJob(id, progress);
+        break;
+      }
+      case "bac": {
+        const progress = await runNewBacStep(job as Job<NewBacProgress>, deadline);
+        if (progress.phase === "done") {
+          await finishJob(id, progress);
+          // Les fiches voisines tiennent compte du nouveau bac ; un échec ne remet pas le bac en cause.
+          await refreshBriefs(job.member_id).catch((error: unknown) =>
+            console.error("Frontières des fiches non rafraîchies :", error instanceof Error ? error.message : error),
           );
           return;
         }

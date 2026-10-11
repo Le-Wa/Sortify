@@ -2,7 +2,7 @@ import "server-only";
 import { check, db } from "./db";
 import { env } from "./env";
 
-export type JobKind = "import" | "analyse" | "creation" | "tri" | "reanalyse";
+export type JobKind = "import" | "analyse" | "creation" | "tri" | "reanalyse" | "bac";
 export type JobStatus = "running" | "done" | "failed";
 
 export interface Job<P = Record<string, unknown>> {
