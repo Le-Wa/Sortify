@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { inkFor } from "@/lib/bac-colors";
-import { sleeveLayout, catalogCode } from "@/lib/sleeve-layout";
+import { sleeveLayout } from "@/lib/sleeve-layout";
 import type { CreationBac } from "@/lib/creation";
 import { useRevelation } from "./useRevelation";
 
@@ -72,11 +72,11 @@ function PressTile({ bac, active }: { bac: CreationBac; active: boolean }) {
   const { lines, fontSize, padding, small } = sleeveLayout(bac.sleeve, 104);
   const lit = bac.done || ratio >= 0.5;
   return (
-    <div className={`press__tile ${active ? "is-active" : ""}`} style={{ padding }}>
+    <div className={`press__tile ${active ? "is-active" : ""} ${bac.done ? "is-done" : ""}`} style={{ padding }}>
       <span className="press__fill" style={{ height: `${ratio * 100}%`, background: bac.color }} />
       <span className="press__text" style={{ color: lit ? inkFor(bac.color) : undefined }}>
         <span className="row between mono" style={{ fontSize: small + 2 }}>
-          <span>{bac.is_divers ? "caisse" : catalogCode(bac.position)}</span>
+          <span>{bac.is_divers ? "caisse" : ""}</span>
           <span>{bac.done ? `✓ ${bac.total}` : active ? `${bac.added} / ${bac.total}` : ""}</span>
         </span>
         <span className="sleeve__name" style={{ fontSize }}>

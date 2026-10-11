@@ -3,8 +3,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
-import { inkFor } from "./bac-colors";
-import { catalogCode, sleeveLayout } from "./sleeve-layout";
+import { inkFor, vinylShades } from "./bac-colors";
+import { sleeveLayout } from "./sleeve-layout";
 
 const SIZE = 640;
 /** Limite Spotify pour une image de playlist (JPEG encodé en base64). */
@@ -20,34 +20,64 @@ function loadFonts() {
 }
 
 /** Pochette Sortify d'un bac, en JPEG encodé base64 (prête pour PUT /playlists/{id}/images). */
-export async function coverJpegBase64(bac: { name: string; sleeve_name: string | null; color: string; position: number }): Promise<string> {
+export async function coverJpegBase64(bac: { name: string; sleeve_name: string | null; color: string }): Promise<string> {
   const { display, mono } = await loadFonts();
   const label = bac.sleeve_name ?? bac.name;
   const { lines, fontSize, padding, small } = sleeveLayout(label, SIZE);
   const ink = inkFor(bac.color);
+  const v = vinylShades(bac.color);
 
   const png = new ImageResponse(
     (
-      <div
-        style={{
-          width: SIZE,
-          height: SIZE,
-          padding,
-          background: bac.color,
-          color: ink,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "DM Mono", fontSize: small }}>
-          <span>{catalogCode(bac.position)}</span>
-          <span>SORTIFY</span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", fontFamily: "Archivo", fontSize, lineHeight: 0.84 }}>
-          {lines.map((line, i) => (
-            <span key={i}>{line.toUpperCase()}</span>
-          ))}
+      <div style={{ width: SIZE, height: SIZE, position: "relative", display: "flex", background: bac.color, overflow: "hidden" }}>
+        {/* Vinyle ton sur ton (sillons, rond central, trou) qui dépasse en haut à droite. */}
+        <div
+            style={{
+              position: "absolute",
+              right: -SIZE * 0.22,
+              top: -SIZE * 0.18,
+              width: SIZE * 0.95,
+              height: SIZE * 0.95,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: `repeating-radial-gradient(circle, ${v.disc} 0, ${v.disc} 7px, ${v.groove} 8px, ${v.disc} 10px)`,
+            }}
+          >
+            <div
+              style={{
+                width: SIZE * 0.32,
+                height: SIZE * 0.32,
+                borderRadius: "50%",
+                background: v.label,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ width: 16, height: 16, borderRadius: "50%", background: bac.color }} />
+            </div>
+          </div>
+        <div
+          style={{
+            position: "relative",
+            width: SIZE,
+            height: SIZE,
+            padding,
+            background: "transparent",
+            color: ink,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", fontFamily: "DM Mono", fontSize: small, opacity: 0.85 }}>sortify</div>
+          <div style={{ display: "flex", flexDirection: "column", fontFamily: "Archivo", fontSize, lineHeight: 0.94 }}>
+            {lines.map((line, i) => (
+              <span key={i}>{line.toUpperCase()}</span>
+            ))}
+          </div>
         </div>
       </div>
     ),

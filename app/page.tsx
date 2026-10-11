@@ -32,9 +32,9 @@ export default async function ConnexionPage(props: PageProps<"/">) {
       </div>
 
       <div className="hero-stack" aria-hidden="true">
-        <Sleeve name="Soirée potes" color="#FF6A13" size={196} code="SRT·01" rotate={-9} className="hero-a" />
-        <Sleeve name="Club 2h du mat'" color="#2448D8" size={196} code="SRT·03" rotate={6} className="hero-b" />
-        <Sleeve name="Dimanche lent" color="#FF9FCB" size={196} code="SRT·02" corner="168 titres" rotate={-1.5} className="hero-c" />
+        <Sleeve name="Soirée potes" color="#FF6A13" size={196} rotate={-9} className="hero-a" />
+        <Sleeve name="Club 2h du mat'" color="#2448D8" size={196} rotate={6} className="hero-b" />
+        <Sleeve name="Dimanche lent" color="#FF9FCB" size={196} corner="168 titres" rotate={-1.5} className="hero-c" />
       </div>
 
       <h1 className="display display--xl">

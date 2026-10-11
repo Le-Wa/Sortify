@@ -51,7 +51,9 @@ body {
 button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 
 /* ── Mise en page ─────────────────────────────────────────── */
 .page {
@@ -180,12 +182,27 @@ a { color: inherit; }
   flex: none;
   box-shadow: 0 6px 12px rgba(17, 17, 17, 0.18);
 }
+.sleeve { position: relative; }
+/* Vinyle ton sur ton qui dépasse en haut à droite : rond central, sillons, trou. */
+.sleeve::before {
+  content: "";
+  position: absolute;
+  right: -22%;
+  top: -18%;
+  width: 95%;
+  height: 95%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--groove) 0 1.6%, var(--label) 1.8% 16.5%, transparent 17%),
+    repeating-radial-gradient(circle, var(--disc) 0 2.2%, var(--groove) 2.5%, var(--disc) 3.2%);
+}
+.sleeve > * { position: relative; }
 .sleeve__code { font-family: var(--font-mono); }
 .sleeve__name {
   font-weight: 900;
   font-stretch: 62%;
   text-transform: uppercase;
-  line-height: 0.84;
+  line-height: 0.92; /* 0,84 faisait toucher les accents des capitales (É) à la ligne du dessus */
   overflow-wrap: anywhere;
 }
 
@@ -734,3 +751,58 @@ a { color: inherit; }
 .skeleton__block { height: 150px; }
 .skeleton__line { height: 60px; }
 .skeleton__line--short { width: 70%; }
+.brief--folded { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ── Animations « disquaire » : courtes, légères, coupées si le téléphone demande moins d'animations ── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes drop-on-counter {
+  from { opacity: 0; transform: translateY(-18px) rotate(-4deg) scale(0.96); }
+  60% { opacity: 1; transform: translateY(2px) rotate(0.6deg) scale(1.01); }
+  to { transform: none; }
+}
+@keyframes pressed {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+/* On feuillette : les éléments de la page et des listes arrivent l'un après l'autre. */
+.page > *,
+.bins > .bin,
+.recent > li,
+.proposal > .bin,
+.press > .press__tile {
+  /* backwards : invisible pendant le délai, puis plus aucune transformation résiduelle une fois arrivé. */
+  animation: rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.page > :nth-child(2), .bins > :nth-child(2), .recent > :nth-child(2), .proposal > :nth-child(2), .press > :nth-child(2) { animation-delay: 30ms; }
+.page > :nth-child(3), .bins > :nth-child(3), .recent > :nth-child(3), .proposal > :nth-child(3), .press > :nth-child(3) { animation-delay: 60ms; }
+.page > :nth-child(4), .bins > :nth-child(4), .recent > :nth-child(4), .proposal > :nth-child(4), .press > :nth-child(4) { animation-delay: 90ms; }
+.page > :nth-child(5), .bins > :nth-child(5), .recent > :nth-child(5), .proposal > :nth-child(5), .press > :nth-child(5) { animation-delay: 120ms; }
+.page > :nth-child(n + 6), .bins > :nth-child(n + 6), .recent > :nth-child(n + 6), .proposal > :nth-child(n + 6), .press > :nth-child(n + 6) { animation-delay: 150ms; }
+
+/* Le vinyle sort un peu de sa pochette au survol (souris) ou à l'appui (tactile). */
+.sleeve::before { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.3); }
+a:active .sleeve::before,
+button:active .sleeve::before { transform: translate(-8%, 8%) rotate(25deg); }
+@media (hover: hover) {
+  a:hover .sleeve::before,
+  button:hover .sleeve::before { transform: translate(-8%, 8%) rotate(25deg); }
+}
+
+/* Le disque à trier se pose sur le comptoir. */
+/* « backwards » seulement : une fois posé, le disque doit suivre le doigt (transform inline du swipe). */
+.deck__card { animation: drop-on-counter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+
+/* Presse : petit rebond quand une pochette est terminée. */
+.press__tile.is-done { animation: rise 0.32s backwards, pressed 0.4s 0.05s ease-out; }
+
+/* Boutons et choix s'enfoncent à l'appui. */
+.btn, .pick, .choice, .icon-btn, .switch, .covers__item, .tabbar a { transition: transform 0.12s ease-out, background 0.15s, color 0.15s; }
+.btn:active:not(:disabled), .pick:active:not(:disabled), .choice:active, .icon-btn:active:not(:disabled), .covers__item:active, .tabbar a:active { transform: scale(0.97); }
+
+/* Messages et suggestions arrivent du bas. */
+.toast, .notice, .ai-status, .suggestion { animation: rise 0.28s ease-out backwards; }

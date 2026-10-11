@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { BottomSheet } from "../ui/BottomSheet";
-import { catalogCode, Sleeve } from "../ui/Sleeve";
+import { Sleeve } from "../ui/Sleeve";
 import { usePreview } from "../ui/usePreview";
 import { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept, type ActionResult } from "./actions";
 import { useRevelation } from "./useRevelation";
@@ -205,7 +205,6 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
                 name={bac.sleeve}
                 color={bac.kept ? bac.color : "#8E8F89"}
                 size={expanded ? 72 : 56}
-                code={catalogCode(i)}
                 className="bin__sleeve"
               />
             </section>

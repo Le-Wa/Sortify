@@ -37,11 +37,8 @@ export function sleeveLayout(name: string, size: number) {
   const lines = splitLines(name);
   const widest = Math.max(...lines.map(lineWidthEm), 1);
   const padding = Math.round(size * 0.08);
-  const fontSize = Math.min(size * 0.34, (size - padding * 2) / widest, (size * 0.62) / (lines.length * 0.84));
+  const fontSize = Math.min(size * 0.34, (size - padding * 2) / widest, (size * 0.62) / (lines.length * 0.94));
   const small = Math.max(7, Math.round(size * 0.055));
   return { lines, fontSize, padding, small };
 }
 
-export function catalogCode(position: number): string {
-  return `SRT·${String(position + 1).padStart(2, "0")}`;
-}

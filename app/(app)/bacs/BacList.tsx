@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { catalogCode, Sleeve } from "../../ui/Sleeve";
+import { Sleeve } from "../../ui/Sleeve";
 import { move } from "./actions";
 
 interface Item {
@@ -80,12 +80,12 @@ export function BacList({ bacs }: { bacs: Item[] }) {
           return reordering ? (
             <div key={b.id} className="bin" style={{ zIndex: i + 1 }}>
               {body}
-              <Sleeve name={b.sleeve} color={b.color} size={60} code={catalogCode(i)} className="bin__sleeve" />
+              <Sleeve name={b.sleeve} color={b.color} size={60} className="bin__sleeve" />
             </div>
           ) : (
             <Link key={b.id} href={`/bacs/${b.id}`} className="bin" style={{ zIndex: i + 1 }}>
               {body}
-              <Sleeve name={b.sleeve} color={b.color} size={60} code={catalogCode(i)} className="bin__sleeve" />
+              <Sleeve name={b.sleeve} color={b.color} size={60} className="bin__sleeve" />
             </Link>
           );
         })}

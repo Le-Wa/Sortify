@@ -14,6 +14,7 @@ interface Props {
 export function BacDetail({ bac, tracks }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [brief, setBrief] = useState(bac.brief);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -72,9 +73,18 @@ export function BacDetail({ bac, tracks }: Props) {
             </div>
           </form>
         ) : (
-          <p className={busy === "adjust" ? "is-working" : undefined} style={{ margin: 0, fontSize: 14, lineHeight: 1.45, whiteSpace: "pre-line" }}>
-            {bac.brief}
-          </p>
+          <>
+            {/* Fiche repliée par défaut : c'est surtout pour l'IA, la personne n'a pas besoin de tout lire. */}
+            <p
+              className={`brief ${expanded ? "" : "brief--folded"} ${busy === "adjust" ? "is-working" : ""}`}
+              style={{ margin: 0, fontSize: 14, lineHeight: 1.45, whiteSpace: "pre-line" }}
+            >
+              {bac.brief}
+            </p>
+            <button type="button" className="link-btn" style={{ alignSelf: "flex-start" }} aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
+              {expanded ? "Replier la fiche" : "Lire la fiche complète"}
+            </button>
+          </>
         )}
         <form
           className="stack"
