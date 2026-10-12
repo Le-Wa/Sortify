@@ -3,11 +3,14 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { getServerSession, type NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import SpotifyProvider from "next-auth/providers/spotify";
+import { verifyHandoff } from "./power-login";
 import { env } from "./env";
 import {
   consumeInvitation,
   countMembers,
+  countSharedAppMembers,
   createMember,
   deleteMember,
   getMember,
@@ -18,7 +21,7 @@ import {
 
 export const INVITE_COOKIE = "sortify_invite";
 
-const SCOPES = [
+export const SCOPES = [
   "user-library-read",
   "playlist-read-private",
   "playlist-modify-private",
@@ -37,11 +40,24 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.spotifyClientSecret,
       authorization: { params: { scope: SCOPES } },
     }),
+    // Power user : sa propre app Spotify. L'OAuth se fait dans /api/power/callback (membre créé là-bas) ;
+    // ici, on n'accepte qu'un jeton de passage signé et récent.
+    CredentialsProvider({
+      id: "power",
+      name: "App Spotify perso",
+      credentials: { token: { type: "text" } },
+      async authorize(credentials) {
+        const spotifyId = verifyHandoff(credentials?.token ?? "");
+        if (!spotifyId || !(await getMember(spotifyId))) return null;
+        return { id: spotifyId };
+      },
+    }),
   ],
   callbacks: {
     // Un compte Spotify n'entre que s'il est déjà membre, s'il est le tout premier
     // (il devient le propriétaire) ou s'il apporte un code d'invitation valide.
     async signIn({ account, profile }) {
+      if (account?.provider === "power") return true; // membre déjà vérifié et créé par /api/power/callback
       if (!account || account.provider !== "spotify" || !account.access_token || !account.refresh_token) return false;
       const spotifyId = account.providerAccountId;
       const tokens = {
@@ -66,7 +82,7 @@ export const authOptions: NextAuthOptions = {
         await createMember({ ...base, isOwner: true });
         return true;
       }
-      if (memberCount >= MAX_MEMBERS) return "/?erreur=complet";
+      if ((await countSharedAppMembers()) >= MAX_MEMBERS) return "/?erreur=complet";
 
       const jar = await cookies();
       const code = jar.get(INVITE_COOKIE)?.value;

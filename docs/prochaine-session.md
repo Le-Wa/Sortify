@@ -45,10 +45,16 @@ Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, mo
 - Migrations V1 rangées dans `supabase/archive-v1/`.
 - **Power user, partie Anthropic** : clé personnelle dans les Réglages, vérifiée, chiffrée (AES-GCM dérivé de `NEXTAUTH_SECRET`, `lib/secrets.ts`) ; tous les appels du membre passent par elle (`withUsage` → `claude()`), comptés `own_key` dans `ai_usage`.
 
+## Fait le 12/10/2026 (suite)
+- **Ne jamais ranger un titre** (À trier, Corriger, Divers) → drapeau `likes.excluded` ; liste « Mis de côté » dans les Réglages (« Remettre » → Divers). Testé de bout en bout.
+- **Playlist « Arrivage de la semaine »** dans Spotify (likes des 7 derniers jours, mise à jour après chaque tri, `lib/arrival-playlist.ts`, réglable). Créée pour Walid ; celle de Jérémy se créera à son prochain tri. `scripts/arrival-now.mts [--all]`.
+- **Notifications du lundi** (web push) : Sortify installable (`app/manifest.ts`, `public/icons`, `public/sw.js`), réglage « Prévenir le lundi » avec « Essayer », envoi après le tri du lundi (`lib/push.ts`, clés `VAPID_*` dans Vercel). Sur iPhone : ajouter Sortify à l'écran d'accueil d'abord. **Pas testé sur un vrai téléphone.**
+- **Power user, partie Spotify** : `/power` (lien sur la page d'accueil) — sa propre app Spotify, identifiants vérifiés puis chiffrés ; OAuth à part (`/api/power/callback`) puis jeton de passage signé (2 min) → session NextAuth (provider « power ») ; jetons renouvelés avec ses identifiants (`appFor`). Ces membres ne comptent pas dans les 25 places. **Pas testé de bout en bout** (il faut une deuxième app Spotify avec l'adresse de redirection `…/api/power/callback`).
+
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
 2. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle.
-3. **Power user, partie Spotify** (à concevoir) : app Spotify personnelle pour dépasser 25 comptes en mode développement. NextAuth n'accepte qu'un client Spotify : il faudrait un circuit OAuth à part (client id / secret du membre, chiffrés ; callback dédié ; rafraîchissement des tokens avec ses identifiants) ou demander l'extension de quota Spotify.
+3. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
 4. Plus tard pour l'algo : affiner les fiches à partir des corrections ; mesurer au banc la limite de 5 et la nouvelle consigne de l'analyse.
 5. Plus tard : réordonner par glisser-déposer.
 

@@ -80,6 +80,9 @@ export default async function ConnexionPage(props: PageProps<"/">) {
         <Link href="/invitation" className="link-btn" style={{ alignSelf: "center", display: "flex", alignItems: "center" }}>
           Première fois ? J&apos;ai un code d&apos;invitation
         </Link>
+        <Link href="/power" className="link-btn small" style={{ alignSelf: "center", display: "flex", alignItems: "center" }}>
+          Power user : utiliser ma propre app Spotify
+        </Link>
       </div>
     </main>
   );

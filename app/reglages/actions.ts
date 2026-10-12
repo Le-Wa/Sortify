@@ -9,7 +9,7 @@ import { notify, removePushSubscription, savePushSubscription } from "@/lib/push
 import { currentMember } from "@/lib/auth";
 import { check, db } from "@/lib/db";
 import { kickJob, latestJob, startJob } from "@/lib/jobs";
-import { countMembers, createInvitation, MAX_MEMBERS, updateSettings } from "@/lib/members";
+import { createInvitation, updateSettings } from "@/lib/members";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -88,7 +88,7 @@ export async function newInvitation(): Promise<ActionResult> {
   const member = await currentMember();
   if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
   if (!member.is_owner) return { ok: false, message: "Seul le propriétaire de Sortify peut inviter." };
-  if ((await countMembers()) >= MAX_MEMBERS) return { ok: false, message: `Sortify est complet (${MAX_MEMBERS} comptes).` };
+  // Même complète, l'app partagée n'empêche pas d'inviter : un pote peut entrer en power user avec sa propre app Spotify.
   await createInvitation(member.spotify_id);
   revalidatePath("/reglages");
   return { ok: true };

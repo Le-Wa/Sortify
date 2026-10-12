@@ -19,6 +19,9 @@ export interface Member {
   /** Playlist « Arrivage de la semaine » dans Spotify (activée par défaut). */
   arrival_playlist: boolean;
   arrival_playlist_id: string | null;
+  /** Power user : sa propre app Spotify (secret chiffré, lib/secrets.ts) ; null = l'app de Sortify. */
+  spotify_client_id: string | null;
+  spotify_client_secret_enc: string | null;
   created_at: string;
 }
 
@@ -38,6 +41,16 @@ export async function getMember(spotifyId: string): Promise<Member | null> {
 
 export async function countMembers(): Promise<number> {
   const { count, error } = await db().from("members").select("spotify_id", { count: "exact", head: true });
+  if (error) throw new Error(`Comptage des membres : ${error.message}`);
+  return count ?? 0;
+}
+
+/**
+ * Membres qui passent par l'app Spotify de Sortify : ce sont eux que limite le mode développement de Spotify
+ * (les power users ont leur propre app).
+ */
+export async function countSharedAppMembers(): Promise<number> {
+  const { count, error } = await db().from("members").select("spotify_id", { count: "exact", head: true }).is("spotify_client_id", null);
   if (error) throw new Error(`Comptage des membres : ${error.message}`);
   return count ?? 0;
 }

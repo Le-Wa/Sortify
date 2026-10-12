@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { homeFor } from "@/lib/library";
-import { countMembers, MAX_MEMBERS, openInvitations } from "@/lib/members";
+import { countSharedAppMembers, MAX_MEMBERS, openInvitations } from "@/lib/members";
 import { SignOutButton } from "../ui/SignOutButton";
 import { latestJob, recentIncidents } from "@/lib/jobs";
 import { setAsideTracks } from "@/lib/daily";
@@ -36,7 +36,7 @@ export default async function ReglagesPage() {
     setAsideTracks(member.spotify_id).then((t) => t.length),
   ]);
   const [codes, members, incidents] = member.is_owner
-    ? await Promise.all([openInvitations(member.spotify_id), countMembers(), recentIncidents(7)])
+    ? await Promise.all([openInvitations(member.spotify_id), countSharedAppMembers(), recentIncidents(7)])
     : [[], 0, []];
 
   return (

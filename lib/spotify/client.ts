@@ -1,6 +1,7 @@
 import "server-only";
 import { env } from "@/lib/env";
-import { getMember, saveTokens, type SpotifyTokens } from "@/lib/members";
+import { getMember, saveTokens, type Member, type SpotifyTokens } from "@/lib/members";
+import { decrypt } from "@/lib/secrets";
 
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 export const API = "https://api.spotify.com/v1";
@@ -8,12 +9,27 @@ const EXPIRY_MARGIN_S = 5 * 60;
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-export async function refreshTokens(refreshToken: string): Promise<SpotifyTokens> {
+export interface SpotifyApp {
+  clientId: string;
+  clientSecret: string;
+}
+
+/** App Spotify d'un membre : la sienne s'il est power user, sinon celle de Sortify. */
+export function appFor(member: Pick<Member, "spotify_client_id" | "spotify_client_secret_enc">): SpotifyApp {
+  if (member.spotify_client_id && member.spotify_client_secret_enc) {
+    return { clientId: member.spotify_client_id, clientSecret: decrypt(member.spotify_client_secret_enc) };
+  }
+  return { clientId: env.spotifyClientId, clientSecret: env.spotifyClientSecret };
+}
+
+export const basicAuth = (app: SpotifyApp) => `Basic ${Buffer.from(`${app.clientId}:${app.clientSecret}`).toString("base64")}`;
+
+export async function refreshTokens(refreshToken: string, app: SpotifyApp): Promise<SpotifyTokens> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(`${env.spotifyClientId}:${env.spotifyClientSecret}`).toString("base64")}`,
+      Authorization: basicAuth(app),
     },
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
   });
@@ -33,7 +49,7 @@ export async function accessTokenFor(spotifyId: string): Promise<string> {
   const member = await getMember(spotifyId);
   if (!member) throw new Error(`Membre inconnu : ${spotifyId}`);
   if (Date.now() / 1000 < member.expires_at - EXPIRY_MARGIN_S) return member.access_token;
-  const tokens = await refreshTokens(member.refresh_token);
+  const tokens = await refreshTokens(member.refresh_token, appFor(member));
   await saveTokens(spotifyId, tokens);
   return tokens.access_token;
 }
