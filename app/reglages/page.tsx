@@ -9,6 +9,9 @@ import { hasActiveBacs } from "@/lib/library";
 import { DeleteData, ReanalyseCard } from "./DataSettings";
 import { InviteCard } from "./InviteCard";
 import { SortSettings } from "./SortSettings";
+import { ThemeSettings } from "./ThemeSettings";
+import { cookies } from "next/headers";
+import { THEME_COOKIE, themeOf } from "@/lib/theme";
 
 export default async function ReglagesPage() {
   const member = await requireMember();
@@ -32,6 +35,9 @@ export default async function ReglagesPage() {
         suggestBacs={member.suggest_bacs}
         unlikeAction={member.unlike_action}
       />
+
+      <div className="label section-label">Apparence</div>
+      <ThemeSettings theme={themeOf((await cookies()).get(THEME_COOKIE)?.value)} />
 
       {hasBacs ? (
         <>

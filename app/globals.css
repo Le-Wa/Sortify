@@ -1,4 +1,4 @@
-/* Sortify V2 — design system « bacs de disquaire ». Deux modes, qui suivent le téléphone. */
+/* Sortify V2 — design system « bacs de disquaire ». Deux modes : auto (téléphone), clair ou sombre (Réglages). */
 
 :root {
   --ground: #ecede8;
@@ -21,8 +21,9 @@
   color-scheme: light;
 }
 
+/* Thème : auto (suit le téléphone), ou forcé clair / sombre dans les Réglages (attribut data-theme sur <html>). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #141413;
     --ink: #ecede8;
     --mid: #a9aaa4;
@@ -35,8 +36,21 @@
     color-scheme: dark;
   }
   /* Une pochette noire reste lisible sur fond sombre. */
-  .sleeve { outline: 1px solid rgba(236, 237, 232, 0.12); outline-offset: -1px; }
+  :root:not([data-theme="light"]) .sleeve { outline: 1px solid rgba(236, 237, 232, 0.12); outline-offset: -1px; }
 }
+:root[data-theme="dark"] {
+  --ground: #141413;
+  --ink: #ecede8;
+  --mid: #a9aaa4;
+  --card: #232421;
+  --line: #34352f;
+  --soft: #3a3b37;
+  --faint: #6e6f69;
+  --danger: #ff8a6b;
+  --shadow: 0 -1px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .sleeve { outline: 1px solid rgba(236, 237, 232, 0.12); outline-offset: -1px; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -862,3 +876,4 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 }
 .cover-play.is-playing .cover-play__icon, .cover-play:focus-visible .cover-play__icon { opacity: 1; }
 @media (hover: hover) { .cover-play:hover .cover-play__icon { opacity: 1; } }
+.segmented--3 { grid-template-columns: repeat(3, 1fr); }

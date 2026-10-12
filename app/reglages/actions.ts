@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { z } from "zod";
+import { THEME_COOKIE, THEMES } from "@/lib/theme";
 import { currentMember } from "@/lib/auth";
 import { check, db } from "@/lib/db";
 import { kickJob, latestJob, startJob } from "@/lib/jobs";
@@ -24,6 +26,15 @@ export async function saveSettings(input: z.input<typeof settingsSchema>): Promi
   if (!parsed.success) return { ok: false, message: "Réglage invalide." };
   await updateSettings(member.spotify_id, parsed.data);
   revalidatePath("/reglages");
+  return { ok: true };
+}
+
+/** Apparence : auto (suit le téléphone), clair ou sombre ; gardée sur cet appareil. */
+export async function saveTheme(theme: string): Promise<ActionResult> {
+  const parsed = z.enum(THEMES).safeParse(theme);
+  if (!parsed.success) return { ok: false, message: "Thème inconnu." };
+  (await cookies()).set(THEME_COOKIE, parsed.data, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
