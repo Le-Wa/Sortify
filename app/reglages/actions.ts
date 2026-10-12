@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { THEME_COOKIE, THEMES } from "@/lib/theme";
 import { setAnthropicKey } from "@/lib/own-keys";
+import { notify, removePushSubscription, savePushSubscription } from "@/lib/push";
 import { currentMember } from "@/lib/auth";
 import { check, db } from "@/lib/db";
 import { kickJob, latestJob, startJob } from "@/lib/jobs";
@@ -42,6 +43,36 @@ export async function saveAnthropicKey(key: string | null): Promise<ActionResult
   }
   revalidatePath("/reglages");
   return { ok: true };
+}
+
+const subscriptionSchema = z.object({
+  endpoint: z.string().url().max(1000),
+  keys: z.object({ p256dh: z.string().max(200), auth: z.string().max(100) }),
+});
+
+/** Notifications du lundi : enregistre l'abonnement de cet appareil. */
+export async function subscribePush(sub: unknown): Promise<ActionResult> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  const parsed = subscriptionSchema.safeParse(sub);
+  if (!parsed.success) return { ok: false, message: "Abonnement invalide." };
+  await savePushSubscription(member.spotify_id, parsed.data);
+  return { ok: true };
+}
+
+export async function unsubscribePush(endpoint: string): Promise<ActionResult> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  await removePushSubscription(member.spotify_id, z.string().max(1000).parse(endpoint));
+  return { ok: true };
+}
+
+/** Notification d'essai, sur tous les appareils abonnés. */
+export async function testPush(): Promise<ActionResult> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  const sent = await notify(member.spotify_id, { title: "Sortify", body: "Les notifications marchent : rendez-vous lundi pour ton arrivage.", url: "/arrivages" });
+  return sent > 0 ? { ok: true } : { ok: false, message: "Aucun appareil n'a reçu la notification : réactive-les sur ce téléphone." };
 }
 
 /** Apparence : auto (suit le téléphone), clair ou sombre ; gardée sur cet appareil. */

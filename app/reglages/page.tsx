@@ -12,6 +12,8 @@ import { InviteCard } from "./InviteCard";
 import { SortSettings } from "./SortSettings";
 import { ThemeSettings } from "./ThemeSettings";
 import { OwnKeyCard } from "./OwnKeyCard";
+import { NotifyCard } from "./NotifyCard";
+import { env } from "@/lib/env";
 import { anthropicKeyHint } from "@/lib/own-keys";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeOf } from "@/lib/theme";
@@ -52,6 +54,8 @@ export default async function ReglagesPage() {
         unlikeAction={member.unlike_action}
         arrivalPlaylist={member.arrival_playlist}
       />
+
+      <NotifyCard publicKey={env.vapidPublicKey} />
 
       <Link href="/reglages/mis-de-cote" className="list__row" style={{ textDecoration: "none", color: "inherit", background: "var(--card)", borderRadius: 14 }}>
         <span>Titres mis de côté</span>

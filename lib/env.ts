@@ -26,6 +26,13 @@ export const env = {
   get appUrl() {
     return required("NEXTAUTH_URL").replace(/\/$/, "");
   },
+  /** Clés VAPID des notifications du lundi (web push). */
+  get vapidPublicKey() {
+    return required("VAPID_PUBLIC_KEY");
+  },
+  get vapidPrivateKey() {
+    return required("VAPID_PRIVATE_KEY");
+  },
   get cronSecret() {
     return required("CRON_SECRET");
   },

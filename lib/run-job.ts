@@ -4,6 +4,7 @@ import { runCreationStep, type CreationProgress } from "./creation";
 import { runImportStep, type ImportProgress } from "./import";
 import { refreshBriefs } from "./bac-admin";
 import { refreshArrivalPlaylist } from "./arrival-playlist";
+import { notify } from "./push";
 import { runNewBacStep, type NewBacProgress } from "./new-bac";
 import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
@@ -65,6 +66,8 @@ async function runClaimed(job: Job<unknown>): Promise<void> {
           await refreshArrivalPlaylist(job.member_id).catch((error: unknown) =>
             console.error("Arrivage de la semaine non mis à jour :", error instanceof Error ? error.message : error),
           );
+          // Tri du lundi : « ton arrivage est prêt » sur les téléphones abonnés.
+          if (progress.source === "cron") await announceArrival(job.member_id, progress);
           // Ré-analyse automatique (spec 02 §2.5) : un échec ne doit pas faire échouer le tri.
           await suggestFromDivers(job.member_id).catch((error: unknown) =>
             console.error("Suggestion depuis Divers impossible :", error instanceof Error ? error.message : error),
@@ -101,4 +104,16 @@ async function runClaimed(job: Job<unknown>): Promise<void> {
     return;
   }
   await kickJob(id);
+}
+
+/** Notification du lundi ; rien si aucun nouveau like. Un échec ne remet pas le tri en cause. */
+async function announceArrival(memberId: string, p: TriProgress): Promise<void> {
+  const total = p.placed + p.pending + p.divers;
+  if (total === 0) return;
+  const body = [`${p.placed} titre${p.placed > 1 ? "s" : ""} rangé${p.placed > 1 ? "s" : ""}`, p.pending ? `${p.pending} à trier` : null, p.divers ? `${p.divers} en Divers` : null]
+    .filter(Boolean)
+    .join(" · ");
+  await notify(memberId, { title: "Ton arrivage est prêt", body, url: p.pending ? "/a-trier" : "/arrivages" }).catch((error: unknown) =>
+    console.error("Notification du lundi non envoyée :", error instanceof Error ? error.message : error),
+  );
 }

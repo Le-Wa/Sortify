@@ -10,6 +10,9 @@ const dmMono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "
 export const metadata: Metadata = {
   title: "Sortify",
   description: "Tu likes, Sortify range. L'IA imagine tes bacs et y range chaque nouveau like.",
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  // Installable sur l'écran d'accueil de l'iPhone (nécessaire aux notifications du lundi).
+  appleWebApp: { capable: true, title: "Sortify", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
