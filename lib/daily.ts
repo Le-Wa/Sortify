@@ -107,35 +107,49 @@ export async function lastTri(memberId: string): Promise<Job<TriProgress> | null
   return (data as Job<TriProgress> | null) ?? null;
 }
 
-/**
- * Titres arrivés lors d'un tri (likés après le dernier like connu au début du tri), avec leurs bacs
- * actuels : un titre corrigé reste dans la liste, avec ses nouveaux bacs. Ceux encore « À trier » n'y sont pas.
- */
-export async function recentlySorted(memberId: string, job: Job<TriProgress>): Promise<RecentItem[]> {
-  if (!job.progress.since || job.progress.fetched === 0) return [];
-  const bacs = await activeBacs(memberId);
-  const byId = new Map(bacs.map((b) => [b.id, b]));
-  const rows = check(
-    await db()
-      .from("likes")
-      .select("track_id, title, artists, cover_url, isrc, liked_at, placements!inner(bac_id, source)")
-      .eq("member_id", memberId)
-      .gt("liked_at", job.progress.since)
-      .lte("liked_at", job.finished_at ?? new Date().toISOString())
-      .order("liked_at", { ascending: false })
-      .limit(100),
-    "Lecture des derniers rangements",
-  ) as unknown as (LikeJoin & { track_id: string; placements: { bac_id: string; source: string }[] })[];
+/** Fenêtre de l'arrivage de la semaine, sur l'Accueil. */
+const WEEK_MS = 7 * 86_400_000;
 
-  return rows.map((r) => ({
-    ...trackInfo(r.track_id, r),
-    corrected: r.placements.some((p) => p.source !== "ia"),
-    bacs: r.placements
-      .map((p) => byId.get(p.bac_id))
-      .filter((b): b is Bac => b !== undefined)
-      .sort((a, b) => a.position - b.position)
-      .map(chip),
-  }));
+/**
+ * Arrivage de la semaine (Accueil) : les likes des 7 derniers jours déjà rangés, avec leurs bacs (modifiables),
+ * et le nombre de likes qui attendent encore le prochain tri.
+ */
+export async function weekArrival(memberId: string, now = new Date()): Promise<{ items: RecentItem[]; waiting: number }> {
+  const since = new Date(now.getTime() - WEEK_MS).toISOString();
+  const [bacs, likesRes, pendingRes] = await Promise.all([
+    activeBacs(memberId),
+    db()
+      .from("likes")
+      .select("track_id, title, artists, cover_url, isrc, liked_at, placements(bac_id, source)")
+      .eq("member_id", memberId)
+      .eq("excluded", false)
+      .is("unliked_at", null)
+      .gte("liked_at", since)
+      .order("liked_at", { ascending: false })
+      .limit(200),
+    db().from("pending").select("track_id").eq("member_id", memberId),
+  ]);
+  const byId = new Map(bacs.map((b) => [b.id, b]));
+  const rows = check(likesRes, "Lecture de l'arrivage de la semaine") as unknown as (LikeJoin & {
+    track_id: string;
+    placements: { bac_id: string; source: string }[];
+  })[];
+  const pending = new Set((check(pendingRes, "Lecture de « À trier »") as { track_id: string }[]).map((p) => p.track_id));
+  const items: RecentItem[] = [];
+  let waiting = 0;
+  for (const r of rows) {
+    const placed = r.placements.map((p) => byId.get(p.bac_id)).filter((b): b is Bac => b !== undefined);
+    if (placed.length === 0) {
+      if (!pending.has(r.track_id)) waiting++;
+      continue;
+    }
+    items.push({
+      ...trackInfo(r.track_id, r),
+      corrected: r.placements.some((p) => p.source !== "ia"),
+      bacs: placed.sort((a, b) => a.position - b.position).map(chip),
+    });
+  }
+  return { items, waiting };
 }
 
 /** Bacs actuels d'un titre (Divers compris). */

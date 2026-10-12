@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
-import { activeBacs, chip, lastTri, pendingQueue, recentlySorted } from "@/lib/daily";
+import { activeBacs, chip, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { Sleeve } from "../../ui/Sleeve";
 import { NewLikesButton } from "./NewLikesButton";
@@ -10,14 +10,19 @@ import { RecentList } from "./RecentList";
 import { SuggestionCards } from "./SuggestionCards";
 import { markFor } from "@/lib/cover-shapes";
 
+/** Titres de l'arrivage montrés sur l'Accueil ; la suite est dans Arrivages. */
+const SHOWN = 10;
+
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs, suggestions] = await Promise.all([pendingQueue(id), lastTri(id), activeBacs(id), openSuggestions(id)]);
+  const [queue, tri, bacs, suggestions, arrival] = await Promise.all([pendingQueue(id), lastTri(id), activeBacs(id), openSuggestions(id), weekArrival(id)]);
   const lastDone = tri?.status === "done" ? tri : null;
-  const recent = lastDone ? await recentlySorted(id, lastDone) : [];
+  const recent = arrival.items;
+  // Rangée de pochettes : seulement les bacs qui ont reçu des titres cette semaine.
   const added = new Map<string, number>();
   for (const item of recent) for (const b of item.bacs) added.set(b.id, (added.get(b.id) ?? 0) + 1);
+  const servedBacs = bacs.filter((b) => !b.is_divers && added.has(b.id)).sort((a, b) => added.get(b.id)! - added.get(a.id)!);
 
   const next = nextCron();
   const pending = queue.length;
@@ -86,35 +91,43 @@ export default async function AccueilPage() {
 
       {suggestions.length > 0 ? <SuggestionCards suggestions={suggestions} /> : null}
 
+      {servedBacs.length > 0 ? (
+        <nav className="bin-row" aria-label="Bacs servis cette semaine">
+          {servedBacs.map((b) => (
+            <Link key={b.id} href={`/bacs/${b.id}`} className="bin-row__item" aria-label={`${b.name}, ${added.get(b.id)} nouveaux`}>
+              <Sleeve name={b.sleeve_name ?? b.name} color={b.color} size={76} mark={markFor(b)} code={`+${added.get(b.id)}`} />
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+
       {recent.length > 0 ? (
         <section className="stack" style={{ gap: 6 }}>
           <div className="row between" style={{ alignItems: "baseline", padding: "4px 4px 0" }}>
             <h2 className="display display--s" style={{ fontSize: 20 }}>
-              Rangés {relativeDay(new Date(lastDone!.finished_at ?? lastDone!.started_at))}
+              Arrivage de la semaine
             </h2>
-            <span className="mono small muted">
-              prochain tri {relativeDay(next)} {hourOf(next)}
-            </span>
-          </div>
-          <RecentList items={recent} bacs={bacs.filter((b) => !b.is_divers).map((b) => ({ ...chip(b), is_divers: false }))} />
-        </section>
-      ) : (
-        <p className="small muted" style={{ margin: "0 4px" }}>
-          {lastDone
-            ? `Pas de nouveau like au dernier tri. Prochain tri ${relativeDay(next)} vers ${hourOf(next)}.`
-            : "Sortify range tes nouveaux likes chaque lundi. Tu peux aussi lancer un tri avec « Nouveaux likes ? »."}
-        </p>
-      )}
-
-      <nav className="bin-row" aria-label="Tes bacs">
-        {bacs
-          .filter((b) => !b.is_divers)
-          .map((b) => (
-            <Link key={b.id} href={`/bacs/${b.id}`} className="bin-row__item" aria-label={`${b.name}${added.get(b.id) ? `, ${added.get(b.id)} nouveaux` : ""}`}>
-              <Sleeve name={b.sleeve_name ?? b.name} color={b.color} size={76} mark={markFor(b)} code={added.get(b.id) ? `+${added.get(b.id)}` : undefined} />
+            <Link href="/arrivages" className="mono small">
+              {recent.length} titre{recent.length > 1 ? "s" : ""} ›
             </Link>
-          ))}
-      </nav>
+          </div>
+          <RecentList items={recent.slice(0, SHOWN)} bacs={bacs.filter((b) => !b.is_divers).map((b) => ({ ...chip(b), is_divers: false }))} />
+          {recent.length > SHOWN ? (
+            <Link href="/arrivages" className="btn btn--ghost btn--sm">
+              Voir les {recent.length} titres de la semaine
+            </Link>
+          ) : null}
+        </section>
+      ) : null}
+      <p className="small muted" style={{ margin: "0 4px" }}>
+        {arrival.waiting > 0
+          ? `${arrival.waiting} like${arrival.waiting > 1 ? "s attendent" : " attend"} le tri ${relativeDay(next) === "aujourd'hui" ? "de ce matin" : relativeDay(next) === "demain" ? "de demain" : `de ${relativeDay(next)}`} (vers ${hourOf(next)}), ou « Nouveaux likes ? » pour ranger tout de suite.`
+          : recent.length > 0
+            ? `Prochain tri ${relativeDay(next)} vers ${hourOf(next)}.`
+            : lastDone
+              ? `Pas de nouveau like cette semaine. Prochain tri ${relativeDay(next)} vers ${hourOf(next)}.`
+              : "Sortify range tes nouveaux likes chaque lundi. Tu peux aussi lancer un tri avec « Nouveaux likes ? »."}
+      </p>
     </>
   );
 }
