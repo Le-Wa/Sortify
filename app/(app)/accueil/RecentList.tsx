@@ -5,7 +5,7 @@ import type { BacChip, RecentItem } from "@/lib/daily";
 import { BacPicker, MAX_PICK } from "../../ui/BacPicker";
 import { BottomSheet } from "../../ui/BottomSheet";
 import { PreviewCover } from "../../ui/PreviewCover";
-import { correct } from "../actions";
+import { correct, putAside } from "../actions";
 
 export function RecentList({ items, bacs }: { items: RecentItem[]; bacs: BacChip[] }) {
   const [editing, setEditing] = useState<RecentItem | null>(null);
@@ -78,6 +78,20 @@ export function RecentList({ items, bacs }: { items: RecentItem[]; bacs: BacChip
               }
             >
               {saving ? "On range…" : selected.length === 0 ? "Mettre dans Divers" : `Ranger dans ${selected.length} bac${selected.length > 1 ? "s" : ""}`}
+            </button>
+            <button
+              type="button"
+              className="btn btn--quiet"
+              disabled={saving}
+              onClick={() =>
+                startSaving(async () => {
+                  const result = await putAside(editing.track_id).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur inconnue." }));
+                  if (result.ok) setEditing(null);
+                  else setError(result.message);
+                })
+              }
+            >
+              Ne jamais ranger ce titre
             </button>
           </>
         ) : null}

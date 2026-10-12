@@ -7,7 +7,7 @@ import type { BacChip, PendingItem } from "@/lib/daily";
 import { BacPicker, MAX_PICK } from "../../ui/BacPicker";
 import { BottomSheet } from "../../ui/BottomSheet";
 import { usePreview } from "../../ui/usePreview";
-import { acceptAll, decide } from "../actions";
+import { acceptAll, decide, putAside } from "../actions";
 
 const SWIPE = 90; // px
 
@@ -21,12 +21,12 @@ export function TriageScreen({ queue, bacs }: { queue: PendingItem[]; bacs: BacC
   const item = remaining[0];
   const position = queue.length - remaining.length + 1;
 
-  function settle(trackId: string, bacIds: string[], label: string) {
+  function settle(trackId: string, bacIds: string[] | "aside", label: string) {
     setDecided((d) => new Set(d).add(trackId));
     setError(null);
     setToast(label);
     startTransition(async () => {
-      const result = await decide(trackId, bacIds).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
+      const result = await (bacIds === "aside" ? putAside(trackId) : decide(trackId, bacIds)).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
       if (!result.ok) {
         setError(result.message);
         setDecided((d) => {
@@ -107,7 +107,7 @@ function Card({
 }: {
   item: PendingItem;
   bacs: BacChip[];
-  onDecide: (trackId: string, bacIds: string[], label: string) => void;
+  onDecide: (trackId: string, bacIds: string[] | "aside", label: string) => void;
 }) {
   const [selected, setSelected] = useState<string[]>(item.suggestions.slice(0, 1).map((s) => s.bac.id));
   const [why, setWhy] = useState(false);
@@ -230,6 +230,9 @@ function Card({
         </button>
         <button type="button" className="btn btn--quiet" onClick={toDivers}>
           Je ne sais pas → Divers
+        </button>
+        <button type="button" className="link-btn small" style={{ alignSelf: "center", minHeight: 44 }} onClick={() => onDecide(item.track_id, "aside", "Mis de côté : il ne sera jamais rangé.")}>
+          Ne jamais ranger ce titre
         </button>
       </div>
 

@@ -7,6 +7,7 @@ import { BacPicker, MAX_PICK } from "../../../ui/BacPicker";
 import { BottomSheet } from "../../../ui/BottomSheet";
 import { usePreview } from "../../../ui/usePreview";
 import { placeFromDivers } from "../actions";
+import { putAside } from "../../actions";
 
 export function DiversList({ tracks, bacs }: { tracks: TrackInfo[]; bacs: BacChip[] }) {
   const [placing, setPlacing] = useState<TrackInfo | null>(null);
@@ -83,6 +84,21 @@ export function DiversList({ tracks, bacs }: { tracks: TrackInfo[]; bacs: BacChi
               }
             >
               {saving ? "On range…" : `Ranger dans ${selected.length} bac${selected.length > 1 ? "s" : ""}`}
+            </button>
+            <button
+              type="button"
+              className="btn btn--quiet"
+              disabled={saving}
+              onClick={() =>
+                startSaving(async () => {
+                  const result = await putAside(placing.track_id).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
+                  if (!result.ok) return setError(result.message);
+                  setDone((d) => new Set(d).add(placing.track_id));
+                  setPlacing(null);
+                })
+              }
+            >
+              Ne jamais ranger ce titre
             </button>
           </>
         ) : null}

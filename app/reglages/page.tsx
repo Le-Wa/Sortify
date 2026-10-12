@@ -5,6 +5,7 @@ import { homeFor } from "@/lib/library";
 import { countMembers, MAX_MEMBERS, openInvitations } from "@/lib/members";
 import { SignOutButton } from "../ui/SignOutButton";
 import { latestJob, recentIncidents } from "@/lib/jobs";
+import { setAsideTracks } from "@/lib/daily";
 import { hasActiveBacs } from "@/lib/library";
 import { DeleteData, ReanalyseCard } from "./DataSettings";
 import { InviteCard } from "./InviteCard";
@@ -27,7 +28,11 @@ const KIND_LABEL: Record<string, string> = {
 export default async function ReglagesPage() {
   const member = await requireMember();
   const home = await homeFor(member.spotify_id);
-  const [hasBacs, reanalyse] = await Promise.all([hasActiveBacs(member.spotify_id), latestJob(member.spotify_id, "reanalyse")]);
+  const [hasBacs, reanalyse, setAside] = await Promise.all([
+    hasActiveBacs(member.spotify_id),
+    latestJob(member.spotify_id, "reanalyse"),
+    setAsideTracks(member.spotify_id).then((t) => t.length),
+  ]);
   const [codes, members, incidents] = member.is_owner
     ? await Promise.all([openInvitations(member.spotify_id), countMembers(), recentIncidents(7)])
     : [[], 0, []];
@@ -46,6 +51,11 @@ export default async function ReglagesPage() {
         suggestBacs={member.suggest_bacs}
         unlikeAction={member.unlike_action}
       />
+
+      <Link href="/reglages/mis-de-cote" className="list__row" style={{ textDecoration: "none", color: "inherit", background: "var(--card)", borderRadius: 14 }}>
+        <span>Titres mis de côté</span>
+        <span className="mono muted">{setAside} ›</span>
+      </Link>
 
       <div className="label section-label">Power user</div>
       <OwnKeyCard hint={await anthropicKeyHint(member.spotify_id)} />

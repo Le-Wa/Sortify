@@ -6,6 +6,7 @@ import { removeFromPlaylist } from "./spotify/playlists";
 import { syncMember } from "./sync";
 import type { TriProgress } from "./tri";
 import { markFor, type SleeveMark } from "./cover-shapes";
+import { MAX_BACS_PER_TRACK } from "./limits";
 
 /** Exemples gardés par bac et par polarité : assez pour guider l'IA, sans alourdir chaque rangement. */
 const MAX_EXAMPLES = 20;
@@ -169,6 +170,48 @@ export async function weekArrival(memberId: string, now = new Date()): Promise<{
   return { items, waiting };
 }
 
+/**
+ * « Ne jamais ranger ce titre » (podcast, musique pour enfants…) : il sort de tous ses bacs et playlists,
+ * de « À trier », et les tris suivants l'ignorent. Même drapeau que le retrait d'un titre de Divers dans Spotify.
+ */
+export async function setAside(memberId: string, trackId: string): Promise<void> {
+  const bacs = new Map((await activeBacs(memberId)).map((b) => [b.id, b]));
+  for (const bacId of await bacsOfTrack(memberId, trackId)) {
+    check(await db().from("placements").delete().eq("bac_id", bacId).eq("track_id", trackId), "Retrait du titre");
+    const playlist = bacs.get(bacId)?.spotify_playlist_id;
+    if (playlist) await removeFromPlaylist(memberId, playlist, [trackId]);
+  }
+  check(await db().from("pending").delete().eq("member_id", memberId).eq("track_id", trackId), "Sortie de « À trier »");
+  check(await db().from("likes").update({ excluded: true }).eq("member_id", memberId).eq("track_id", trackId), "Titre mis de côté");
+}
+
+/** Remet un titre mis de côté dans le circuit : il attend dans Divers qu'on le range. */
+export async function bringBack(memberId: string, trackId: string): Promise<void> {
+  check(await db().from("likes").update({ excluded: false }).eq("member_id", memberId).eq("track_id", trackId), "Titre remis");
+  const divers = await ensureDivers(memberId);
+  check(
+    await db().from("placements").upsert({ bac_id: divers.id, member_id: memberId, track_id: trackId, source: "manuel" }, { onConflict: "bac_id,track_id" }),
+    "Vers Divers",
+  );
+  await syncMember(memberId);
+}
+
+/** Titres mis de côté (toujours likés), les plus récents d'abord. */
+export async function setAsideTracks(memberId: string): Promise<TrackInfo[]> {
+  const rows = check(
+    await db()
+      .from("likes")
+      .select("track_id, title, artists, cover_url, isrc")
+      .eq("member_id", memberId)
+      .eq("excluded", true)
+      .is("unliked_at", null)
+      .order("liked_at", { ascending: false })
+      .limit(200),
+    "Lecture des titres mis de côté",
+  ) as unknown as (LikeJoin & { track_id: string })[];
+  return rows.map((r) => trackInfo(r.track_id, r));
+}
+
 /** Bacs actuels d'un titre (Divers compris). */
 export async function bacsOfTrack(memberId: string, trackId: string): Promise<string[]> {
   const rows = check(
@@ -213,7 +256,7 @@ export async function setTrackBacs(
   const bacs = await activeBacs(memberId);
   const byId = new Map(bacs.map((b) => [b.id, b]));
   const divers = bacs.find((b) => b.is_divers)!;
-  const chosen = [...new Set(wanted)].filter((id) => byId.has(id) && id !== divers.id).slice(0, 3);
+  const chosen = [...new Set(wanted)].filter((id) => byId.has(id) && id !== divers.id).slice(0, MAX_BACS_PER_TRACK);
   const target = chosen.length > 0 ? chosen : [divers.id];
   const current = await bacsOfTrack(memberId, trackId);
 

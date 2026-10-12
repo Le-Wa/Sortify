@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { currentMember } from "@/lib/auth";
-import { acceptAllPending, bacsOfTrack, pendingQueue, setTrackBacs } from "@/lib/daily";
+import { acceptAllPending, bacsOfTrack, bringBack, pendingQueue, setAside, setTrackBacs } from "@/lib/daily";
 import { kickJob, startJob } from "@/lib/jobs";
 import { initialTri } from "@/lib/tri";
 import { withUsage } from "@/lib/ai-usage";
@@ -53,6 +53,16 @@ export async function acceptAll(): Promise<ActionResult> {
     const n = await acceptAllPending(memberId);
     return { ok: true, message: `${n} titre${n > 1 ? "s" : ""} rangé${n > 1 ? "s" : ""}.` };
   });
+}
+
+/** « Ne jamais ranger ce titre » : il quitte tous ses bacs et les tris suivants l'ignorent. */
+export async function putAside(track: string): Promise<ActionResult> {
+  return run((memberId) => setAside(memberId, trackId.parse(track)));
+}
+
+/** Remet un titre mis de côté : il attend dans Divers. */
+export async function putBack(track: string): Promise<ActionResult> {
+  return run((memberId) => bringBack(memberId, trackId.parse(track)));
 }
 
 /** « Corriger » depuis l'Accueil : le titre va dans exactement ces bacs. */
