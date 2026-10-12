@@ -22,23 +22,29 @@ export function SleeveEditor({ bac }: Props) {
   const [shape, setShape] = useState<ShapeName>(bac.mark.shape);
   const [color, setColor] = useState(bac.color);
   const [outline, setOutline] = useState(bac.mark.outline);
+  const [name, setName] = useState(bac.name);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const ink = inkFor(color);
-  const changed = shape !== bac.mark.shape || color !== bac.color || outline !== bac.mark.outline;
+  const cleanName = name.trim().replace(/\s+/g, " ");
+  const renamed = cleanName !== bac.name;
+  const changed = renamed || shape !== bac.mark.shape || color !== bac.color || outline !== bac.mark.outline;
+  // Aperçu : un nouveau nom remplace le nom court de la pochette.
+  const label = renamed ? cleanName || bac.name : bac.sleeve;
 
   function close() {
     setOpen(false);
     setShape(bac.mark.shape);
     setColor(bac.color);
     setOutline(bac.mark.outline);
+    setName(bac.name);
     setError(null);
   }
 
   function save() {
     setError(null);
     startTransition(async () => {
-      const result = await restyle(bac.id, shape, color, outline).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
+      const result = await restyle(bac.id, { name: cleanName, shape, color, outline }).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
       if (result.ok) {
         setOpen(false);
         router.refresh();
@@ -55,10 +61,15 @@ export function SleeveEditor({ bac }: Props) {
         </span>
       </button>
 
-      <BottomSheet open={open} onClose={close} title="Ta pochette">
+      <BottomSheet open={open} onClose={close} title="Ton bac">
         <div className="row" style={{ justifyContent: "center" }}>
-          <Sleeve name={bac.sleeve} color={color} size={150} mark={{ shape, outline }} />
+          <Sleeve name={label} color={color} size={150} mark={{ shape, outline }} />
         </div>
+
+        <label className="label" htmlFor="bac-name">
+          Nom (aussi celui de la playlist Spotify)
+        </label>
+        <input id="bac-name" className="field" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
 
         <span className="label">Forme</span>
         <div className="shape-grid" role="radiogroup" aria-label="Forme">
@@ -110,7 +121,7 @@ export function SleeveEditor({ bac }: Props) {
             {error}
           </p>
         ) : null}
-        <button type="button" className="btn" disabled={!changed || pending} onClick={save}>
+        <button type="button" className="btn" disabled={!changed || pending || cleanName.length < 2} onClick={save}>
           {pending ? "Envoi à Spotify…" : "Enregistrer"}
         </button>
       </BottomSheet>

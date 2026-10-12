@@ -8,6 +8,7 @@ import { loadCorpus } from "./corpus";
 import { createPlaylist, uploadCover } from "./creation";
 import { bacsOfTrack, setTrackBacs, type TrackInfo } from "./daily";
 import { check, db } from "./db";
+import { spotify } from "./spotify/client";
 import { removeFromPlaylist } from "./spotify/playlists";
 import { syncMember } from "./sync";
 
@@ -92,21 +93,35 @@ export async function refreshBriefs(memberId: string): Promise<number> {
 }
 
 /**
- * Pochette personnalisée (forme pleine ou en contour, couleur choisies dans les listes de Sortify), renvoyée tout de suite à Spotify.
+ * Pochette personnalisée (nom du bac et de sa playlist, forme pleine ou en contour, couleur choisies dans les listes de Sortify), renvoyée tout de suite à Spotify.
  * Renvoie false si Spotify n'a pas pris la pochette : le prochain tri réessaiera.
  */
-export async function restyleBac(memberId: string, id: string, look: { shape: string; color: string; outline: boolean }): Promise<boolean> {
+export async function restyleBac(
+  memberId: string,
+  id: string,
+  look: { name: string; shape: string; color: string; outline: boolean },
+): Promise<{ sent: boolean; renamed: boolean }> {
   const bac = await ownedActive(memberId, id);
   if (!(FICHE_SHAPES as readonly string[]).includes(look.shape)) throw new Error("Forme inconnue.");
   if (!BAC_COLORS.some((c) => c.bg === look.color)) throw new Error("Couleur inconnue.");
+  const name = look.name.trim().replace(/\s+/g, " ");
+  if (name.length < 2 || name.length > 40) throw new Error("Un nom de 2 à 40 caractères.");
+  const renamed = name !== bac.name;
   const updated = check(
-    await db().from("bacs").update({ shape: look.shape, color: look.color, outline: look.outline, cover_uploaded_at: null }).eq("id", bac.id).select("*").single(),
+    await db()
+      .from("bacs")
+      // Nouveau nom : la pochette s'ajuste au nom complet (le nom court de l'IA ne correspond plus).
+      .update({ shape: look.shape, color: look.color, outline: look.outline, cover_uploaded_at: null, ...(renamed ? { name, sleeve_name: null } : {}) })
+      .eq("id", bac.id)
+      .select("*")
+      .single(),
     "Pochette du bac",
   ) as Bac;
-  if (!updated.spotify_playlist_id) return true;
+  if (!updated.spotify_playlist_id) return { sent: true, renamed };
+  if (renamed) await spotify(memberId, `/playlists/${updated.spotify_playlist_id}`, { method: "PUT", json: { name } });
   await uploadCover(memberId, updated);
   const after = check(await db().from("bacs").select("cover_uploaded_at").eq("id", bac.id).single(), "Pochette envoyée") as { cover_uploaded_at: string | null };
-  return Boolean(after.cover_uploaded_at);
+  return { sent: Boolean(after.cover_uploaded_at), renamed };
 }
 
 export interface BacTrack extends TrackInfo {

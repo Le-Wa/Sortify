@@ -49,9 +49,16 @@ export async function editBrief(id: string, brief: string): Promise<ActionResult
 }
 
 /** Personnalisation de la pochette (forme, couleur), renvoyée à Spotify. */
-export async function restyle(id: string, shape: string, color: string, outline: boolean): Promise<ActionResult> {
+export async function restyle(id: string, look: { name: string; shape: string; color: string; outline: boolean }): Promise<ActionResult> {
   return run(async (m) => {
-    const sent = await restyleBac(m, uuid.parse(id), { shape: z.string().max(20).parse(shape), color: z.string().max(9).parse(color), outline: z.boolean().parse(outline) });
+    const { sent, renamed } = await restyleBac(m, uuid.parse(id), {
+      name: z.string().max(60).parse(look.name),
+      shape: z.string().max(20).parse(look.shape),
+      color: z.string().max(9).parse(look.color),
+      outline: z.boolean().parse(look.outline),
+    });
+    // Les autres fiches citent ce bac par son nom dans leurs frontières.
+    if (renamed) refreshBriefsLater(m);
     return sent ? { ok: true } : { ok: false, message: "Pochette enregistrée, mais Spotify ne l'a pas encore prise : on réessaiera au prochain tri." };
   });
 }
