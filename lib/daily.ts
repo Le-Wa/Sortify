@@ -107,6 +107,23 @@ export async function lastTri(memberId: string): Promise<Job<TriProgress> | null
   return (data as Job<TriProgress> | null) ?? null;
 }
 
+/** Le dernier tri lancé a échoué (et aucun tri n'a réussi depuis) : de quoi prévenir la personne sur l'Accueil. */
+export async function failedTri(memberId: string): Promise<{ error: string; at: string } | null> {
+  const data = check(
+    await db()
+      .from("jobs")
+      .select("status, error, finished_at, started_at")
+      .eq("member_id", memberId)
+      .eq("kind", "tri")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    "Lecture du dernier essai de tri",
+  ) as { status: string; error: string | null; finished_at: string | null; started_at: string } | null;
+  if (data?.status !== "failed") return null;
+  return { error: data.error ?? "erreur inconnue", at: data.finished_at ?? data.started_at };
+}
+
 /** Fenêtre de l'arrivage de la semaine, sur l'Accueil. */
 const WEEK_MS = 7 * 86_400_000;
 

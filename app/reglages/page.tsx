@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
-import { hourOf, nextCron } from "@/lib/dates";
+import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { homeFor } from "@/lib/library";
 import { countMembers, MAX_MEMBERS, openInvitations } from "@/lib/members";
 import { SignOutButton } from "../ui/SignOutButton";
-import { latestJob } from "@/lib/jobs";
+import { latestJob, recentIncidents } from "@/lib/jobs";
 import { hasActiveBacs } from "@/lib/library";
 import { DeleteData, ReanalyseCard } from "./DataSettings";
 import { InviteCard } from "./InviteCard";
@@ -13,13 +13,22 @@ import { ThemeSettings } from "./ThemeSettings";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeOf } from "@/lib/theme";
 
+const KIND_LABEL: Record<string, string> = {
+  tri: "tri",
+  import: "import",
+  analyse: "analyse",
+  creation: "création des playlists",
+  reanalyse: "ré-analyse",
+  bac: "nouveau bac",
+};
+
 export default async function ReglagesPage() {
   const member = await requireMember();
   const home = await homeFor(member.spotify_id);
   const [hasBacs, reanalyse] = await Promise.all([hasActiveBacs(member.spotify_id), latestJob(member.spotify_id, "reanalyse")]);
-  const [codes, members] = member.is_owner
-    ? await Promise.all([openInvitations(member.spotify_id), countMembers()])
-    : [[], 0];
+  const [codes, members, incidents] = member.is_owner
+    ? await Promise.all([openInvitations(member.spotify_id), countMembers(), recentIncidents(7)])
+    : [[], 0, []];
 
   return (
     <main className="page page--bare">
@@ -50,6 +59,24 @@ export default async function ReglagesPage() {
         <>
           <div className="label section-label">Les potes</div>
           <InviteCard code={codes[0]?.code ?? null} members={members} max={MAX_MEMBERS} />
+
+          <div className="label section-label">Incidents (7 jours)</div>
+          {incidents.length === 0 ? (
+            <p className="small muted" style={{ margin: "0 4px" }}>
+              Aucun tri, import ou analyse en échec cette semaine.
+            </p>
+          ) : (
+            <div className="list">
+              {incidents.map((i, k) => (
+                <div key={k} className="list__row" style={{ alignItems: "flex-start", flexDirection: "column", gap: 2 }}>
+                  <span>
+                    <b>{i.member}</b> · {KIND_LABEL[i.kind]} · {relativeDay(new Date(i.at))} {hourOf(new Date(i.at))}
+                  </span>
+                  <span className="small muted">{i.error}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       ) : null}
 

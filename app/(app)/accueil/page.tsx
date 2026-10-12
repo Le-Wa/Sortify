@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
-import { activeBacs, chip, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
+import { activeBacs, chip, failedTri, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { Sleeve } from "../../ui/Sleeve";
 import { NewLikesButton } from "./NewLikesButton";
@@ -16,7 +16,14 @@ const SHOWN = 10;
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs, suggestions, arrival] = await Promise.all([pendingQueue(id), lastTri(id), activeBacs(id), openSuggestions(id), weekArrival(id)]);
+  const [queue, tri, bacs, suggestions, arrival, failure] = await Promise.all([
+    pendingQueue(id),
+    lastTri(id),
+    activeBacs(id),
+    openSuggestions(id),
+    weekArrival(id),
+    failedTri(id),
+  ]);
   const lastDone = tri?.status === "done" ? tri : null;
   const recent = arrival.items;
   // Rangée de pochettes : seulement les bacs qui ont reçu des titres cette semaine.
@@ -88,6 +95,12 @@ export default async function AccueilPage() {
           </p>
         ) : null}
       </section>
+
+      {failure ? (
+        <p className="notice notice--error" role="alert">
+          Le dernier tri ({relativeDay(new Date(failure.at))} {hourOf(new Date(failure.at))}) n&apos;a pas pu se faire : {failure.error}. Touche « Nouveaux likes ? » pour le relancer.
+        </p>
+      ) : null}
 
       {suggestions.length > 0 ? <SuggestionCards suggestions={suggestions} /> : null}
 

@@ -117,6 +117,34 @@ export async function failJob(id: string, message: string): Promise<void> {
   );
 }
 
+export interface Incident {
+  member: string;
+  kind: JobKind;
+  error: string;
+  at: string;
+}
+
+/** Tâches de fond en échec ces derniers jours, tous membres confondus (Réglages du propriétaire). */
+export async function recentIncidents(days = 7): Promise<Incident[]> {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const rows = check(
+    await db()
+      .from("jobs")
+      .select("kind, error, finished_at, started_at, members(display_name, spotify_id)")
+      .eq("status", "failed")
+      .gte("started_at", since)
+      .order("started_at", { ascending: false })
+      .limit(30),
+    "Lecture des incidents",
+  ) as unknown as { kind: JobKind; error: string | null; finished_at: string | null; started_at: string; members: { display_name: string | null; spotify_id: string } | null }[];
+  return rows.map((r) => ({
+    member: r.members?.display_name ?? r.members?.spotify_id ?? "?",
+    kind: r.kind,
+    error: r.error ?? "erreur inconnue",
+    at: r.finished_at ?? r.started_at,
+  }));
+}
+
 export function isStalled(job: Job<unknown>): boolean {
   if (job.status !== "running") return false;
   const leaseOver = !job.lease_until || Date.parse(job.lease_until) < Date.now();
