@@ -12,6 +12,7 @@ import { kickJob, startJob } from "@/lib/jobs";
 import { newBacProgress } from "@/lib/new-bac";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
 import { withUsage } from "@/lib/ai-usage";
+import { MAX_BACS_PER_TRACK } from "@/lib/limits";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -109,7 +110,7 @@ export async function detach(id: string): Promise<ActionResult> {
 export async function placeFromDivers(track: string, bacIds: string[]): Promise<ActionResult> {
   return run(async (m) => {
     const id = trackId.parse(track);
-    const chosen = z.array(uuid).min(1).max(3).parse(bacIds);
+    const chosen = z.array(uuid).min(1).max(MAX_BACS_PER_TRACK).parse(bacIds);
     await setTrackBacs(m, id, chosen, { source: "manuel", aiChoice: await bacsOfTrack(m, id) });
   });
 }

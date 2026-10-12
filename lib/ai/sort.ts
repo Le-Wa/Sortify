@@ -5,6 +5,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { claude, responseText, SORT_MODEL } from "../claude";
 import { DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
 import type { Axis } from "./fiches";
+import { MAX_BACS_PER_TRACK } from "../limits";
 
 export interface SortFiche {
   name: string;
@@ -26,7 +27,7 @@ export interface Sorted {
   reason: string;
 }
 
-export const MAX_BACS_PER_TRACK = 3;
+export { MAX_BACS_PER_TRACK };
 const BATCH = 20;
 
 /** Réglages du rangement (le banc d'essai compare des variantes ; l'app utilise les valeurs par défaut). */
@@ -36,7 +37,7 @@ export interface SortOptions {
   batch?: number;
   /**
    * Deux familles rangées séparément : un bac de scène principal (2 au plus),
-   * puis 0 à 2 bacs transversaux (ambiance / moment). Par défaut depuis le banc d'essai du 11/10/2026
+   * puis 0 à 3 bacs transversaux (ambiance / moment). Par défaut depuis le banc d'essai du 11/10/2026
    * (bacs de scène : 85 → 90 % de rangements justes) ; false pour l'ancien rangement.
    */
   families?: boolean;
@@ -101,7 +102,7 @@ ${fichesBlock(fiches, (f) => !isScene(f)) || "(aucun)"}
 
 Pour chaque titre, réponds en deux temps, indépendants :
 1. « scene » : le bac de scène où il a sa place — un seul en général, deux s'il est vraiment à cheval entre deux scènes. Liste vide si aucune scène ne lui convient.
-2. « transversal » : 0 à 2 bacs transversaux où il colle aussi, quelle que soit sa scène. Ne t'en prive pas : c'est ce qui permet à la personne de retrouver un titre dans une ambiance ou un moment, en plus de sa scène.
+2. « transversal » : 0 à 3 bacs transversaux où il colle aussi, quelle que soit sa scène. Ne t'en prive pas : c'est ce qui permet à la personne de retrouver un titre dans une ambiance ou un moment, en plus de sa scène.
 ${SCALE}
 Un titre sans aucun bac ira dans la caisse « Divers », c'est normal.
 Juge l'ensemble (artiste, titre, époque, énergie, tags) et respecte les frontières décrites dans les fiches : les tags de genre sont des indices, pas des règles.
@@ -157,13 +158,13 @@ async function sortBatch(
   const valid = (b: { bac: number; confiance: number }) => b.bac >= 1 && b.bac <= bacCount && b.confiance >= 0.3;
   const answers = new Map<number, { bacs: { bac: number; confiance: number }[]; raison: string }>();
   if (opts.families) {
-    // Chaque famille garde ses bacs (un bac de scène cité comme transversal est ignoré), 2 au plus par famille.
+    // Chaque famille garde ses bacs (un bac de scène cité comme transversal est ignoré) : 2 scènes, 3 transversaux au plus.
     for (const t of familiesSchema.parse(JSON.parse(text)).titres) {
       const pick = (list: typeof t.scene, scene: boolean) =>
         list
           .filter((b) => valid(b) && isScene(fiches[b.bac - 1]) === scene)
           .sort((a, b) => b.confiance - a.confiance)
-          .slice(0, 2);
+          .slice(0, scene ? 2 : 3);
       answers.set(t.id, { bacs: [...pick(t.scene, true), ...pick(t.transversal, false)], raison: t.raison });
     }
   } else {

@@ -36,7 +36,7 @@ Ce qui marche (appris sur de vraies bibliothèques) :
 - Le meilleur format est « une scène + une couleur » (« Soul nocturne », « Électro solaire »). Un bac de pure ambiance (« Mélancolie ») est trop flou pour ranger de façon fiable ; un bac de pure scène trop large (« Électro ») ne sert à rien.
 - Mélange les trois axes : environ deux tiers de bacs « scène », et au moins deux bacs « ambiance » ou « moment » qui traversent plusieurs scènes (un même titre de rap, d'électro ou de soul peut y aller). Ce sont eux qui permettent à un titre de vivre dans plusieurs bacs, et c'est ce que la personne veut.
 - Les genres sont des indices, pas des règles : un titre a souvent 4 ou 5 tags, juge l'ensemble (artiste, titre, époque, énergie).
-- Un titre peut aller dans plusieurs bacs (3 au plus), c'est voulu, mais deux bacs ne doivent pas se recouvrir largement.
+- Un titre peut aller dans plusieurs bacs (5 au plus), c'est voulu, mais deux bacs ne doivent pas se recouvrir largement.
 
 ${DATA_RULE}`;
 

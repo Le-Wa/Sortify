@@ -1,11 +1,12 @@
 "use client";
 
 import type { BacChip } from "@/lib/daily";
+import { MAX_BACS_PER_TRACK } from "@/lib/limits";
 import { Sleeve } from "./Sleeve";
 
-export const MAX_PICK = 3;
+export const MAX_PICK = MAX_BACS_PER_TRACK;
 
-/** Choix de 0 à 3 bacs (aucun = Divers). */
+/** Choix de 0 à 5 bacs (aucun = Divers). */
 export function BacPicker({
   bacs,
   selected,

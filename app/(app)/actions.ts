@@ -7,6 +7,7 @@ import { acceptAllPending, bacsOfTrack, pendingQueue, setTrackBacs } from "@/lib
 import { kickJob, startJob } from "@/lib/jobs";
 import { initialTri } from "@/lib/tri";
 import { withUsage } from "@/lib/ai-usage";
+import { MAX_BACS_PER_TRACK } from "@/lib/limits";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -24,7 +25,7 @@ async function run(action: (memberId: string) => Promise<ActionResult | void>): 
 }
 
 const trackId = z.string().regex(/^[A-Za-z0-9]{10,40}$/);
-const bacIds = z.array(z.string().uuid()).max(3);
+const bacIds = z.array(z.string().uuid()).max(MAX_BACS_PER_TRACK);
 
 /** « Nouveaux likes ? » : lance un tri tout de suite (ou suit celui qui tourne). */
 export async function sortNow(): Promise<ActionResult> {
