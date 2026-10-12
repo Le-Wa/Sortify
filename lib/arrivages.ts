@@ -12,6 +12,7 @@ export interface ArrivalTrack {
   title: string;
   artist: string;
   cover_url: string | null;
+  isrc: string | null;
 }
 
 export interface ArrivalBac {
@@ -38,7 +39,7 @@ export async function arrivals(memberId: string, now = new Date()): Promise<Week
   const likes = check(
     await db()
       .from("likes")
-      .select("track_id, title, artists, cover_url, liked_at")
+      .select("track_id, title, artists, cover_url, isrc, liked_at")
       .eq("member_id", memberId)
       .eq("excluded", false)
       .is("unliked_at", null)
@@ -46,7 +47,7 @@ export async function arrivals(memberId: string, now = new Date()): Promise<Week
       .order("liked_at", { ascending: false })
       .limit(2000),
     "Lecture des arrivages",
-  ) as { track_id: string; title: string; artists: string[]; cover_url: string | null; liked_at: string }[];
+  ) as { track_id: string; title: string; artists: string[]; cover_url: string | null; isrc: string | null; liked_at: string }[];
   const ids = likes.map((l) => l.track_id);
 
   const placements: { track_id: string; bac_id: string }[] = [];
@@ -76,7 +77,7 @@ export async function arrivals(memberId: string, now = new Date()): Promise<Week
     const week = weeks.get(weekKey(new Date(like.liked_at)));
     if (!week) continue;
     week.total++;
-    const track = { track_id: like.track_id, title: like.title, artist: like.artists[0] ?? "", cover_url: like.cover_url };
+    const track = { track_id: like.track_id, title: like.title, artist: like.artists[0] ?? "", cover_url: like.cover_url, isrc: like.isrc };
     const placed = bacsOf.get(like.track_id) ?? [];
     if (pending.has(like.track_id)) week.pending++;
     else if (placed.length === 0) week.divers.push(track);

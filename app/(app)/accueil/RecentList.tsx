@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useTransition } from "react";
 import type { BacChip, RecentItem } from "@/lib/daily";
 import { BacPicker, MAX_PICK } from "../../ui/BacPicker";
 import { BottomSheet } from "../../ui/BottomSheet";
+import { PreviewCover } from "../../ui/PreviewCover";
 import { correct } from "../actions";
 
 export function RecentList({ items, bacs }: { items: RecentItem[]; bacs: BacChip[] }) {
@@ -24,7 +24,7 @@ export function RecentList({ items, bacs }: { items: RecentItem[]; bacs: BacChip
       <ul className="recent">
         {items.map((item) => (
           <li key={item.track_id} className="recent__item">
-            <span className="recent__cover">{item.cover_url ? <Image src={item.cover_url} alt="" fill sizes="44px" /> : null}</span>
+            <PreviewCover isrc={item.isrc} cover={item.cover_url} title={item.title} />
             <span className="grow stack" style={{ gap: 4 }}>
               <span className="recent__title">
                 {item.title} <span className="muted">{item.artist}</span>

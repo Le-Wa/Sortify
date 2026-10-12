@@ -848,8 +848,17 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 .arrival__bac { gap: 10px; min-height: 44px; text-decoration: none; color: inherit; font-weight: 700; }
 .arrival__tracks { list-style: none; margin: 0; padding: 0 0 0 46px; display: flex; flex-direction: column; gap: 6px; }
 .arrival__tracks li { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.arrival__cover { width: 32px; height: 32px; }
 .arrival__crate {
   width: 36px; height: 36px; flex: none; border-radius: 3px; background: #C9A878; color: #111111;
   font-size: 8px; font-weight: 900; text-transform: uppercase; display: grid; place-items: center;
 }
+
+/* ── Pochette de titre : un extrait au toucher ────────────── */
+.cover-play { border: 0; padding: 0; cursor: pointer; min-width: 32px; }
+.cover-play__icon {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 12px; color: #FFFFFF; background: rgba(17, 17, 17, 0.35);
+  opacity: 0; transition: opacity 0.15s;
+}
+.cover-play.is-playing .cover-play__icon, .cover-play:focus-visible .cover-play__icon { opacity: 1; }
+@media (hover: hover) { .cover-play:hover .cover-play__icon { opacity: 1; } }

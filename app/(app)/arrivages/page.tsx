@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { arrivals, WEEKS, type ArrivalTrack } from "@/lib/arrivages";
 import { requireMember } from "@/lib/auth";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { weekKey, weekLabel } from "@/lib/weeks";
+import { PreviewCover } from "../../ui/PreviewCover";
 import { Sleeve } from "../../ui/Sleeve";
 
 const SHOWN = 5;
@@ -13,7 +13,7 @@ function Tracks({ tracks }: { tracks: ArrivalTrack[] }) {
     <ul className="arrival__tracks">
       {tracks.slice(0, SHOWN).map((t) => (
         <li key={t.track_id}>
-          <span className="recent__cover arrival__cover">{t.cover_url ? <Image src={t.cover_url} alt="" fill sizes="32px" /> : null}</span>
+          <PreviewCover isrc={t.isrc} cover={t.cover_url} title={t.title} size={32} />
           <span className="recent__title">
             {t.title} <span className="muted">{t.artist}</span>
           </span>

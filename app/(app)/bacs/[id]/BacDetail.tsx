@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { BacTrack } from "@/lib/bac-admin";
+import { PreviewCover } from "../../../ui/PreviewCover";
 import { adjust, detach, editBrief, removeFromBac, setAutoFill, type ActionResult } from "../actions";
 
 interface Props {
@@ -133,7 +133,7 @@ export function BacDetail({ bac, tracks }: Props) {
           .filter((t) => !removed.has(t.track_id))
           .map((t) => (
             <li key={t.track_id} className="recent__item">
-              <span className="recent__cover">{t.cover_url ? <Image src={t.cover_url} alt="" fill sizes="44px" /> : null}</span>
+              <PreviewCover isrc={t.isrc} cover={t.cover_url} title={t.title} />
               <span className="grow" style={{ minWidth: 0 }}>
                 <span className="recent__title" style={{ display: "block" }}>
                   {t.title}
