@@ -16,6 +16,9 @@ export interface Member {
   /** Like retiré sur Spotify : le retirer des playlists Sortify, ou l'y garder. */
   unlike_action: "retirer" | "garder";
   last_sorted_at: string | null;
+  /** Playlist « Arrivage de la semaine » dans Spotify (activée par défaut). */
+  arrival_playlist: boolean;
+  arrival_playlist_id: string | null;
   created_at: string;
 }
 
@@ -68,7 +71,7 @@ export async function saveTokens(spotifyId: string, tokens: SpotifyTokens): Prom
 
 export async function updateSettings(
   spotifyId: string,
-  settings: Partial<Pick<Member, "sort_paused" | "suggest_bacs" | "unlike_action">>,
+  settings: Partial<Pick<Member, "sort_paused" | "suggest_bacs" | "unlike_action" | "arrival_playlist">>,
 ): Promise<void> {
   check(await db().from("members").update(settings).eq("spotify_id", spotifyId), "Mise à jour des réglages");
 }

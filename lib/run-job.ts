@@ -3,6 +3,7 @@ import { initialAnalyse, runAnalyseStep, type AnalyseProgress } from "./analyse"
 import { runCreationStep, type CreationProgress } from "./creation";
 import { runImportStep, type ImportProgress } from "./import";
 import { refreshBriefs } from "./bac-admin";
+import { refreshArrivalPlaylist } from "./arrival-playlist";
 import { runNewBacStep, type NewBacProgress } from "./new-bac";
 import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
@@ -60,6 +61,10 @@ async function runClaimed(job: Job<unknown>): Promise<void> {
         const progress = await runTriStep(job as Job<TriProgress>, deadline);
         if (progress.phase === "done") {
           await finishJob(id, progress);
+          // Playlist « Arrivage de la semaine » : un échec ne remet pas le tri en cause.
+          await refreshArrivalPlaylist(job.member_id).catch((error: unknown) =>
+            console.error("Arrivage de la semaine non mis à jour :", error instanceof Error ? error.message : error),
+          );
           // Ré-analyse automatique (spec 02 §2.5) : un échec ne doit pas faire échouer le tri.
           await suggestFromDivers(job.member_id).catch((error: unknown) =>
             console.error("Suggestion depuis Divers impossible :", error instanceof Error ? error.message : error),

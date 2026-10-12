@@ -7,6 +7,7 @@ interface Props {
   sortPaused: boolean;
   suggestBacs: boolean;
   unlikeAction: "retirer" | "garder";
+  arrivalPlaylist: boolean;
 }
 
 /** `cronHour` : heure de Paris du tri du lundi (fixe pour tout le monde sur le plan Vercel Hobby). */
@@ -24,6 +25,7 @@ export function SortSettings({ cronHour, ...initial }: Props & { cronHour: strin
         sort_paused: patch.sortPaused,
         suggest_bacs: patch.suggestBacs,
         unlike_action: patch.unlikeAction,
+        arrival_playlist: patch.arrivalPlaylist,
       }).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur inconnue." }));
       if (!result.ok) {
         setValues(previous);
@@ -40,6 +42,12 @@ export function SortSettings({ cronHour, ...initial }: Props & { cronHour: strin
           <span className="mono muted">vers {cronHour}</span>
         </div>
         <Toggle label="Mettre en pause" checked={values.sortPaused} disabled={saving} onChange={(v) => change({ sortPaused: v })} />
+        <Toggle
+          label="Playlist « Arrivage de la semaine »"
+          checked={values.arrivalPlaylist}
+          disabled={saving}
+          onChange={(v) => change({ arrivalPlaylist: v })}
+        />
         <Toggle
           label="Suggérer de nouveaux bacs"
           checked={values.suggestBacs}

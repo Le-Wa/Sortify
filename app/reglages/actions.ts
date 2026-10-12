@@ -17,6 +17,7 @@ const settingsSchema = z
     sort_paused: z.boolean(),
     suggest_bacs: z.boolean(),
     unlike_action: z.enum(["retirer", "garder"]),
+    arrival_playlist: z.boolean(),
   })
   .partial();
 

@@ -50,6 +50,7 @@ export default async function ReglagesPage() {
         sortPaused={member.sort_paused}
         suggestBacs={member.suggest_bacs}
         unlikeAction={member.unlike_action}
+        arrivalPlaylist={member.arrival_playlist}
       />
 
       <Link href="/reglages/mis-de-cote" className="list__row" style={{ textDecoration: "none", color: "inherit", background: "var(--card)", borderRadius: 14 }}>
