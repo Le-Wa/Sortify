@@ -57,6 +57,7 @@ Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, mo
 3. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
 4. Plus tard pour l'algo : affiner les fiches à partir des corrections ; mesurer au banc la limite de 5 et la nouvelle consigne de l'analyse.
 5. Plus tard : réordonner par glisser-déposer.
+6. **Plus tard : choix du LLM par membre, autres fournisseurs** (GPT, Gemini, Mistral…), pour les power users avec leur propre clé. Demande : couche commune (Vercel AI SDK / AI Gateway) à la place des appels Anthropic directs (sorties structurées, cache des fiches, repli en cas de refus, effort), puis chaque modèle passé au banc (`scripts/lab/algo-bench3.mts`) avant d'être proposé (liste validée). ~2–3 jours. Variante plus simple écartée pour l'instant par Walid : réglage « Qualité » parmi les modèles Claude (Haiku 76 % / Sonnet 86 % de premier bac juste).
 
 ## En attente de Walid
 - **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY`). Le pote de Walid avait 259 likes sur 2 ans → import depuis 2019 (2 340 likes, 1 918 titres sortis avant 2021). Proposition : élargir année par année jusqu'à 300 likes, puis relancer son import et son analyse.
