@@ -34,7 +34,8 @@ ${Object.entries(SHAPE_MEANINGS).map(([k, v]) => `  ${k} = ${v}`).join("\n")}
 
 Ce qui marche (appris sur de vraies bibliothèques) :
 - Le meilleur format est « une scène + une couleur » (« Soul nocturne », « Électro solaire »). Un bac de pure ambiance (« Mélancolie ») est trop flou pour ranger de façon fiable ; un bac de pure scène trop large (« Électro ») ne sert à rien.
-- Mélange les trois axes : environ deux tiers de bacs « scène », et au moins deux bacs « ambiance » ou « moment » qui traversent plusieurs scènes (un même titre de rap, d'électro ou de soul peut y aller). Ce sont eux qui permettent à un titre de vivre dans plusieurs bacs, et c'est ce que la personne veut.
+- Deux familles : les bacs « scène » (un titre a en général UN bac de scène) et les bacs transversaux « ambiance » ou « moment », qui traversent les scènes (un même titre de rap, d'électro ou de soul peut y aller en plus de sa scène). Ce sont les transversaux qui font vivre un titre dans plusieurs bacs, et c'est ce que la personne veut : propose-en au moins trois, chacun capable d'accueillir des titres d'au moins trois scènes différentes.
+- Un bac transversal doit avoir un critère net, vérifiable sur le titre lui-même : instrumental ou presque, lent et sans kick, joyeux et dansant, énergie très haute… Évite les moments flous (« avant de sortir », « route de nuit ») qui dépendent de l'humeur de chacun : au banc d'essai, l'IA s'y trompait une fois sur deux.
 - Les genres sont des indices, pas des règles : un titre a souvent 4 ou 5 tags, juge l'ensemble (artiste, titre, époque, énergie).
 - Un titre peut aller dans plusieurs bacs (5 au plus), c'est voulu, mais deux bacs ne doivent pas se recouvrir largement.
 
