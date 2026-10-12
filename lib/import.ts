@@ -160,7 +160,7 @@ export async function enrichNext(memberId: string): Promise<{ count: number; las
       console.warn("ReccoBeats indisponible :", error instanceof Error ? error.message : error);
       return new Map<string, AudioFeatures>();
     }),
-    genresFor(likes),
+    genresForLikes(likes),
   ]);
 
   const now = new Date().toISOString();
@@ -182,16 +182,20 @@ export async function enrichNext(memberId: string): Promise<{ count: number; las
 /**
  * Genres d'un lot : tags Last.fm de l'artiste principal (en cache, partagés entre membres),
  * ceux du titre quand l'artiste n'en a pas, puis les genres d'album Deezer en dernier recours.
+ * Homonymes : Last.fm confond parfois deux artistes (HUGEL → rappeur finlandais). On vérifie UN titre de
+ * l'artiste sur Deezer (verdict gardé dans `artist_tags.homonym`) ; si Deezer contredit, chacun de ses titres
+ * prend ses genres Deezer. Vérifier par artiste plutôt que par titre divise les appels à Deezer par ~3.
  */
-async function genresFor(likes: PendingLike[]): Promise<Map<string, string[]>> {
+export async function genresForLikes(likes: PendingLike[]): Promise<Map<string, string[]>> {
   const artists = [...new Set(likes.map((l) => l.artists[0]).filter((a): a is string => Boolean(a)))];
   // Un guillemet casserait le filtre PostgREST : ces rares artistes sont simplement redemandés.
   const lookup = artists.filter((a) => !a.includes('"'));
   const cached = check(
-    await db().from("artist_tags").select("artist, tags").in("artist", lookup),
+    await db().from("artist_tags").select("artist, tags, homonym").in("artist", lookup),
     "Lecture du cache d'artistes",
-  ) as { artist: string; tags: string[] }[];
+  ) as { artist: string; tags: string[]; homonym: boolean | null }[];
   const byArtist = new Map(cached.map((c) => [c.artist, c.tags]));
+  const homonym = new Map(cached.filter((c) => c.homonym !== null).map((c) => [c.artist, c.homonym as boolean]));
 
   const missing = artists.filter((a) => !byArtist.has(a));
   const fetched = await Promise.all(missing.map(async (artist) => ({ artist, tags: await artistTags(artist) })));
@@ -207,21 +211,53 @@ async function genresFor(likes: PendingLike[]): Promise<Map<string, string[]>> {
   }
 
   const result = new Map<string, string[]>();
+  const deezerOf = new Map<string, string[]>(); // genres Deezer déjà demandés dans ce lot (par titre)
+  const deezerFor = async (like: PendingLike) => {
+    if (!deezerOf.has(like.track_id)) deezerOf.set(like.track_id, await deezerGenres(like.isrc));
+    return deezerOf.get(like.track_id)!;
+  };
+
+  // 1. Verdict « homonyme » pour les artistes tagués avec un style et pas encore vérifiés : un titre (deux au plus) sur Deezer.
+  const tagged = [...new Set(likes.map((l) => l.artists[0]).filter((a): a is string => Boolean(a) && hasStyle(byArtist.get(a!) ?? [])))];
+  const verdicts: { artist: string; homonym: boolean }[] = [];
+  await Promise.all(
+    tagged
+      .filter((artist) => !homonym.has(artist))
+      .map(async (artist) => {
+        for (const like of likes.filter((l) => l.artists[0] === artist).slice(0, 2)) {
+          const deezer = await deezerFor(like);
+          if (deezer.length === 0) continue; // Deezer ne connaît pas ce titre : on essaie le suivant
+          const verdict = contradicts(byArtist.get(artist)!, deezer);
+          homonym.set(artist, verdict);
+          if (!artist.includes('"')) verdicts.push({ artist, homonym: verdict });
+          return;
+        }
+      }),
+  );
+  for (const v of verdicts) {
+    check(await db().from("artist_tags").update({ homonym: v.homonym }).eq("artist", v.artist), "Verdict homonyme");
+  }
+
+  // 2. Genres de chaque titre.
   await Promise.all(
     likes.map(async (like) => {
       const artist = like.artists[0] ?? "";
       const tags = byArtist.get(artist) ?? [];
       if (tags.length > 0) {
-        // Les tags Last.fm sont ceux de l'artiste, parfois d'un homonyme (HUGEL → rappeur finlandais) :
-        // si les genres Deezer de l'album les contredisent, on prend Deezer.
-        // Tags sans style (« french, female vocalists ») : on ajoute les genres Deezer.
-        const deezer = await deezerGenres(like.isrc);
-        result.set(like.track_id, contradicts(tags, deezer) ? deezer : hasStyle(tags) ? tags : [...tags, ...deezer]);
+        if (!hasStyle(tags)) {
+          // Tags sans style (« french, female vocalists ») : on ajoute les genres Deezer du titre.
+          result.set(like.track_id, [...tags, ...(await deezerFor(like))]);
+        } else if (homonym.get(artist)) {
+          // Homonyme : les genres Deezer du titre ; s'il ne le connaît pas, aucun tag plutôt que ceux de l'autre artiste.
+          result.set(like.track_id, await deezerFor(like));
+        } else {
+          result.set(like.track_id, tags);
+        }
         return;
       }
       const fromTrack = artist ? ((await trackTags(artist, like.title)) ?? []) : [];
       // Repli : genres d'album Deezer quand Last.fm ne connaît ni l'artiste ni le titre.
-      result.set(like.track_id, fromTrack.length > 0 ? fromTrack : await deezerGenres(like.isrc));
+      result.set(like.track_id, fromTrack.length > 0 ? fromTrack : await deezerFor(like));
     }),
   );
   return result;
