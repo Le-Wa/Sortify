@@ -22,6 +22,8 @@ export interface Member {
   /** Power user : sa propre app Spotify (secret chiffré, lib/secrets.ts) ; null = l'app de Sortify. */
   spotify_client_id: string | null;
   spotify_client_secret_enc: string | null;
+  /** Carte de bienvenue de l'Accueil fermée (montrée une seule fois). */
+  welcomed_at: string | null;
   created_at: string;
 }
 

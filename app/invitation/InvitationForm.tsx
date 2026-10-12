@@ -1,20 +1,24 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { StoryGuide } from "../ui/pedagogie/StoryGuide";
 import { checkInvitation, type InvitationState } from "./actions";
 
 export function InvitationForm() {
   const [state, action, pending] = useActionState<InvitationState, FormData>(checkInvitation, { status: "idle" });
-  const redirecting = state.status === "ok";
+  // Code accepté et mis en cookie : le mini-guide (qu'on peut passer), puis Spotify.
+  const [guideDone, setGuideDone] = useState(false);
+  const redirecting = state.status === "ok" && guideDone;
 
-  // Code accepté et mis en cookie : on enchaîne directement sur Spotify.
   useEffect(() => {
     if (!redirecting) return;
     signIn("spotify", { callbackUrl: "/" }).catch((error: unknown) => {
       console.error("Connexion Spotify impossible", error);
     });
   }, [redirecting]);
+
+  if (state.status === "ok" && !guideDone) return <StoryGuide onDone={() => setGuideDone(true)} />;
 
   return (
     <form action={action} className="stack" style={{ gap: 12 }}>

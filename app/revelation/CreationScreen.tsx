@@ -6,6 +6,7 @@ import { SleeveMarkSvg } from "@/lib/sleeve-mark";
 import { shapeBox, sleeveLayout } from "@/lib/sleeve-layout";
 import type { CreationBac } from "@/lib/creation";
 import { useRevelation } from "./useRevelation";
+import { NextSteps } from "../ui/pedagogie/NextSteps";
 
 /** « On presse tes bacs » : chaque bac devient une playlist et se remplit sous tes yeux. */
 export function CreationScreen() {
@@ -53,6 +54,8 @@ export function CreationScreen() {
         </div>
       ) : null}
       {error ? <p className="small muted">{error}</p> : null}
+
+      <NextSteps />
 
       <div className="grow" />
       {done ? (

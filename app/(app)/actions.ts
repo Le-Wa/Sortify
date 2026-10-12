@@ -8,6 +8,7 @@ import { kickJob, startJob } from "@/lib/jobs";
 import { initialTri } from "@/lib/tri";
 import { withUsage } from "@/lib/ai-usage";
 import { MAX_BACS_PER_TRACK } from "@/lib/limits";
+import { db } from "@/lib/db";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -52,6 +53,14 @@ export async function acceptAll(): Promise<ActionResult> {
   return run(async (memberId) => {
     const n = await acceptAllPending(memberId);
     return { ok: true, message: `${n} titre${n > 1 ? "s" : ""} rangé${n > 1 ? "s" : ""}.` };
+  });
+}
+
+/** Carte de bienvenue fermée : elle ne revient plus. */
+export async function closeWelcome(): Promise<ActionResult> {
+  return run(async (memberId) => {
+    const { error } = await db().from("members").update({ welcomed_at: new Date().toISOString() }).eq("spotify_id", memberId);
+    if (error) throw new Error(`Bienvenue : ${error.message}`);
   });
 }
 

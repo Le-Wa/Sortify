@@ -55,6 +55,9 @@ Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, mo
 - Proposition : « Divers : N titres (X %) » en permanence (alerte au-delà de 30 %), et pour chaque bac l'effet de le retirer / le remettre (`proposalImpact`, `lib/revelation.ts`). Vérifié sur les vraies données (140 / 1 039).
 - Import : homonymes vérifiés sur Deezer une fois par artiste (verdict `artist_tags.homonym`, partagé), plus à chaque titre ; un homonyme inconnu de Deezer n'a aucun tag. Durée annoncée selon le nombre de likes.
 
+## Pédagogie de l'onboarding (12/10/2026, planche `docs/design/pedagogie-*.jpg`)
+Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Walid). Connexion : « Comment ça marche » dépliable (étapes, mots du disquaire, bon à savoir) ; après le code d'invitation : mini-guide en 4 écrans, « Passer » à tout moment ; attente : « Coin du disquaire » selon l'étape ; proposition : « Comment lire ta proposition » ; création : « Et ensuite ? » ; Accueil : bienvenue une seule fois (`members.welcomed_at`). Planche vivante : `/lab/pedagogie` (développement seulement). Mini-guide après le code non testé en vrai (il faut être déconnecté).
+
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
 2. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle.

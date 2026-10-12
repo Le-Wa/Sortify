@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRevelation } from "./useRevelation";
+import { WaitTips } from "../ui/pedagogie/WaitTips";
 
 const SEGMENTS = 30;
 
@@ -83,6 +84,7 @@ export function WaitScreen({ stage }: { stage: "import" | "analyse" }) {
     }
   }
   const filled = Math.round(ratio * SEGMENTS);
+  const tipStep = imp ? (imp.progress.phase === "likes" ? "likes" : "enrich") : "analyse";
   // Durées mesurées : ~4 titres enrichis par seconde (Last.fm, Deezer, ReccoBeats), puis 4 à 8 min d'analyse.
   const estimate = imp
     ? `Première analyse · ~${Math.max(8, Math.round(6 + imp.progress.imported / 240))} min en tout`
@@ -140,6 +142,8 @@ export function WaitScreen({ stage }: { stage: "import" | "analyse" }) {
           {step}
         </div>
       </div>
+
+      <WaitTips key={tipStep} step={tipStep} />
 
       {failed ? (
         <div className="notice notice--error stack" role="alert">

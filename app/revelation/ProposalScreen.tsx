@@ -8,6 +8,7 @@ import { Sleeve } from "../ui/Sleeve";
 import { usePreview } from "../ui/usePreview";
 import { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept, type ActionResult } from "./actions";
 import { useRevelation } from "./useRevelation";
+import { ProposalIntro } from "../ui/pedagogie/ProposalIntro";
 import type { SleeveMark } from "@/lib/cover-shapes";
 
 export interface ProposalBac {
@@ -99,6 +100,8 @@ export function ProposalScreen({ likes, period, bacs, divers, total, filling, er
           ta discothèque.
         </h1>
       </div>
+
+      <ProposalIntro />
 
       <p className={`notice ${total && divers / total > 0.3 ? "notice--warn" : ""}`} style={{ margin: 0 }}>
         <b>Divers : {divers.toLocaleString("fr-FR")} titres</b> ({total ? Math.round((100 * divers) / total) : 0} %) n&apos;ont pas de bac.

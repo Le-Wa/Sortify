@@ -4,6 +4,7 @@ import { currentMember } from "@/lib/auth";
 import { homeFor } from "@/lib/library";
 import { Sleeve } from "./ui/Sleeve";
 import { SpotifyButton } from "./ui/SpotifyButton";
+import { HowItWorks } from "./ui/pedagogie/HowItWorks";
 
 const ERRORS: Record<string, string> = {
   invitation: "Première fois ici ? Il te faut un code d'invitation.",
@@ -63,6 +64,8 @@ export default async function ConnexionPage(props: PageProps<"/">) {
           </span>
         </li>
       </ol>
+
+      <HowItWorks />
 
       <div className="grow" />
 

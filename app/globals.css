@@ -878,3 +878,37 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 @media (hover: hover) { .cover-play:hover .cover-play__icon { opacity: 1; } }
 .segmented--3 { grid-template-columns: repeat(3, 1fr); }
 .notice--warn { box-shadow: inset 4px 0 0 var(--accent); }
+
+/* ── Pédagogie : mini-guide, « Comment ça marche », coin du disquaire, bienvenue ── */
+.story { display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
+.story__bars { display: grid; grid-auto-flow: column; gap: 4px; }
+.story__bars span { height: 3px; border-radius: 2px; background: var(--line); }
+.story__bars span.on { background: var(--ink); }
+.story__visual { display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 150px; }
+.story__visual--list { flex-direction: column; align-items: stretch; gap: 8px; }
+.story__like {
+  width: 72px; height: 72px; border-radius: 4px; display: grid; place-items: center;
+  font-size: 30px; color: #111111; box-shadow: 0 6px 12px rgba(17, 17, 17, 0.18);
+}
+.story__row { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px; border-radius: 12px; background: var(--card); }
+.howto { background: var(--card); border-radius: 14px; }
+.howto--card { box-shadow: var(--shadow); }
+.howto__head { list-style: none; display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px; font-weight: 700; cursor: pointer; }
+.howto__head::-webkit-details-marker { display: none; }
+.howto__head span[aria-hidden] { transition: transform 0.2s; font-size: 18px; }
+.howto[open] .howto__head span[aria-hidden] { transform: rotate(90deg); }
+.howto__body { padding: 0 14px 14px; gap: 14px; }
+.howto__steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.4; }
+.howto__steps li { display: grid; grid-template-columns: 26px 1fr; gap: 6px; }
+.tip { background: var(--card); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-shadow: inset 4px 0 0 var(--accent); }
+.tip__title { font-size: 15px; }
+.tip__text { font-size: 14px; line-height: 1.4; }
+.welcome { background: var(--accent); color: #111111; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.welcome .label { color: #111111; opacity: 0.75; }
+.welcome a { color: inherit; font-weight: 700; }
+.welcome__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.4; }
+.welcome__list li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+.welcome .btn { background: #111111; color: #ECEDE8; align-self: flex-start; }
+/* Interrupteur décoratif (illustrations de la pédagogie). */
+.switch.is-on::before { background: var(--ink); }
+.switch.is-on::after { transform: translateX(20px); background: var(--accent); }

@@ -8,6 +8,7 @@ import { NewLikesButton } from "./NewLikesButton";
 import { openSuggestions } from "@/lib/suggestions";
 import { RecentList } from "./RecentList";
 import { SuggestionCards } from "./SuggestionCards";
+import { Welcome } from "./Welcome";
 import { markFor } from "@/lib/cover-shapes";
 
 /** Titres de l'arrivage montrés sur l'Accueil ; la suite est dans Arrivages. */
@@ -95,6 +96,8 @@ export default async function AccueilPage() {
           </p>
         ) : null}
       </section>
+
+      {member.welcomed_at ? null : <Welcome nextTri={`${relativeDay(next)} vers ${hourOf(next)}`} />}
 
       {failure ? (
         <p className="notice notice--error" role="alert">
