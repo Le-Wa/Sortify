@@ -3,7 +3,7 @@ import { requireMember } from "@/lib/auth";
 import { examplesFor, listBacs, placementCounts } from "@/lib/bacs";
 import { latestJob } from "@/lib/jobs";
 import type { ImportProgress } from "@/lib/import";
-import { revelationState } from "@/lib/revelation";
+import { proposalImpact, revelationState } from "@/lib/revelation";
 import { CreationScreen } from "./CreationScreen";
 import { ProposalScreen, type ProposalBac } from "./ProposalScreen";
 import { WaitScreen } from "./WaitScreen";
@@ -35,7 +35,11 @@ export default async function RevelationPage() {
     listBacs(member.spotify_id, ["proposed", "removed"]),
     latestJob<ImportProgress>(member.spotify_id, "import"),
   ]);
-  const [counts, examples] = await Promise.all([placementCounts(bacs.map((b) => b.id)), examplesFor(bacs.map((b) => b.id))]);
+  const [counts, examples, impact] = await Promise.all([
+    placementCounts(bacs.map((b) => b.id)),
+    examplesFor(bacs.map((b) => b.id)),
+    proposalImpact(member.spotify_id, bacs),
+  ]);
   const proposal: ProposalBac[] = bacs.map((b) => ({
     id: b.id,
     name: b.name,
@@ -46,6 +50,7 @@ export default async function RevelationPage() {
     color: b.color,
     kept: b.status === "proposed",
     count: counts.get(b.id) ?? 0,
+    alone: impact.alone.get(b.id) ?? 0,
     filling: b.needs_fill,
     examples: (examples.get(b.id)?.positive ?? []).map((e) => ({
       track_id: e.track_id,
@@ -62,6 +67,8 @@ export default async function RevelationPage() {
         likes={imp?.progress.imported ?? 0}
         period={imp?.progress.mode === "tout" ? "tout l'historique" : "2 ans"}
         bacs={proposal}
+        divers={impact.divers}
+        total={impact.total}
         filling={state.filling}
         error={state.error}
       />

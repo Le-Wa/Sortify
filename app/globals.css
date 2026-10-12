@@ -877,3 +877,4 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 .cover-play.is-playing .cover-play__icon, .cover-play:focus-visible .cover-play__icon { opacity: 1; }
 @media (hover: hover) { .cover-play:hover .cover-play__icon { opacity: 1; } }
 .segmented--3 { grid-template-columns: repeat(3, 1fr); }
+.notice--warn { box-shadow: inset 4px 0 0 var(--accent); }

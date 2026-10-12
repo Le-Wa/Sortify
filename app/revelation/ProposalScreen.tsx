@@ -20,11 +20,15 @@ export interface ProposalBac {
   color: string;
   kept: boolean;
   count: number;
+  /** Gardé : titres qui partiraient dans Divers si on le retirait. Retiré : titres qu'il sortirait de Divers. */
+  alone: number;
   filling: boolean;
   examples: { track_id: string; title: string; artist: string; cover_url: string | null; isrc: string | null }[];
 }
 
 interface Props {
+  divers: number;
+  total: number;
   likes: number;
   period: string;
   bacs: ProposalBac[];
@@ -32,7 +36,7 @@ interface Props {
   error: string | null;
 }
 
-export function ProposalScreen({ likes, period, bacs, filling, error: jobError }: Props) {
+export function ProposalScreen({ likes, period, bacs, divers, total, filling, error: jobError }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(bacs[0]?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null); // id du bac (ou « create », « custom ») en cours
@@ -87,9 +91,7 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
           <span>
             {likes.toLocaleString("fr-FR")} likes · {period}
           </span>
-          <span>
-            {kept.length} bacs + Divers
-          </span>
+          <span>{kept.length} bacs</span>
         </div>
         <h1 className="display">
           Voici l&apos;âme de
@@ -97,6 +99,11 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
           ta discothèque.
         </h1>
       </div>
+
+      <p className={`notice ${total && divers / total > 0.3 ? "notice--warn" : ""}`} style={{ margin: 0 }}>
+        <b>Divers : {divers.toLocaleString("fr-FR")} titres</b> ({total ? Math.round((100 * divers) / total) : 0} %) n&apos;ont pas de bac.
+        {total && divers / total > 0.3 ? " C'est beaucoup : garde des bacs ou ajoute-en un sur mesure pour leur trouver une place." : ""}
+      </p>
 
       {jobError ? (
         <p className="notice notice--error" role="alert">
@@ -124,11 +131,17 @@ export function ProposalScreen({ likes, period, bacs, filling, error: jobError }
                       {bac.name}
                       {!expanded && bac.kept ? <span className="bin__count">{bac.filling ? "…" : bac.count}</span> : null}
                     </span>
-                    <span className="bin__sub">{bac.kept ? bac.pitch : "Retiré · touche l'interrupteur pour le remettre"}</span>
+                    <span className="bin__sub">
+                      {bac.kept
+                        ? bac.pitch
+                        : `Retiré : ${bac.alone} titre${bac.alone > 1 ? "s" : ""} de plus dans Divers. Touche l'interrupteur pour le remettre, ou récupère-le plus tard depuis Bacs.`}
+                    </span>
                     {expanded && bac.kept ? (
                       <span className="row" style={{ gap: 6 }}>
                         <span className="tag">{bac.axis}</span>
-                        <span className="mono small muted">{bac.filling ? "se remplit…" : `${bac.count} titres`}</span>
+                        <span className="mono small muted">
+                          {bac.filling ? "se remplit…" : `${bac.count} titres${bac.alone ? ` · ${bac.alone} iraient dans Divers sans lui` : ""}`}
+                        </span>
                       </span>
                     ) : null}
                   </button>

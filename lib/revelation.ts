@@ -1,6 +1,7 @@
 import "server-only";
 import { fillOnly, initialAnalyse, type AnalyseProgress } from "./analyse";
 import { listBacs } from "./bacs";
+import { loadCorpus } from "./corpus";
 import type { CreationProgress } from "./creation";
 import { check, db } from "./db";
 import { initialImport, type ImportProgress } from "./import";
@@ -98,3 +99,38 @@ async function randomCovers(memberId: string): Promise<string[]> {
   return urls.slice(0, 40);
 }
 
+
+export interface ProposalImpact {
+  /** Titres de la bibliothèque (ceux que l'analyse a vus). */
+  total: number;
+  /** Titres sans aucun bac gardé : ils iront dans Divers. */
+  divers: number;
+  /** Par bac : gardé, titres qui partiraient dans Divers si on le retirait ; retiré, titres qu'il sortirait de Divers. */
+  alone: Map<string, number>;
+}
+
+/** Ce que pèse chaque bac de la proposition sur la caisse Divers. */
+export async function proposalImpact(memberId: string, bacs: { id: string; status: string }[]): Promise<ProposalImpact> {
+  const total = (await loadCorpus(memberId)).length;
+  const kept = new Set(bacs.filter((b) => b.status === "proposed").map((b) => b.id));
+  const bacsOf = new Map<string, string[]>();
+  for (const bac of bacs) {
+    for (let from = 0; ; from += 1000) {
+      const rows = check(
+        await db().from("placements").select("track_id").eq("bac_id", bac.id).range(from, from + 999),
+        "Lecture des placements",
+      ) as { track_id: string }[];
+      for (const r of rows) bacsOf.set(r.track_id, [...(bacsOf.get(r.track_id) ?? []), bac.id]);
+      if (rows.length < 1000) break;
+    }
+  }
+  let housed = 0;
+  const alone = new Map<string, number>(bacs.map((b) => [b.id, 0]));
+  for (const ids of bacsOf.values()) {
+    const keptHere = ids.filter((id) => kept.has(id));
+    if (keptHere.length > 0) housed++;
+    if (keptHere.length === 1) alone.set(keptHere[0], alone.get(keptHere[0])! + 1);
+    if (keptHere.length === 0) for (const id of ids) alone.set(id, alone.get(id)! + 1);
+  }
+  return { total, divers: Math.max(0, total - housed), alone };
+}

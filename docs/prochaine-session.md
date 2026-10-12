@@ -51,6 +51,10 @@ Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, mo
 - **Notifications du lundi** (web push) : Sortify installable (`app/manifest.ts`, `public/icons`, `public/sw.js`), réglage « Prévenir le lundi » avec « Essayer », envoi après le tri du lundi (`lib/push.ts`, clés `VAPID_*` dans Vercel). Sur iPhone : ajouter Sortify à l'écran d'accueil d'abord. **Pas testé sur un vrai téléphone.**
 - **Power user, partie Spotify** : `/power` (lien sur la page d'accueil) — sa propre app Spotify, identifiants vérifiés puis chiffrés ; OAuth à part (`/api/power/callback`) puis jeton de passage signé (2 min) → session NextAuth (provider « power ») ; jetons renouvelés avec ses identifiants (`appFor`). Ces membres ne comptent pas dans les 5 places (limite du mode développement Spotify). **Pas testé de bout en bout** (il faut une deuxième app Spotify avec l'adresse de redirection `…/api/power/callback`).
 
+## Fait le 12/10/2026 (onboarding, suite de `docs/analyses/2026-10-12-onboarding.md`)
+- Proposition : « Divers : N titres (X %) » en permanence (alerte au-delà de 30 %), et pour chaque bac l'effet de le retirer / le remettre (`proposalImpact`, `lib/revelation.ts`). Vérifié sur les vraies données (140 / 1 039).
+- Import : homonymes vérifiés sur Deezer une fois par artiste (verdict `artist_tags.homonym`, partagé), plus à chaque titre ; un homonyme inconnu de Deezer n'a aucun tag. Durée annoncée selon le nombre de likes.
+
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
 2. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle.
