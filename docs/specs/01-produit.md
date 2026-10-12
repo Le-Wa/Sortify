@@ -13,7 +13,7 @@ Je like des titres sur Spotify au fil de l'eau. Ils s'empilent dans « Titres li
 
 ## 3. Pour qui
 
-- Moi et quelques potes (≤ 25 comptes, mode développement Spotify suffit).
+- Moi et quelques potes (5 comptes au plus sur l'app Spotify de Sortify en mode développement ; au-delà, chacun sa propre app via « Power user »).
 - Pas de landing marketing, pas de pricing, pas d'onboarding « produit ».
 - **Principe directeur : simple et fini > léché et inachevé.** Toute feature qui ralentit la V1 sort du périmètre.
 

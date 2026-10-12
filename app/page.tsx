@@ -8,7 +8,7 @@ import { SpotifyButton } from "./ui/SpotifyButton";
 const ERRORS: Record<string, string> = {
   invitation: "Première fois ici ? Il te faut un code d'invitation.",
   code: "Ce code n'est plus valable. Demande-en un nouveau à la personne qui te l'a donné.",
-  complet: "Sortify est complet : 25 comptes maximum.",
+  complet: "Sortify est complet : 5 comptes maximum avec l'app Spotify de Sortify. Passe par « Power user » avec ta propre app.",
 };
 
 // Erreurs renvoyées par NextAuth (?error=…) : en mode développement, Spotify refuse

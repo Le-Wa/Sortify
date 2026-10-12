@@ -10,7 +10,7 @@ const ERRORS: Record<string, string> = {
   spotify: "Spotify n'a pas pu finir la connexion : vérifie l'adresse de redirection de ton app.",
 };
 
-/** Power user : se connecter avec sa propre app Spotify (pas de limite de 25 comptes, ses propres quotas). */
+/** Power user : se connecter avec sa propre app Spotify (hors limite des 5 comptes de l'app de Sortify, ses propres quotas). */
 export default async function PowerPage(props: PageProps<"/power">) {
   const { erreur } = await props.searchParams;
   const error = typeof erreur === "string" ? ERRORS[erreur] : undefined;

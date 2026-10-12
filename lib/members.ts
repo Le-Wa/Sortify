@@ -92,7 +92,7 @@ export async function updateSettings(
 // ── Invitations ────────────────────────────────────────────────────────────────
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-export const MAX_MEMBERS = 25; // limite Spotify en mode développement
+export const MAX_MEMBERS = 5; // limite Spotify en mode développement (5 utilisateurs par app)
 
 export function normalizeCode(raw: string): string {
   const code = raw.trim().toUpperCase().replace(/[\s_]+/g, "");
