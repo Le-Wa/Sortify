@@ -1,11 +1,14 @@
 import "server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { costOf } from "./ai-cost";
+import { memberAnthropicKey } from "./own-keys";
 import { db } from "./db";
 
 interface UsageScope {
   memberId: string | null;
   scope: string;
+  /** Clé Anthropic personnelle du membre (onboarding « power user »), sinon celle de Sortify. */
+  apiKey: string | null;
   pending: Promise<void>[];
 }
 
@@ -16,7 +19,8 @@ const current = new AsyncLocalStorage<UsageScope>();
  * et attend l'enregistrement de leur consommation avant de rendre la main.
  */
 export async function withUsage<T>(memberId: string | null, scope: string, fn: () => Promise<T>): Promise<T> {
-  const s: UsageScope = { memberId, scope, pending: [] };
+  const apiKey = memberId ? await memberAnthropicKey(memberId) : null;
+  const s: UsageScope = { memberId, scope, apiKey, pending: [] };
   try {
     return await current.run(s, fn);
   } finally {
@@ -32,6 +36,11 @@ export interface UsageLike {
     cache_creation_input_tokens?: number | null;
     cache_read_input_tokens?: number | null;
   } | null;
+}
+
+/** Clé Anthropic à utiliser pour l'appel en cours (null : celle de Sortify). */
+export function currentApiKey(): string | null {
+  return current.getStore()?.apiKey ?? null;
 }
 
 /** Enregistre la consommation d'une réponse de l'IA (sans jamais faire échouer l'appel). */
@@ -54,6 +63,7 @@ export function recordUsage(message: UsageLike, step: string): void {
       cache_read_tokens: cacheRead,
       output_tokens: output,
       cost_usd: Math.round(cost * 1e5) / 1e5,
+      own_key: Boolean(s?.apiKey),
     });
     if (error) console.error("Consommation de l'IA non enregistrée :", error.message);
   })();

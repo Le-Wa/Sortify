@@ -10,6 +10,8 @@ import { DeleteData, ReanalyseCard } from "./DataSettings";
 import { InviteCard } from "./InviteCard";
 import { SortSettings } from "./SortSettings";
 import { ThemeSettings } from "./ThemeSettings";
+import { OwnKeyCard } from "./OwnKeyCard";
+import { anthropicKeyHint } from "@/lib/own-keys";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeOf } from "@/lib/theme";
 
@@ -44,6 +46,9 @@ export default async function ReglagesPage() {
         suggestBacs={member.suggest_bacs}
         unlikeAction={member.unlike_action}
       />
+
+      <div className="label section-label">Power user</div>
+      <OwnKeyCard hint={await anthropicKeyHint(member.spotify_id)} />
 
       <div className="label section-label">Apparence</div>
       <ThemeSettings theme={themeOf((await cookies()).get(THEME_COOKIE)?.value)} />

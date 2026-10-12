@@ -32,16 +32,30 @@ Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, mo
 - **Le partage n'a pas augmenté** (17 % → 16 % des titres dans plusieurs bacs) : le seuil 0,6 a vidé Groove joyeux (124 → 84) et Fin de nuit (43 → 25) des titres douteux, compensé par les 3 nouveaux bacs. « Avant de sortir » est surtout de l'afrobeats (Rema, Burna Boy) : à surveiller, le juge le trouvait flou. Si Walid veut plus de partage : bacs transversaux à critère net (comme Focus instrumental), pas de seuil plus bas (45 % de justes à 0,5).
 - L'analyse initiale (Fable) n'a pas été retouchée : elle propose toujours ~2/3 de scènes. À revoir si l'ami obtient peu de bacs transversaux.
 
-## À faire, dans l'ordre
-1. Retours du test avec l'ami (onboarding, analyse, création des playlists).
-2. Plus tard pour l'algo : affiner les fiches à partir des corrections.
-3. **Petites features proposées** : toucher une pochette lance un extrait (attention : sur la fiche d'un bac, toucher la pochette ouvre maintenant la personnalisation) ; Accueil : n'afficher que les bacs qui ont reçu des titres au dernier tri ; renommer un bac (et sa playlist Spotify) ; choix clair / sombre / auto dans les Réglages.
-4. **Plus tard** : réordonner par glisser-déposer, onboarding « power user », alerte en cas d'échec du tri, tests automatisés, ranger les anciennes migrations V1.
+## Fait le 12/10/2026
+- Limite de **5 bacs par titre** (2 scènes, 3 transversaux ; `lib/limits.ts`) — non mesurée au banc.
+- Bacs retirés de la proposition **mis de côté** (statut `archived`, sans titres) et **récupérables** depuis Bacs (job « bac » qui reprend la fiche).
+- Analyse initiale : au moins 3 bacs transversaux à critère net (consigne, non mesurée).
+- **Extrait au toucher** de la pochette d'un titre (Arrivages, Accueil, fiche d'un bac ; `app/ui/PreviewCover.tsx`).
+- **Accueil** : « Arrivage de la semaine » (likes des 7 derniers jours, modifiables, 10 affichés) et seulement les bacs servis cette semaine ; nombre de likes en attente du tri de lundi.
+- **Renommer un bac** (et sa playlist Spotify) depuis le panneau de la pochette ; les fiches voisines sont rafraîchies.
+- **Apparence** auto / clair / sombre (cookie par appareil, `data-theme` sur `<html>`).
+- **Alerte** : bandeau sur l'Accueil quand le dernier tri a échoué ; incidents des 7 derniers jours dans les Réglages du propriétaire.
+- **Tests** : `npm test` (Vitest, `lib/__tests__/`) — homonymes, formes, mise en page, dates, semaines, couleurs, coût.
+- Migrations V1 rangées dans `supabase/archive-v1/`.
+- **Power user, partie Anthropic** : clé personnelle dans les Réglages, vérifiée, chiffrée (AES-GCM dérivé de `NEXTAUTH_SECRET`, `lib/secrets.ts`) ; tous les appels du membre passent par elle (`withUsage` → `claude()`), comptés `own_key` dans `ai_usage`.
+
+## À faire
+1. Retours de Jérémy sur son onboarding (Walid les donnera).
+2. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle.
+3. **Power user, partie Spotify** (à concevoir) : app Spotify personnelle pour dépasser 25 comptes en mode développement. NextAuth n'accepte qu'un client Spotify : il faudrait un circuit OAuth à part (client id / secret du membre, chiffrés ; callback dédié ; rafraîchissement des tokens avec ses identifiants) ou demander l'extension de quota Spotify.
+4. Plus tard pour l'algo : affiner les fiches à partir des corrections ; mesurer au banc la limite de 5 et la nouvelle consigne de l'analyse.
+5. Plus tard : réordonner par glisser-déposer.
 
 ## En attente de Walid
-- Tester un retrait / ajout fait directement dans Spotify, puis « Nouveaux likes ? ».
-- Décider de la limite de 3 bacs par titre.
-- **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY`). Le pote de Walid avait 259 likes sur 2 ans → import depuis 2019 (2 340 likes, 1 918 titres sortis avant 2021) : ses bacs reflètent ses goûts d'il y a 5 ans. Proposition : élargir année par année (3 ans, 4 ans…) jusqu'à 300 likes au lieu de tout prendre, puis relancer son import et son analyse.
+- **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY`). Le pote de Walid avait 259 likes sur 2 ans → import depuis 2019 (2 340 likes, 1 918 titres sortis avant 2021). Proposition : élargir année par année jusqu'à 300 likes, puis relancer son import et son analyse.
+- Re-ranger les bibliothèques avec les dernières corrections (Deezer pour les tags sans style, 0,6 minimum) : essai à blanc d'abord.
+- Plus de partage (16 %) : bacs transversaux à critère net ; « Avant de sortir » à surveiller.
 - Suivre la part de titres « À trier » (cible ~20 %).
 
 ## Façon de travailler

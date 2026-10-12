@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { THEME_COOKIE, THEMES } from "@/lib/theme";
+import { setAnthropicKey } from "@/lib/own-keys";
 import { currentMember } from "@/lib/auth";
 import { check, db } from "@/lib/db";
 import { kickJob, latestJob, startJob } from "@/lib/jobs";
@@ -25,6 +26,19 @@ export async function saveSettings(input: z.input<typeof settingsSchema>): Promi
   const parsed = settingsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Réglage invalide." };
   await updateSettings(member.spotify_id, parsed.data);
+  revalidatePath("/reglages");
+  return { ok: true };
+}
+
+/** Clé Anthropic personnelle (onboarding « power user ») : vérifiée puis enregistrée chiffrée ; null pour la retirer. */
+export async function saveAnthropicKey(key: string | null): Promise<ActionResult> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  try {
+    await setAnthropicKey(member.spotify_id, key === null ? null : z.string().max(300).parse(key));
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Clé non enregistrée." };
+  }
   revalidatePath("/reglages");
   return { ok: true };
 }

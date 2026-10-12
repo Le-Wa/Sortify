@@ -1,6 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
-import { recordUsage, type UsageLike } from "./ai-usage";
+import { currentApiKey, recordUsage, type UsageLike } from "./ai-usage";
 
 /** Analyse de la bibliothèque : appel rare, la qualité prime (spec 02 — « le plus capable »). */
 export const ANALYSIS_MODEL = "claude-fable-5-1";
@@ -13,9 +13,19 @@ export const EDIT_MODEL = "claude-opus-5-5";
 export const SORT_MODEL = "claude-sonnet-5-5";
 
 let client: Anthropic | null = null;
+const ownClients = new Map<string, Anthropic>();
 
-/** Client Anthropic (clé ANTHROPIC_API_KEY lue par le SDK). */
+/**
+ * Client Anthropic : la clé personnelle du membre en cours s'il en a enregistré une (onboarding « power user »),
+ * sinon celle de Sortify (ANTHROPIC_API_KEY lue par le SDK).
+ */
 export function claude(): Anthropic {
+  const own = currentApiKey();
+  if (own) {
+    let c = ownClients.get(own);
+    if (!c) ownClients.set(own, (c = new Anthropic({ apiKey: own, maxRetries: 3 })));
+    return c;
+  }
   if (!client) client = new Anthropic({ maxRetries: 3 });
   return client;
 }
