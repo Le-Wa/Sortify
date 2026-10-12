@@ -8,7 +8,7 @@ import { markFor } from "@/lib/cover-shapes";
 
 export default async function BacsPage() {
   const member = await requireMember();
-  const bacs = await listBacs(member.spotify_id, ["active"]);
+  const [bacs, archived] = await Promise.all([listBacs(member.spotify_id, ["active"]), listBacs(member.spotify_id, ["archived"])]);
   const [stats, divers] = await Promise.all([bacStats(bacs.map((b) => b.id)), diversTracks(member.spotify_id, 1)]);
   const total = [...stats.values()].reduce((n, s) => n + s.total, 0);
 
@@ -34,7 +34,9 @@ export default async function BacsPage() {
           week: stats.get(b.id)?.week ?? 0,
         }))}
       />
-      <NewBac />
+      <NewBac
+        archived={archived.map((b) => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, mark: markFor(b), pitch: b.pitch }))}
+      />
       <Link href="/bacs/divers" className="crate-card">
         <span className="crate-card__label">
           Caisse

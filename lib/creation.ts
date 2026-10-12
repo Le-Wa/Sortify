@@ -178,11 +178,16 @@ async function addNextChunk(memberId: string, bacId: string, playlistId: string)
   return rows.length;
 }
 
-/** Tout est dans Spotify : les bacs gardés deviennent actifs, les retirés disparaissent. */
+/** Tout est dans Spotify : les bacs gardés deviennent actifs, les retirés sont mis de côté (récupérables depuis Bacs). */
 async function finalize(memberId: string): Promise<void> {
   check(
     await db().from("bacs").update({ status: "active", needs_fill: false }).eq("member_id", memberId).eq("status", "proposed"),
     "Activation des bacs",
   );
-  check(await db().from("bacs").delete().eq("member_id", memberId).eq("status", "removed"), "Suppression des bacs retirés");
+  const removed = check(
+    await db().from("bacs").update({ status: "archived", needs_fill: false }).eq("member_id", memberId).eq("status", "removed").select("id"),
+    "Mise de côté des bacs retirés",
+  ) as { id: string }[];
+  // Leurs titres ne comptent plus nulle part : on les retrouvera dans toute la bibliothèque au moment de la récupération.
+  if (removed.length) check(await db().from("placements").delete().in("bac_id", removed.map((b) => b.id)), "Titres des bacs mis de côté");
 }

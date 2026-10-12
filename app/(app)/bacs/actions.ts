@@ -9,7 +9,7 @@ import { detachBac, moveBac, refreshBriefs, removeTrack, restyleBac, updateBac }
 import { getBac, listBacs } from "@/lib/bacs";
 import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { kickJob, startJob } from "@/lib/jobs";
-import { newBacProgress } from "@/lib/new-bac";
+import { newBacProgress, recoverProgress } from "@/lib/new-bac";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
 import { withUsage } from "@/lib/ai-usage";
 import { MAX_BACS_PER_TRACK } from "@/lib/limits";
@@ -95,6 +95,14 @@ export async function createBac(description: string): Promise<ActionResult> {
     const text = description.trim();
     if (text.length < 3) return { ok: false, message: "Décris le bac en quelques mots." };
     const job = await startJob(m, "bac", newBacProgress(text.slice(0, 500)));
+    await kickJob(job.id);
+  });
+}
+
+/** Récupère un bac mis de côté à la création : il est rempli dans toute la bibliothèque et sa playlist créée. */
+export async function recover(id: string): Promise<ActionResult> {
+  return run(async (m) => {
+    const job = await startJob(m, "bac", await recoverProgress(m, uuid.parse(id)));
     await kickJob(job.id);
   });
 }

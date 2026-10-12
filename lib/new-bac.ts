@@ -19,11 +19,30 @@ export interface NewBacProgress {
   total: number;
   found: { track_id: string; confidence: number }[];
   bac?: { id: string; name: string; count: number };
+  /** Récupération d'un bac mis de côté : sa fiche est reprise telle quelle, puis l'ancien est effacé. */
+  archivedId?: string;
   /** Début de l'étape en cours : la jauge avance au temps pendant les appels longs. */
   phaseStartedAt?: string;
 }
 
 export const newBacProgress = (request: string): NewBacProgress => ({ phase: "fiche", request, scanned: 0, total: 0, found: [] });
+
+/** Récupérer un bac mis de côté : on saute l'écriture de la fiche. */
+export async function recoverProgress(memberId: string, archivedId: string): Promise<NewBacProgress> {
+  const { data: bac, error } = await db()
+    .from("bacs")
+    .select("id, name, sleeve_name, pitch, brief, axis, shape")
+    .eq("member_id", memberId)
+    .eq("id", archivedId)
+    .eq("status", "archived")
+    .maybeSingle();
+  if (error) throw new Error(`Lecture du bac mis de côté : ${error.message}`);
+  if (!bac) throw new Error("Ce bac n'est plus disponible.");
+  const { data: ex, error: e2 } = await db().from("bac_examples").select("track_id").eq("bac_id", bac.id).eq("polarity", "positive");
+  if (e2) throw new Error(`Exemples du bac mis de côté : ${e2.message}`);
+  const fiche: Fiche = { name: bac.name, sleeve_name: bac.sleeve_name, pitch: bac.pitch, brief: bac.brief, axis: bac.axis, shape: bac.shape, examples: [] };
+  return { phase: "remplissage", request: bac.name, fiche, exampleIds: (ex ?? []).map((r) => r.track_id), scanned: 0, total: 0, found: [], archivedId: bac.id };
+}
 
 /** Titres écoutés par passage : 6 lots de 100 en parallèle, ~20 s. */
 const SCAN_UNIT = 600;
@@ -70,6 +89,10 @@ async function unit(memberId: string, p: NewBacProgress): Promise<NewBacProgress
     case "playlist": {
       if (!p.fiche) throw new Error("Fiche du nouveau bac perdue");
       const bac = await createActiveBac(memberId, p.fiche, p.exampleIds ?? [], p.found);
+      if (p.archivedId) {
+        const { error: e } = await db().from("bacs").delete().eq("id", p.archivedId).eq("status", "archived");
+        if (e) throw new Error(`Effacement du bac mis de côté : ${e.message}`);
+      }
       const { count, error } = await db().from("placements").select("track_id", { count: "exact", head: true }).eq("bac_id", bac.id);
       if (error) throw new Error(`Comptage du nouveau bac : ${error.message}`);
       return { ...p, phase: "done", bac: { id: bac.id, name: bac.name, count: count ?? 0 } };

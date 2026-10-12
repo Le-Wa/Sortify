@@ -35,7 +35,8 @@ export interface Bac {
   outline: boolean | null;
   color: string;
   position: number;
-  status: "proposed" | "active" | "removed";
+  /** archived : retiré sur l'écran Proposition, gardé (fiche + exemples, sans titres) pour être récupéré. */
+  status: "proposed" | "active" | "removed" | "archived";
   auto_fill: boolean;
   spotify_playlist_id: string | null;
   is_divers: boolean;

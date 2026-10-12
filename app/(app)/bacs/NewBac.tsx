@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
+import type { SleeveMark } from "@/lib/cover-shapes";
 import { BottomSheet } from "../../ui/BottomSheet";
-import { createBac } from "./actions";
+import { Sleeve } from "../../ui/Sleeve";
+import { createBac, recover } from "./actions";
 
 interface BacJob {
   id: string;
@@ -50,8 +52,20 @@ async function fetchJob(): Promise<BacJob | null> {
   return (await res.json()) as BacJob | null;
 }
 
-/** « + Nouveau bac » : une description libre ; l'IA crée le bac en tâche de fond, suivi ici étape par étape. */
-export function NewBac() {
+export interface ArchivedBac {
+  id: string;
+  name: string;
+  sleeve: string;
+  color: string;
+  mark: SleeveMark;
+  pitch: string;
+}
+
+/**
+ * « + Nouveau bac » (description libre) et bacs mis de côté à la création (« Récupérer ») :
+ * l'IA crée le bac en tâche de fond, suivi ici étape par étape.
+ */
+export function NewBac({ archived }: { archived: ArchivedBac[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -95,9 +109,13 @@ export function NewBac() {
   }, [running, poll]);
 
   function submit() {
+    start(() => createBac(text));
+  }
+
+  function start(action: () => Promise<{ ok: true; message?: string } | { ok: false; message: string }>) {
     setError(null);
     startTransition(async () => {
-      const result = await createBac(text).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
+      const result = await action().catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
       if (!result.ok) {
         setError(result.message);
         return;
@@ -171,6 +189,30 @@ export function NewBac() {
       <button type="button" className="btn btn--ghost" onClick={() => setOpen(true)}>
         + Nouveau bac
       </button>
+      {error && !open ? (
+        <p className="notice notice--error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {archived.length ? (
+        <section className="panel">
+          <span className="label">Mis de côté à la création</span>
+          <span className="small muted">Les bacs que tu avais retirés de la proposition. Récupérer en refait une playlist avec tes titres.</span>
+          {archived.map((b) => (
+            <div key={b.id} className="row" style={{ gap: 10 }}>
+              <Sleeve name={b.sleeve} color={b.color} size={44} mark={b.mark} />
+              <span className="grow stack" style={{ gap: 2, minWidth: 0 }}>
+                <b style={{ fontSize: 14 }}>{b.name}</b>
+                <span className="small muted">{b.pitch}</span>
+              </span>
+              <button type="button" className="btn btn--ghost btn--sm" disabled={pending} onClick={() => start(() => recover(b.id))}>
+                Récupérer
+              </button>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       <BottomSheet open={open} onClose={() => setOpen(false)} title="Nouveau bac">
         <form
