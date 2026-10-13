@@ -71,11 +71,12 @@ Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Wal
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
 2. **Décidé par Walid le 13/10 et déployé** : import des **1 000 derniers likes** (`MAX_IMPORT`, `lib/library-size.ts`) ; homonymes en **règle hybride** (`genresForLikes`). Ne s'applique qu'aux prochains imports / tris (pas de re-rangement).
-   Questions ouvertes (réponses à demander) :
-   - « Ranger mes anciens likes » avec **demande au propriétaire** (le membre demande, Walid accepte sur son Accueil avec le coût estimé ; direct pour un membre avec sa propre clé) : ~1 j, réutilise le tri. Walid a demandé si c'était compliqué : non, à valider.
-   - Import des playlists : workflow, impact, maintenance, playlists trop larges → `docs/analyses/2026-10-13-import-playlists.md` (3 questions à trancher avant la planche).
-   - Divers facile à ranger (question du 13/10) : profil des caisses (`scripts/lab/divers-profile.mts`) — Walid 134 titres éparpillés (moitié électro, 2 artistes à 3+ titres) ; Jérémy 1 034 titres dont 81 % de rap et 75 artistes à 3+ titres (Kalash 65, Drake 26) = ses bacs retirés. Options proposées : filtres par famille + regroupement par artiste + rangement par lot ; « Fais-moi des bacs avec Divers » à la demande.
-   - Idées retenues par Walid : import des playlists, lot de petits gains (Incertains, comptoir vide, ce bac dort), bilan du mois / de l'année, ordre DJ / bacs des potes — planche d'abord pour chacune.
+   Aussi le 13/10 (après ses réponses) :
+   - **Avis de l'IA gardé pour Divers** à l'onboarding (table `divers_hints`) : les hésitations (< 0,6) vont dans Divers avec leur avis, pour le swipe de Divers sans IA.
+   - **« Ranger mes anciens likes »** (`lib/old-likes.ts`, job « anciens ») : carte dans Réglages ; le membre sur la clé de Sortify demande, Walid accepte / refuse sur son Accueil (coût estimé) ; direct pour le propriétaire et les clés perso. Sûrs → bacs, sinon Divers + avis ; ajoutés **en bas** des playlists ; `likes.backfilled_at` les écarte du tri et de la synchro pendant le job. Refus testé ; **le job lui-même n'a pas tourné** (il écrit dans les playlists) — pour Walid : ~1 083 likes d'avant oct. 2024, ~1,67 $, ~6 min ; essai à blanc avant s'il le veut.
+   - **Inférence par artiste écartée par le banc** (rangement d'office : 3 % validés ; indice au tri : 2,7× plus d'erreurs) — section 5 de `docs/bench/2026-10-13-banc-essai.md`.
+   - Décisions de Walid : import des playlists en **copie Sortify** d'abord, playlist trop large → **découpage proposé** ; Divers : filtres + artiste + lot, « Fais-moi des bacs avec Divers », swipe avec l'avis gardé.
+   - **Planche** `docs/design/idees-1..4.jpg` (planche vivante `/lab/idees`, dev) : Divers (D1–D3), import des playlists (P1–P3), petits gains (G1–G3), plus tard (L1–L3). **En attente de ses retours** avant de coder.
    - Relance de Jérémy (avec son accord) : à préparer, il a déjà des bacs actifs.
 3. Tester (Walid s'en occupe) : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle (Réglages et maintenant `/power`) ; le mini-guide après un code d'invitation (navigation privée) ; le lien du dashboard dans « Inviter un pote » (adresse `/settings` supposée).
 4. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
