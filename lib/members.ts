@@ -24,6 +24,10 @@ export interface Member {
   spotify_client_secret_enc: string | null;
   /** Carte de bienvenue de l'Accueil fermée (montrée une seule fois). */
   welcomed_at: string | null;
+  /** Bacs des potes : il montre ses bacs partagés et voit ceux des potes qui ont dit oui. */
+  share_bacs: boolean;
+  /** Playlist « Reco des potes » dans son Spotify. */
+  reco_playlist_id: string | null;
   created_at: string;
 }
 

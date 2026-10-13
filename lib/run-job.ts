@@ -9,6 +9,7 @@ import { runNewBacStep, type NewBacProgress } from "./new-bac";
 import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
 import { runOldLikesStep, type OldLikesProgress } from "./old-likes";
+import { refreshCommons } from "./potes";
 import { withUsage } from "./ai-usage";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
@@ -69,6 +70,10 @@ async function runClaimed(job: Job<unknown>): Promise<void> {
           );
           // Tri du lundi : « ton arrivage est prêt » sur les téléphones abonnés.
           if (progress.source === "cron") await announceArrival(job.member_id, progress);
+          // Bacs communs avec les potes : ils suivent les nouveaux likes ; un échec ne remet pas le tri en cause.
+          await refreshCommons(job.member_id).catch((error: unknown) =>
+            console.error("Bacs communs non mis à jour :", error instanceof Error ? error.message : error),
+          );
           // Ré-analyse automatique (spec 02 §2.5) : un échec ne doit pas faire échouer le tri.
           await suggestFromDivers(job.member_id).catch((error: unknown) =>
             console.error("Suggestion depuis Divers impossible :", error instanceof Error ? error.message : error),

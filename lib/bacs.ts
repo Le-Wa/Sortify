@@ -47,6 +47,8 @@ export interface Bac {
   asleep_ok_until: string | null;
   /** Ordre de la playlist : nouveaux titres en haut, ou enchaînement DJ (`lib/dj.ts`). */
   play_order: "recents" | "dj";
+  /** Visible des potes quand le membre partage ses bacs (`members.share_bacs`). */
+  shared: boolean;
 }
 
 export async function listBacs(memberId: string, statuses: Bac["status"][]): Promise<Bac[]> {

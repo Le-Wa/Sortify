@@ -7,6 +7,8 @@ import { markFor } from "@/lib/cover-shapes";
 import { BacDetail } from "./BacDetail";
 import { SleeveEditor } from "./SleeveEditor";
 import { PlayOrder } from "./PlayOrder";
+import { Crossings } from "./Crossings";
+import { Suspense } from "react";
 
 export default async function BacPage(props: PageProps<"/bacs/[id]">) {
   const member = await requireMember();
@@ -42,7 +44,14 @@ export default async function BacPage(props: PageProps<"/bacs/[id]">) {
       <BacDetail
         bac={{ id: bac.id, name: bac.name, brief: bac.brief, autoFill: bac.auto_fill }}
         tracks={tracks.map((t) => ({ ...t, label: t.source !== "ia" ? "rangé par toi" : t.isExample ? "exemple de l'IA" : "rangé par l'IA" }))}
-        orderSlot={bac.spotify_playlist_id ? <PlayOrder bacId={bac.id} order={bac.play_order} /> : null}
+        orderSlot={
+          <>
+            {bac.spotify_playlist_id ? <PlayOrder bacId={bac.id} order={bac.play_order} /> : null}
+            <Suspense fallback={null}>
+              <Crossings memberId={member.spotify_id} bacId={bac.id} />
+            </Suspense>
+          </>
+        }
       />
     </>
   );

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { COST_ALERT_USD, costAlerts, usd } from "@/lib/ai-budget";
 import { pendingOldLikesRequests } from "@/lib/old-likes";
+import { pendingCommonsFor } from "@/lib/potes";
 import { OldLikesRequests } from "./OldLikesRequests";
 import { activeBacs, chip, failedTri, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
@@ -20,7 +21,7 @@ const SHOWN = 10;
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs, suggestions, arrival, failure, costly, oldRequests] = await Promise.all([
+  const [queue, tri, bacs, suggestions, arrival, failure, costly, oldRequests, commons] = await Promise.all([
     pendingQueue(id),
     lastTri(id),
     activeBacs(id),
@@ -29,6 +30,7 @@ export default async function AccueilPage() {
     failedTri(id),
     member.is_owner ? costAlerts() : Promise.resolve([]),
     member.is_owner ? pendingOldLikesRequests() : Promise.resolve([]),
+    pendingCommonsFor(id),
   ]);
   const lastDone = tri?.status === "done" ? tri : null;
   const recent = arrival.items;
@@ -116,6 +118,15 @@ export default async function AccueilPage() {
           <Link href="/reglages">Réglages</Link>.
         </p>
       ) : null}
+
+      {commons.map((c) => (
+        <Link key={c.id} href="/potes" className="suggestion card" style={{ color: "inherit", textDecoration: "none" }}>
+          <div className="grow stack" style={{ gap: 4 }}>
+            <b style={{ fontSize: 15 }}>{c.from} te propose un bac commun</b>
+            <span style={{ fontSize: 13 }}>Une playlist à deux avec vos titres et vos artistes en commun. Réponds sur la page des potes ›</span>
+          </div>
+        </Link>
+      ))}
 
       {oldRequests.length > 0 ? (
         <OldLikesRequests requests={oldRequests.map((r) => ({ id: r.id, name: r.name, estimate: r.estimate, cost: usd(Number(r.cost_usd)) }))} />

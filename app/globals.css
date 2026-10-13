@@ -991,3 +991,9 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
   animation: fade-up 0.22s ease-out;
 }
+
+/* ── Potes (13/10/2026) ─────────────────────────────────── */
+.pote-bacs { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px; scroll-snap-type: x proximity; scroll-padding-inline: 14px; }
+.pote-bacs::-webkit-scrollbar { display: none; }
+.pote-bacs__item { flex: none; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; color: inherit; text-decoration: none; scroll-snap-align: start; }
+.pote-bacs__item:active .sleeve { transform: scale(0.96); }

@@ -7,6 +7,8 @@ import { SignOutButton } from "../ui/SignOutButton";
 import { isStalled, kickJob, latestJob, recentIncidents, type Job } from "@/lib/jobs";
 import { oldLikesStatus, ownerName } from "@/lib/old-likes";
 import { OldLikesCard, type OldLikesView } from "./OldLikesCard";
+import { PotesSettings } from "./PotesSettings";
+import { listBacs } from "@/lib/bacs";
 import { setAsideTracks } from "@/lib/daily";
 import { hasActiveBacs } from "@/lib/library";
 import { DeleteData, ReanalyseCard } from "./DataSettings";
@@ -105,6 +107,12 @@ export default async function ReglagesPage() {
           <div className="label section-label">Tes bacs</div>
           <ReanalyseCard running={reanalyse?.status === "running"} />
           {oldLikes ? <OldLikesCard view={oldLikes} /> : null}
+
+          <div className="label section-label">Les potes</div>
+          <PotesSettings
+            on={member.share_bacs}
+            bacs={(await listBacs(member.spotify_id, ["active"])).map((b) => ({ id: b.id, name: b.name, shared: b.shared }))}
+          />
         </>
       ) : null}
 
