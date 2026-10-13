@@ -59,6 +59,7 @@ async function writeFiches(memberId: string): Promise<AnalyseProgress> {
   if (librarySize(corpus.length) === "trop-petite") throw new Error(tooSmallMessage(corpus.length));
   const sample = sampleCorpus(corpus);
   const fiches = await proposeFiches(sample);
+  check(await db().from("divers_hints").delete().eq("member_id", memberId), "Effacement des anciens avis");
   // Nouvelle analyse : les propositions précédentes (jamais créées) disparaissent.
   check(
     await db().from("bacs").delete().eq("member_id", memberId).in("status", ["proposed", "removed"]).eq("is_divers", false),
@@ -88,6 +89,16 @@ async function sortUnit(memberId: string, progress: AnalyseProgress): Promise<An
         .filter((s) => (s.suggestions[0]?.confidence ?? 0) >= SURE_THRESHOLD)
         .flatMap((s) => s.suggestions.map((x) => ({ bac_id: bacs[x.bac].id, track_id: s.track_id, confidence: x.confidence }))),
     );
+    // Titres qui iront dans Divers : on garde l'avis de l'IA, pour les ranger plus tard sans la redemander.
+    const hints = sorted
+      .filter((s) => s.suggestions.length > 0 && s.suggestions[0].confidence < SURE_THRESHOLD)
+      .map((s) => ({
+        member_id: memberId,
+        track_id: s.track_id,
+        suggestions: s.suggestions.map((x) => ({ bac_id: bacs[x.bac].id, confidence: x.confidence })),
+        reason: s.reason || null,
+      }));
+    if (hints.length > 0) check(await db().from("divers_hints").upsert(hints, { onConflict: "member_id,track_id" }), "Avis gardés pour Divers");
   }
   const done = progress.sorted + slice.length;
   if (done < corpus.length && slice.length > 0) return { ...progress, sorted: done, total: corpus.length };
