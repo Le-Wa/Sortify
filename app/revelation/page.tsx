@@ -7,6 +7,8 @@ import { proposalImpact, revelationState } from "@/lib/revelation";
 import { CreationScreen } from "./CreationScreen";
 import { ProposalScreen, type ProposalBac } from "./ProposalScreen";
 import { WaitScreen } from "./WaitScreen";
+import { PlaylistsScreen } from "./PlaylistsScreen";
+import { playlistCandidates } from "@/lib/playlists-import";
 import { markFor } from "@/lib/cover-shapes";
 import { librarySize } from "@/lib/library-size";
 
@@ -20,6 +22,14 @@ export default async function RevelationPage() {
     return (
       <main className="page page--bare">
         <WaitScreen stage={state.stage} />
+      </main>
+    );
+  }
+
+  if (state.stage === "playlists") {
+    return (
+      <main className="page page--bare">
+        <PlaylistsScreen candidates={await playlistCandidates(member.spotify_id)} />
       </main>
     );
   }
@@ -53,6 +63,7 @@ export default async function RevelationPage() {
     count: counts.get(b.id) ?? 0,
     alone: impact.alone.get(b.id) ?? 0,
     filling: b.needs_fill,
+    fromPlaylist: b.from_playlist,
     examples: (examples.get(b.id)?.positive ?? []).map((e) => ({
       track_id: e.track_id,
       title: e.title,

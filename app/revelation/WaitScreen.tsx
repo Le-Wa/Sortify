@@ -12,7 +12,8 @@ const SEGMENTS = 30;
  * elles avancent au temps écoulé (en ralentissant, sans jamais finir avant l'étape suivante).
  */
 const ANALYSE_STEPS = {
-  fiches: { from: 0, to: 0.4, seconds: 150, text: "L'IA écoute l'ensemble et imagine tes bacs…" },
+  playlists: { from: 0, to: 0.08, seconds: 40, text: "On reprend tes playlists…" },
+  fiches: { from: 0.08, to: 0.4, seconds: 150, text: "L'IA écoute l'ensemble et imagine tes bacs…" },
   rangement: { from: 0.4, to: 0.85, seconds: 0, text: "On essaie les bacs sur tes titres…" },
   complement: { from: 0.85, to: 0.92, seconds: 60, text: "On cherche une maison aux titres restants…" },
   remplissage: { from: 0.92, to: 1, seconds: 60, text: "On remplit les derniers bacs…" },

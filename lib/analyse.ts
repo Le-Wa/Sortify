@@ -6,10 +6,13 @@ import { loadCorpus, sampleCorpus } from "./corpus";
 import { check, db } from "./db";
 import { saveProgress, type Job } from "./jobs";
 import { librarySize, minPerBac as minPerBacFor, tooSmallMessage } from "./library-size";
+import { importPlaylistUnit, playlistHints } from "./playlists-import";
 
 export interface AnalyseProgress {
   /** fiches → rangement de tout le corpus → compléter (orphelins) → remplissage des bacs à remplir → done */
-  phase: "fiches" | "rangement" | "complement" | "remplissage" | "done";
+  phase: "playlists" | "fiches" | "rangement" | "complement" | "remplissage" | "done";
+  /** Étape « playlists » : prochaine playlist choisie à reprendre (lib/playlists-import.ts). */
+  playlistIndex?: number;
   sorted: number;
   total: number;
   /** Début de l'étape en cours (ISO) : la jauge avance au temps pendant les longs appels à l'IA. */
@@ -18,6 +21,8 @@ export interface AnalyseProgress {
 
 export const initialAnalyse: AnalyseProgress = { phase: "fiches", sorted: 0, total: 0 };
 export const fillOnly: AnalyseProgress = { phase: "remplissage", sorted: 0, total: 0 };
+/** Avec des playlists choisies à l'étape « Tes playlists » : on commence par elles. */
+export const withPlaylists: AnalyseProgress = { phase: "playlists", sorted: 0, total: 0, playlistIndex: 0 };
 
 const SORT_UNIT = 120;
 /** Sous cette couverture, on cherche des bacs parmi les titres restés sans maison (spec 02). */
@@ -40,6 +45,11 @@ export async function runAnalyseStep(job: Job<AnalyseProgress>, deadline: number
 
 async function analyseUnit(memberId: string, progress: AnalyseProgress): Promise<AnalyseProgress> {
   switch (progress.phase) {
+    case "playlists": {
+      const index = progress.playlistIndex ?? 0;
+      const more = await importPlaylistUnit(memberId, index);
+      return more ? { ...progress, playlistIndex: index + 1 } : { ...progress, phase: "fiches" };
+    }
     case "fiches":
       return writeFiches(memberId);
     case "rangement":
@@ -58,18 +68,23 @@ async function writeFiches(memberId: string): Promise<AnalyseProgress> {
   // Message lisible à l'écran d'attente ; « Réessayer » relance alors l'import pour lire les nouveaux likes.
   if (librarySize(corpus.length) === "trop-petite") throw new Error(tooSmallMessage(corpus.length));
   const sample = sampleCorpus(corpus);
-  const fiches = await proposeFiches(sample);
+  // Nouvelle analyse : les propositions précédentes (jamais créées) disparaissent, sauf les playlists reprises à l'instant.
   check(await db().from("divers_hints").delete().eq("member_id", memberId), "Effacement des anciens avis");
-  // Nouvelle analyse : les propositions précédentes (jamais créées) disparaissent.
   check(
-    await db().from("bacs").delete().eq("member_id", memberId).in("status", ["proposed", "removed"]).eq("is_divers", false),
+    await db().from("bacs").delete().eq("member_id", memberId).in("status", ["proposed", "removed"]).eq("is_divers", false).is("from_playlist", null),
     "Effacement des anciennes propositions",
   );
+  const fromPlaylists = (await listBacs(memberId, ["proposed"])).filter((b) => b.from_playlist);
+  const fiches = await proposeFiches(sample, {
+    existing: fromPlaylists.map((b) => ({ name: b.name, pitch: b.pitch, axis: b.axis })),
+    hints: await playlistHints(memberId),
+  });
   const active = await listBacs(memberId, ["active"]);
+  const taken = [...active, ...fromPlaylists];
   await insertFiches(memberId, fiches, sample, {
-    startPosition: active.length,
-    usedColors: active.map((b) => b.color),
-    usedShapes: active.map((b) => b.shape),
+    startPosition: taken.length,
+    usedColors: taken.map((b) => b.color),
+    usedShapes: taken.map((b) => b.shape),
     needsFill: false,
   });
   return { phase: "rangement", sorted: 0, total: corpus.length };

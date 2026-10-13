@@ -28,6 +28,8 @@ export interface Member {
   share_bacs: boolean;
   /** Playlist « Reco des potes » dans son Spotify. */
   reco_playlist_id: string | null;
+  /** Étape « Tes playlists » de l'onboarding passée (choix enregistrés ou rien à reprendre). */
+  playlists_done_at: string | null;
   created_at: string;
 }
 

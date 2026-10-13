@@ -25,6 +25,8 @@ export interface ProposalBac {
   /** Gardé : titres qui partiraient dans Divers si on le retirait. Retiré : titres qu'il sortirait de Divers. */
   alone: number;
   filling: boolean;
+  /** Repris d'une playlist de la personne (nom de la playlist). */
+  fromPlaylist: string | null;
   examples: { track_id: string; title: string; artist: string; cover_url: string | null; isrc: string | null }[];
 }
 
@@ -145,6 +147,7 @@ export function ProposalScreen({ likes, period, size, bacs, divers, total, filli
                     aria-expanded={expanded}
                     onClick={() => setOpen(expanded ? null : bac.id)}
                   >
+                    {bac.fromPlaylist ? <span className="tag" style={{ alignSelf: "flex-start" }}>ta playlist</span> : null}
                     <span className="bin__name">
                       {bac.name}
                       {!expanded && bac.kept ? <span className="bin__count">{bac.filling ? "…" : bac.count}</span> : null}

@@ -49,6 +49,8 @@ export interface Bac {
   play_order: "recents" | "dj";
   /** Visible des potes quand le membre partage ses bacs (`members.share_bacs`). */
   shared: boolean;
+  /** Bac repris d'une playlist de la personne à l'onboarding (nom de la playlist), sinon null. */
+  from_playlist: string | null;
 }
 
 export async function listBacs(memberId: string, statuses: Bac["status"][]): Promise<Bac[]> {

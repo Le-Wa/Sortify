@@ -12,16 +12,7 @@ import { syncMember } from "./sync";
  * regroupement par artiste, rangement par lot, et avis de l'IA gardé quand il existe (`divers_hints`).
  */
 
-export const FAMILY_LABELS: Record<string, string> = {
-  rap: "Rap",
-  "électro": "Électro",
-  "soul-rnb": "Soul & R&B",
-  "pop-rock": "Pop & rock",
-  "latino-caraïbes": "Latino & caraïbes",
-  afro: "Afro",
-  oriental: "Oriental",
-  jazz: "Jazz",
-};
+export { FAMILY_LABELS } from "./family-labels";
 
 export interface DiversItem {
   track_id: string;

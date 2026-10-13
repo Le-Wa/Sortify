@@ -33,6 +33,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "i.scdn.co" },
       { protocol: "https", hostname: "mosaic.scdn.co" },
+      // Pochettes des playlists faites par la personne (étape « Tes playlists ») et de celles générées par Sortify.
+      { protocol: "https", hostname: "**.spotifycdn.com" },
       { protocol: "https", hostname: "e-cdns-images.dzcdn.net" },
     ],
   },

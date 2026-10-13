@@ -1,5 +1,7 @@
 import "server-only";
-import { fillOnly, initialAnalyse, type AnalyseProgress } from "./analyse";
+import { fillOnly, initialAnalyse, withPlaylists, type AnalyseProgress } from "./analyse";
+import { getMember } from "./members";
+import { playlistChoices } from "./playlists-import";
 import { listBacs } from "./bacs";
 import { loadCorpus } from "./corpus";
 import type { CreationProgress } from "./creation";
@@ -17,6 +19,8 @@ interface JobView<P> {
 
 export type RevelationState =
   | ({ stage: "import" } & JobView<ImportProgress>)
+  /** Import fini : la personne choisit ses playlists à reprendre avant l'analyse. */
+  | { stage: "playlists" }
   | ({ stage: "analyse"; covers: string[] } & JobView<AnalyseProgress>)
   | { stage: "proposition"; filling: boolean; error: string | null }
   | ({ stage: "creation" } & JobView<CreationProgress>)
@@ -69,10 +73,18 @@ export async function revelationState(memberId: string, retry = false): Promise<
 
   const proposed = await listBacs(memberId, ["proposed", "removed"]);
   // Une analyse plus ancienne que le dernier import ne compte plus (import relancé).
-  if (!analyse || (analyse.status === "failed" && retry) || analyse.started_at < imp.started_at) {
-    analyse = await launch(memberId, "analyse", proposed.length > 0 ? fillOnly : initialAnalyse);
+  const stale = !analyse || analyse.started_at < imp.started_at;
+  if (stale && proposed.length === 0) {
+    // Étape « Tes playlists » : tant qu'elle n'est pas passée, l'analyse attend.
+    const member = await getMember(memberId);
+    if (!member?.playlists_done_at) return { stage: "playlists" };
   }
-  const analysing = ["fiches", "rangement", "complement"].includes(analyse.progress.phase);
+  if (stale || (analyse!.status === "failed" && retry)) {
+    const choices = (await playlistChoices(memberId)).filter((c) => c.mode !== "indice");
+    analyse = await launch(memberId, "analyse", proposed.length > 0 ? fillOnly : choices.length > 0 ? withPlaylists : initialAnalyse);
+  }
+  if (!analyse) throw new Error("Analyse introuvable.");
+  const analysing = ["playlists", "fiches", "rangement", "complement"].includes(analyse.progress.phase);
   if (analysing || proposed.length === 0) {
     await nudge(analyse);
     return { stage: "analyse", covers: await randomCovers(memberId), ...view(analyse) };

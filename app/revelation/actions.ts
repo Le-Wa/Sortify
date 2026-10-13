@@ -11,6 +11,7 @@ import { startCreation } from "@/lib/creation";
 import { check, db } from "@/lib/db";
 import { revelationState } from "@/lib/revelation";
 import { withUsage } from "@/lib/ai-usage";
+import { MAX_CHOICES, savePlaylistChoices } from "@/lib/playlists-import";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -139,5 +140,20 @@ export async function createBacs(): Promise<ActionResult> {
     const bacs = await listBacs(memberId, ["proposed"]);
     if (bacs.some((b) => b.needs_fill)) return { ok: false, message: "Un bac est encore en train de se remplir, patiente un instant." };
     await startCreation(memberId);
+  });
+}
+
+const playlistChoice = z.object({
+  id: z.string().regex(/^[A-Za-z0-9]{10,40}$/),
+  name: z.string().max(200),
+  mode: z.enum(["bac", "split", "indice"]),
+});
+
+/** Étape « Tes playlists » : choix enregistrés (ou « Passer » : liste vide), puis l'analyse démarre. */
+export async function savePlaylists(choices: unknown): Promise<ActionResult> {
+  return run(async (memberId) => {
+    const parsed = z.array(playlistChoice).max(MAX_CHOICES).parse(choices);
+    if ((await listBacs(memberId, ["proposed", "active"])).length > 0) return { ok: false, message: "Tes bacs sont déjà proposés." };
+    await savePlaylistChoices(memberId, parsed);
   });
 }

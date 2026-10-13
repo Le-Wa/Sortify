@@ -10,6 +10,8 @@ import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./s
 import { runTriStep, type TriProgress } from "./tri";
 import { runOldLikesStep, type OldLikesProgress } from "./old-likes";
 import { refreshCommons } from "./potes";
+import { getMember } from "./members";
+import { hasPlaylistCandidates, savePlaylistChoices } from "./playlists-import";
 import { withUsage } from "./ai-usage";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
@@ -34,6 +36,16 @@ async function runClaimed(job: Job<unknown>): Promise<void> {
         const progress = await runImportStep(job as Job<ImportProgress>, deadline);
         if (progress.phase === "done") {
           await finishJob(id, progress);
+          // Des playlists à reprendre ? L'analyse attend le choix de la personne (écran « Tes playlists »).
+          const member = await getMember(job.member_id);
+          if (!member?.playlists_done_at) {
+            const ask = await hasPlaylistCandidates(job.member_id).catch((error: unknown) => {
+              console.error("Playlists à reprendre illisibles :", error instanceof Error ? error.message : error);
+              return false;
+            });
+            if (ask) return;
+            await savePlaylistChoices(job.member_id, []);
+          }
           // Les likes sont prêts : l'IA enchaîne sur l'analyse.
           const analyse = await startJob(job.member_id, "analyse", initialAnalyse);
           await kickJob(analyse.id);
