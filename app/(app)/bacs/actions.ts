@@ -13,6 +13,7 @@ import { newBacProgress, recoverProgress } from "@/lib/new-bac";
 import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
 import { withUsage } from "@/lib/ai-usage";
 import { MAX_BACS_PER_TRACK } from "@/lib/limits";
+import { applyOrder, djPreview, type DjPreview } from "@/lib/dj";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -145,4 +146,24 @@ export async function refuse(id: string): Promise<ActionResult> {
 /** « Ce bac dort » → « Laisser dormir » : la carte revient dans 8 semaines si rien ne change. */
 export async function sleepOn(id: string): Promise<ActionResult> {
   return run((memberId) => letSleep(memberId, z.string().uuid().parse(id)));
+}
+
+/** Aperçu de l'ordre DJ (rien n'est écrit). */
+export async function previewDj(id: string): Promise<{ ok: true; preview: DjPreview } | { ok: false; message: string }> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  try {
+    return { ok: true, preview: await djPreview(member.spotify_id, z.string().uuid().parse(id)) };
+  } catch (error) {
+    console.error("Aperçu de l'ordre DJ :", error);
+    return { ok: false, message: error instanceof Error ? error.message : "Erreur inconnue." };
+  }
+}
+
+/** Ordre de la playlist : réécrite dans Spotify, et gardé pour les prochains tris. */
+export async function setPlayOrder(id: string, order: "dj" | "recents"): Promise<ActionResult> {
+  return run(async (memberId) => {
+    await applyOrder(memberId, z.string().uuid().parse(id), z.enum(["dj", "recents"]).parse(order));
+    return { ok: true, message: order === "dj" ? "Playlist réordonnée façon DJ dans Spotify." : "Les plus récents sont de nouveau en haut." };
+  });
 }

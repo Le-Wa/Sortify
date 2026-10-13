@@ -10,6 +10,9 @@ export interface AudioFeatures {
   acousticness: number;
   instrumentalness: number;
   tempo: number;
+  /** Tonalité (0 = do … 11 = si) et mode (1 majeur, 0 mineur), pour l'ordre DJ ; absents des likes enrichis avant le 13/10/2026. */
+  key?: number;
+  mode?: number;
 }
 
 interface ReccoFeature extends Partial<AudioFeatures> {
@@ -49,6 +52,7 @@ export async function audioFeatures(spotifyIds: string[]): Promise<Map<string, A
       acousticness: f.acousticness,
       instrumentalness: f.instrumentalness,
       tempo: Math.round(f.tempo),
+      ...(f.key != null && f.key >= 0 && f.key <= 11 && (f.mode === 0 || f.mode === 1) ? { key: f.key, mode: f.mode } : {}),
     });
   }
   return result;

@@ -9,9 +9,11 @@ import { adjust, detach, editBrief, removeFromBac, setAutoFill, type ActionResul
 interface Props {
   bac: { id: string; name: string; brief: string; autoFill: boolean };
   tracks: (BacTrack & { label: string })[];
+  /** Réglage de l'ordre de la playlist, placé sous le remplissage automatique. */
+  orderSlot?: React.ReactNode;
 }
 
-export function BacDetail({ bac, tracks }: Props) {
+export function BacDetail({ bac, tracks, orderSlot }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -173,6 +175,8 @@ export function BacDetail({ bac, tracks }: Props) {
           />
         </div>
       </div>
+
+      {orderSlot}
 
       {confirmDetach ? (
         <div className="panel" style={{ border: "1.5px solid var(--ink)" }}>

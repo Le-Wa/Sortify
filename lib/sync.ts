@@ -4,6 +4,7 @@ import { coverJpegBase64 } from "./cover";
 import { check, db } from "./db";
 import { spotify } from "./spotify/client";
 import { addToTop } from "./spotify/playlists";
+import { keepDjOrder } from "./dj";
 
 /**
  * Pousse dans Spotify les placements pas encore synchronisés des bacs actifs (nouveaux titres en haut,
@@ -45,6 +46,10 @@ export async function syncMember(memberId: string): Promise<number> {
       );
     }
     added += ids.length;
+    // Bac en ordre DJ : les nouveaux titres rejoignent l'enchaînement plutôt que le haut de la playlist.
+    await keepDjOrder(memberId, bac).catch((error: unknown) =>
+      console.error(`Ordre DJ de « ${bac.name} » non mis à jour :`, error instanceof Error ? error.message : error),
+    );
   }
   return added;
 }

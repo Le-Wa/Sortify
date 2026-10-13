@@ -966,3 +966,10 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
+
+/* ── Ordre DJ : aperçu (13/10/2026) ───────────────────────── */
+.dj-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: dj; max-height: 40dvh; overflow-y: auto; }
+.dj-list li { display: flex; align-items: center; gap: 10px; min-height: 44px; counter-increment: dj; }
+.dj-list li::before { content: counter(dj, decimal-leading-zero); font-family: var(--font-mono); font-size: 11px; opacity: 0.5; }
+.dj-list__title { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dj-list__key { min-width: 32px; text-align: right; }

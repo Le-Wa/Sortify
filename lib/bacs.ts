@@ -45,6 +45,8 @@ export interface Bac {
   created_at: string;
   /** « Laisser dormir » : pas de carte « ce bac dort » avant cette date. */
   asleep_ok_until: string | null;
+  /** Ordre de la playlist : nouveaux titres en haut, ou enchaînement DJ (`lib/dj.ts`). */
+  play_order: "recents" | "dj";
 }
 
 export async function listBacs(memberId: string, statuses: Bac["status"][]): Promise<Bac[]> {

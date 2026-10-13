@@ -8,6 +8,7 @@ import { kickJob, latestJob, saveProgress, startJob, type Job } from "./jobs";
 import { memberAnthropicKey } from "./own-keys";
 import { spotify } from "./spotify/client";
 import { append } from "./spotify/playlists";
+import { keepDjOrder } from "./dj";
 
 /**
  * « Ranger mes anciens likes » (décision de Walid, 13/10/2026) : l'import ne prend que les 1 000 derniers likes ;
@@ -288,6 +289,9 @@ async function syncOld(memberId: string, p: OldLikesProgress): Promise<OldLikesP
       );
     }
     synced += ids.length;
+    await keepDjOrder(memberId, bac).catch((error: unknown) =>
+      console.error(`Ordre DJ de « ${bac.name} » non mis à jour :`, error instanceof Error ? error.message : error),
+    );
   }
   check(await db().from("likes").update({ backfilled_at: null }).eq("member_id", memberId).not("backfilled_at", "is", null), "Fin des anciens likes");
   return { ...p, phase: "done", synced: p.synced + synced };
