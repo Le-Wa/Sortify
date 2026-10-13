@@ -70,7 +70,13 @@ Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Wal
 
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
-2. Décisions de Walid attendues : fenêtre d'import (puis relance de Jérémy avec son accord, à préparer : il a déjà des bacs actifs), règle hybride des homonymes, idée(s) à lancer (planche d'abord si design).
+2. **Décidé par Walid le 13/10 et déployé** : import des **1 000 derniers likes** (`MAX_IMPORT`, `lib/library-size.ts`) ; homonymes en **règle hybride** (`genresForLikes`). Ne s'applique qu'aux prochains imports / tris (pas de re-rangement).
+   Questions ouvertes (réponses à demander) :
+   - « Ranger mes anciens likes » avec **demande au propriétaire** (le membre demande, Walid accepte sur son Accueil avec le coût estimé ; direct pour un membre avec sa propre clé) : ~1 j, réutilise le tri. Walid a demandé si c'était compliqué : non, à valider.
+   - Import des playlists : workflow, impact, maintenance, playlists trop larges → `docs/analyses/2026-10-13-import-playlists.md` (3 questions à trancher avant la planche).
+   - Divers facile à ranger (question du 13/10) : profil des caisses (`scripts/lab/divers-profile.mts`) — Walid 134 titres éparpillés (moitié électro, 2 artistes à 3+ titres) ; Jérémy 1 034 titres dont 81 % de rap et 75 artistes à 3+ titres (Kalash 65, Drake 26) = ses bacs retirés. Options proposées : filtres par famille + regroupement par artiste + rangement par lot ; « Fais-moi des bacs avec Divers » à la demande.
+   - Idées retenues par Walid : import des playlists, lot de petits gains (Incertains, comptoir vide, ce bac dort), bilan du mois / de l'année, ordre DJ / bacs des potes — planche d'abord pour chacune.
+   - Relance de Jérémy (avec son accord) : à préparer, il a déjà des bacs actifs.
 3. Tester (Walid s'en occupe) : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle (Réglages et maintenant `/power`) ; le mini-guide après un code d'invitation (navigation privée) ; le lien du dashboard dans « Inviter un pote » (adresse `/settings` supposée).
 4. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
 5. Plus tard : affiner les fiches à partir des corrections.
@@ -78,7 +84,6 @@ Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Wal
 7. **Plus tard : choix du LLM par membre, autres fournisseurs** (GPT, Gemini, Mistral…), pour les power users avec leur propre clé. Demande : couche commune (Vercel AI SDK / AI Gateway) à la place des appels Anthropic directs (sorties structurées, cache des fiches, repli en cas de refus, effort), puis chaque modèle passé au banc (`scripts/lab/algo-bench3.mts`) avant d'être proposé (liste validée). ~2–3 jours. Variante plus simple écartée pour l'instant par Walid : réglage « Qualité » parmi les modèles Claude (Haiku 76 % / Sonnet 86 % de premier bac juste).
 
 ## En attente de Walid
-- **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY` — à ne pas confondre avec `SMALL_LIBRARY` de `lib/library-size.ts`), plafonné à 2 500. Options chiffrées : `docs/analyses/2026-10-13-fenetre-import.md`.
 - Relancer l'import et l'analyse de Jérémy (avec son accord) une fois la fenêtre d'import décidée ; il a déjà créé « Foulées rythmées » (Divers 1 264 → 1 039).
 - Re-ranger les bibliothèques avec les dernières corrections (Deezer pour les tags sans style, 0,6 minimum, règle hybride si validée) : essai à blanc d'abord, seulement à sa demande.
 - Coût de l'onboarding enfin mesurable dans `ai_usage` au prochain pote (rapport : `scripts/ai-costs.mts`, ou Réglages).
