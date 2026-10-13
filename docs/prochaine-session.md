@@ -1,4 +1,4 @@
-# Prochaine session — passage de relais (13 oct. 2026)
+# Prochaine session — passage de relais (13 oct. 2026, soir)
 
 ## État
 Sortify V2 est **en production** (https://sortify-mauve.vercel.app). Branches `v2` = `main`, poussées sur GitHub (`origin`). 2 membres : Walid (propriétaire) et Jérémy (« Le G 87 »). Tri automatique le lundi.
@@ -58,19 +58,30 @@ Chaque appel à l'IA est enregistré dans `ai_usage` (membre, tâche, étape, mo
 ## Pédagogie de l'onboarding (12/10/2026, planche `docs/design/pedagogie-*.jpg`)
 Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Walid). Connexion : « Comment ça marche » dépliable (étapes, mots du disquaire, bon à savoir) ; après le code d'invitation : mini-guide en 4 écrans, « Passer » à tout moment ; attente : « Coin du disquaire » selon l'étape ; proposition : « Comment lire ta proposition » ; création : « Et ensuite ? » ; Accueil : bienvenue une seule fois (`members.welcomed_at`). Planche vivante : `/lab/pedagogie` (développement seulement). Mini-guide après le code non testé en vrai (il faut être déconnecté).
 
+## Fait le 13/10/2026
+- **Onboarding (suite de l'analyse du 12/10)**, déployé :
+  - `/power` : champ « Ta clé Anthropic (facultatif) », vérifiée avec l'app Spotify puis enregistrée au retour de Spotify, **avant** que l'analyse ne démarre (`verifyAnthropicKey`, `lib/own-keys.ts` ; cookie de passage chiffré).
+  - « Inviter un pote » : rappel + lien vers le dashboard Spotify (`/dashboard/<client id>/settings`, onglet User Management) et case « J'ai ajouté son e-mail… » obligatoire avant « Créer un code ». Quand les 5 places sont prises : « Créer un code (power user) ».
+  - Garde-fous (`lib/library-size.ts`, testés) : **< 20 titres** → l'analyse refuse avec un message clair, « Réessayer » relit les likes (`lib/revelation.ts`) ; **< 60 titres** → 2 ou 3 bacs, pas de passe « compléter », message sur la proposition ; **import plafonné aux 2 500 likes les plus récents** (`MAX_IMPORT`, `capped` dans la progression, message sur la proposition).
+  - **Coût de l'IA par membre** (`lib/ai-budget.ts`) : section « Coût de l'IA (30 jours) » dans les Réglages du propriétaire ; bandeau sur son Accueil si un membre dépasse **10 $ en 7 jours** (clés personnelles exclues).
+- **Fenêtre d'import** : comparaison de 4 options dans `docs/analyses/2026-10-13-fenetre-import.md` (données Spotify : `scripts/lab/import-window.mts`). Recommandation : les 1 000 derniers likes (~3 $, ~10 min), plus tard « Ranger mes anciens likes ». **Rien codé**, en attente de Walid.
+- **Banc du 13/10** (`docs/bench/2026-10-13-banc-essai.md`, `scripts/lab/algo-bench4.mts`, 4,86 $) : limite de 5 bacs sans effet (aucun titre ne dépasse 3 bacs) ; consigne des 3 transversaux gardée (82 % de placements validés contre 77 %, mais 31 % de titres partagés contre 41 %) ; Deezer pour les tags sans style gardé (Walid top 1 83 → 92 %) ; homonymes : **règle hybride recommandée** (verdict du titre pour les artistes signalés, sans appel Deezer en plus ; Walid top 1 75 → 96 % sur les 26 titres concernés). Le verdict par artiste n'est en base que pour 15 artistes (imports depuis le 12/10).
+- **Idées** triées dans `docs/analyses/2026-10-13-idees.md` (effort, coût, design, points d'attention). Recommandation : importer ses playlists Spotify d'abord, puis Incertains + comptoir vide + ce bac dort.
+
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
-2. Suite de l'analyse d'onboarding (`docs/analyses/2026-10-12-onboarding.md`) : clé Anthropic saisissable sur `/power` avant l'analyse (P1-d) ; case « e-mail ajouté au dashboard Spotify » dans « Inviter un pote » (P2-e) ; garde-fous petite (< 60 likes) et grosse bibliothèque (plafond du corpus, alerte de coût) (P2-g, h).
-3. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle ; le mini-guide après un code d'invitation (navigation privée).
+2. Décisions de Walid attendues : fenêtre d'import (puis relance de Jérémy avec son accord, à préparer : il a déjà des bacs actifs), règle hybride des homonymes, idée(s) à lancer (planche d'abord si design).
+3. Tester (Walid s'en occupe) : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle (Réglages et maintenant `/power`) ; le mini-guide après un code d'invitation (navigation privée) ; le lien du dashboard dans « Inviter un pote » (adresse `/settings` supposée).
 4. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
-5. Mesurer au banc ce qui ne l'a pas été (limite de 5 bacs par titre, consigne « 3 transversaux » de l'analyse, Deezer pour les tags sans style, homonymes par artiste) ; plus tard, affiner les fiches à partir des corrections.
-6. Idées restantes (liste du 12/10) : importer ses playlists Spotify existantes à l'onboarding ; filtres « Incertains » dans À trier ; petite célébration quand le comptoir est vide ; « ce bac dort » ; disque oublié de la semaine ; bacs des potes / affinité ; ordre « DJ » dans une playlist ; bilan du mois / de l'année ; réordonner les bacs par glisser-déposer.
+5. Plus tard : affiner les fiches à partir des corrections.
+6. Idées (voir `docs/analyses/2026-10-13-idees.md`) : selon le choix de Walid.
 7. **Plus tard : choix du LLM par membre, autres fournisseurs** (GPT, Gemini, Mistral…), pour les power users avec leur propre clé. Demande : couche commune (Vercel AI SDK / AI Gateway) à la place des appels Anthropic directs (sorties structurées, cache des fiches, repli en cas de refus, effort), puis chaque modèle passé au banc (`scripts/lab/algo-bench3.mts`) avant d'être proposé (liste validée). ~2–3 jours. Variante plus simple écartée pour l'instant par Walid : réglage « Qualité » parmi les modèles Claude (Haiku 76 % / Sonnet 86 % de premier bac juste).
 
 ## En attente de Walid
-- **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY`). Le pote de Walid avait 259 likes sur 2 ans → import depuis 2019 (2 340 likes, 1 918 titres sortis avant 2021). Proposition : élargir année par année jusqu'à 300 likes, puis relancer son import et son analyse.
+- **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY` — à ne pas confondre avec `SMALL_LIBRARY` de `lib/library-size.ts`), plafonné à 2 500. Options chiffrées : `docs/analyses/2026-10-13-fenetre-import.md`.
 - Relancer l'import et l'analyse de Jérémy (avec son accord) une fois la fenêtre d'import décidée ; il a déjà créé « Foulées rythmées » (Divers 1 264 → 1 039).
-- Re-ranger les bibliothèques avec les dernières corrections (Deezer pour les tags sans style, 0,6 minimum) : essai à blanc d'abord.
+- Re-ranger les bibliothèques avec les dernières corrections (Deezer pour les tags sans style, 0,6 minimum, règle hybride si validée) : essai à blanc d'abord, seulement à sa demande.
+- Coût de l'onboarding enfin mesurable dans `ai_usage` au prochain pote (rapport : `scripts/ai-costs.mts`, ou Réglages).
 - Plus de partage (16 %) : bacs transversaux à critère net ; « Avant de sortir » à surveiller.
 - Suivre la part de titres « À trier » (cible ~20 %).
 
@@ -80,5 +91,5 @@ Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Wal
 - Commit après chaque tâche ; `main` avance en fast-forward sur `v2` ; déploiement : `npx vercel@latest deploy --prod --yes` (projet non relié à GitHub ; un « Not authorized » passager se règle en relançant).
 - Migrations : `psql "$POSTGRES_URL_NON_POOLING" -f supabase/migrations/<fichier>.sql` (après `set -a; source .env.local`), appliquées tout de suite.
 - Scripts hors app : `npm run try -- scripts/<fichier>.mts [options]` — **le `--` est indispensable** ; charger `.env.local` avant (`set -a; source .env.local; set +a`).
-- Bancs d'essai : `scripts/lab/algo-bench3.mts` (échantillon fixe et verdicts du juge dans `docs/bench/2026-10-11/`).
+- Bancs d'essai : `scripts/lab/algo-bench3.mts` (échantillon fixe et verdicts du juge dans `docs/bench/2026-10-11/`) ; `scripts/lab/algo-bench4.mts <dossier> <limite|transversaux|style|homonymes>` (caches hors git : bibliothèque de Jérémy). Options de banc : `SortOptions.maxTransversal / maxPerTrack`, `proposeFiches(corpus, { rules })`. Le coût réel d'un banc se lit dans `ai_usage` (membre vide).
 - Le panneau navigateur masqué met les animations en pause (ce n'est pas un bug).
