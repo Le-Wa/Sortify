@@ -80,6 +80,11 @@ export function PlayOrder({ bacId, order }: { bacId: string; order: "recents" | 
             <p className="small muted" style={{ margin: 0 }}>
               Tempo connu pour {preview.withTempo} titres sur {preview.total} ; les autres sont placés d&apos;après leur énergie, ou à la fin.
             </p>
+            <div className="dj-list__head mono small muted" aria-hidden="true">
+              <span className="grow">Début de l&apos;enchaînement</span>
+              <span>tempo</span>
+              <span className="dj-list__key">ton.</span>
+            </div>
             <ol className="dj-list">
               {preview.first.map((t, i) => (
                 <li key={i}>
@@ -100,7 +105,7 @@ export function PlayOrder({ bacId, order }: { bacId: string; order: "recents" | 
           </p>
         ) : null}
         <button type="button" className="btn" disabled={pending || (asking === "dj" && !preview)} onClick={confirm}>
-          {pending && (asking !== "dj" || preview) ? "On réécrit la playlist…" : "Réécrire la playlist dans Spotify"}
+          {pending && (asking !== "dj" || preview) ? "On réécrit…" : "Réécrire dans Spotify"}
         </button>
         <button type="button" className="btn btn--quiet" disabled={pending} onClick={() => setAsking(null)}>
           Annuler

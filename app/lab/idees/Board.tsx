@@ -152,7 +152,7 @@ const Section = ({ title }: { title: string }) => (
   </h2>
 );
 
-/** `only` : « divers », « playlists », « gains » ou « tard » pour ne montrer qu'une section (captures). */
+/** `only` : « divers », « playlists », « gains », « tard » ou « potes » pour ne montrer qu'une section (captures). */
 export function Board({ only = null }: { only?: string | null }) {
   const show = (key: string) => only === null || only === key;
   return (
@@ -677,6 +677,169 @@ export function Board({ only = null }: { only?: string | null }) {
                 Suivre « Afrobeats solaire »
               </button>
             </div>
+          </Phone>
+        </>
+      ) : null}
+      {show("potes") ? (
+        <>
+          <Section title="Bacs des potes · trois pistes" />
+          <Phone caption="0 · L'accord (Réglages) : rien n'est visible sans lui">
+            <span className="label">Les potes</span>
+            <h1 className="display" style={{ fontSize: 36 }}>
+              Montrer tes bacs
+              <br />à tes potes ?
+            </h1>
+            <span className="small">
+              Ils verront le nom, la pochette et les titres des bacs que tu
+              choisis. Jamais tes likes un par un, ni Divers.
+            </span>
+            <div className="list">
+              <div className="list__row">
+                <span className="grow">Montrer mes bacs</span>
+                <span className="switch" aria-checked="true" role="switch" />
+              </div>
+              {[
+                "Rap français",
+                "House solaire",
+                "Afrobeats & afro-RnB",
+                "Fin de nuit",
+              ].map((n, i) => (
+                <div key={n} className="list__row">
+                  <span className="grow small">{n}</span>
+                  <span
+                    className="switch"
+                    aria-checked={i !== 3 ? "true" : "false"}
+                    role="switch"
+                  />
+                </div>
+              ))}
+            </div>
+            <span className="small muted">
+              L&apos;affinité ne se calcule qu&apos;entre deux potes qui ont
+              tous les deux dit oui.
+            </span>
+          </Phone>
+
+          <Phone caption="A · Vitrine : l'affinité et ses bacs">
+            <span className="label">Les potes</span>
+            <div className="card stack" style={{ gap: 12, padding: 14 }}>
+              <span className="row between">
+                <b style={{ fontSize: 18 }}>Le G 87</b>
+                <span className="display" style={{ fontSize: 34 }}>
+                  39 %
+                </span>
+              </span>
+              <span className="small">
+                Vous vous retrouvez sur <b>l&apos;afro</b> : 12 titres en commun
+                (Rema, Burna Boy, CKay) et 38 artistes, de Booba à Jorja Smith.
+              </span>
+              <div className="row" style={{ gap: 10, overflowX: "hidden" }}>
+                {sleeve("Dancehall jamaïcain", "#2bb673", "scène", 84)}
+                {sleeve("R&B nocturne", "#3a2a6b", "scène", 84)}
+                {sleeve("Foulées rythmées", "#e8433a", "moment", 84)}
+              </div>
+              <span className="small muted">
+                Touche un bac pour voir ses titres et le suivre dans Spotify.
+              </span>
+            </div>
+            <div
+              className="card row"
+              style={{ gap: 12, padding: 12, opacity: 0.6 }}
+            >
+              <span className="grow small">
+                Un autre pote n&apos;a pas encore dit oui.
+              </span>
+            </div>
+          </Phone>
+
+          <Phone caption="B · Croisement : depuis ton bac, ce que ton pote a d'autre (titres d'exemple)">
+            <span className="label">Soul nocturne · 130 titres</span>
+            <div className="card stack" style={{ gap: 10, padding: 14 }}>
+              <span className="row" style={{ gap: 10 }}>
+                {sleeve("R&B nocturne", "#3a2a6b", "scène", 56)}
+                <span className="grow">
+                  <b>Chez Le G 87 : « R&amp;B nocturne »</b>
+                  <br />
+                  <span className="small muted">
+                    proche de ton bac · 3 titres en commun
+                  </span>
+                </span>
+              </span>
+              <span className="label">7 titres qu&apos;il a et pas toi</span>
+              <ul className="recent">
+                <Track
+                  title="Be Honest"
+                  artist="Jorja Smith"
+                  hue={45}
+                  right={<span className="mono small">▶</span>}
+                />
+                <Track
+                  title="By Any Means"
+                  artist="Jorja Smith"
+                  hue={30}
+                  right={<span className="mono small">▶</span>}
+                />
+                <Track
+                  title="Tadow"
+                  artist="Masego"
+                  hue={320}
+                  right={<span className="mono small">▶</span>}
+                />
+              </ul>
+              <button type="button" className="btn btn--sm">
+                Les mettre dans « Reco des potes »
+              </button>
+            </div>
+            <span className="small muted">
+              Une playlist « Reco des potes » dans ton Spotify : tu écoutes, tu
+              likes ce qui te plaît, Sortify le range lundi.
+            </span>
+          </Phone>
+
+          <Phone caption="C · Bac commun : une playlist à deux">
+            <span className="label">Bac commun · proposé aux deux</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 0,
+                margin: "8px 0",
+              }}
+            >
+              <span style={{ transform: "rotate(-6deg)" }}>
+                {sleeve("Walid", "#e85d3a", "scène", 110)}
+              </span>
+              <span style={{ transform: "rotate(5deg)", marginLeft: -24 }}>
+                {sleeve("Le G 87", "#2bb673", "scène", 110)}
+              </span>
+            </div>
+            <h1
+              className="display"
+              style={{ fontSize: 40, textAlign: "center" }}
+            >
+              Walid × Le G 87
+            </h1>
+            <span className="small" style={{ textAlign: "center" }}>
+              Vos 12 titres en commun, et ceux de vos 38 artistes communs. Mise
+              à jour chaque lundi avec vos nouveaux likes qui collent aux deux.
+            </span>
+            <div className="list">
+              <div className="list__row">
+                <span className="grow">Titres au départ</span>
+                <b>64</b>
+              </div>
+              <div className="list__row">
+                <span className="grow">Couleur dominante</span>
+                <b>Afro</b>
+              </div>
+            </div>
+            <div className="grow" />
+            <button type="button" className="btn">
+              Créer notre bac commun
+            </button>
+            <span className="small muted" style={{ textAlign: "center" }}>
+              Créé quand vous avez dit oui tous les deux.
+            </span>
           </Phone>
         </>
       ) : null}

@@ -32,6 +32,12 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, startSaving] = useTransition();
   const preview = usePreview();
+  const top = useRef<HTMLDivElement>(null);
+  // « Un par un » : les filtres remontent en haut de l'écran, la carte est sous le pouce sans défiler.
+  const choose = (k: Mode) => {
+    setMode(k);
+    if (k === "un") requestAnimationFrame(() => top.current?.scrollIntoView({ block: "start", behavior: reducedMotion() ? "auto" : "smooth" }));
+  };
   const bacName = (id: string) => bacs.find((b) => b.id === id)?.name ?? "";
 
   const left = items.filter((t) => !done.has(t.track_id));
@@ -59,6 +65,9 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
     for (const t of visible) m.set(t.artist, [...(m.get(t.artist) ?? []), t]);
     return [...m].sort((a, b) => b[1].length - a[1].length);
   }, [visible]);
+  // Vue par artiste : un groupe pour ceux qui ont au moins 2 titres ; les autres, ensemble, en simple liste.
+  const multi = groups.filter(([, t]) => t.length > 1);
+  const singles = groups.filter(([, t]) => t.length === 1).map(([, t]) => t[0]);
 
   const toggle = (id: string) =>
     setSelected((s) => {
@@ -140,7 +149,7 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
 
   return (
     <>
-      <div className="filter-chips" role="tablist" aria-label="Filtrer Divers par genre">
+      <div ref={top} className="filter-chips" role="tablist" aria-label="Filtrer Divers par genre" style={{ scrollMarginTop: 12 }}>
         {chips.map((c) => (
           <button key={c.key} type="button" role="tab" aria-selected={active === c.key} className="filter-chip" onClick={() => setFilter(c.key)}>
             {c.label}
@@ -155,7 +164,7 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
             ["un", "Un par un"],
           ] as const
         ).map(([k, label]) => (
-          <button key={k} type="button" role="radio" aria-checked={mode === k} className={`segmented__item ${mode === k ? "is-on" : ""}`} onClick={() => setMode(k)}>
+          <button key={k} type="button" role="radio" aria-checked={mode === k} className={`segmented__item ${mode === k ? "is-on" : ""}`} onClick={() => choose(k)}>
             {label}
           </button>
         ))}
@@ -180,7 +189,8 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
 
       {mode === "artistes" ? (
         <div className="stack" style={{ gap: 14 }}>
-          {groups.slice(0, shown).map(([artist, tracks]) => {
+          {multi.length === 0 ? <p className="small muted" style={{ margin: 0 }}>Aucun artiste n&apos;a plusieurs titres ici.</p> : null}
+          {multi.slice(0, shown).map(([artist, tracks]) => {
             const all = tracks.every((t) => selected.has(t.track_id));
             return (
               <section key={artist} className="stack" style={{ gap: 6 }}>
@@ -215,10 +225,19 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
               </section>
             );
           })}
-          {groups.length > shown ? (
+          {multi.length > shown ? (
             <button type="button" className="btn btn--ghost" onClick={() => setShown((n) => n + PAGE)}>
               Voir plus d&apos;artistes
             </button>
+          ) : null}
+          {singles.length > 0 ? (
+            <details className="stack" style={{ gap: 6 }}>
+              <summary className="row between" style={{ minHeight: 44, cursor: "pointer" }}>
+                <b>Artistes à un seul titre · {singles.length}</b>
+                <span className="small muted">voir</span>
+              </summary>
+              <ul className="recent">{singles.slice(0, shown).map(row)}</ul>
+            </details>
           ) : null}
         </div>
       ) : null}
@@ -234,7 +253,8 @@ export function DiversList({ items, bacs, labels }: { items: DiversItem[]; bacs:
       ) : null}
 
       {selected.size > 0 && mode !== "un" ? (
-        <div className="lot-bar" role="region" aria-label="Sélection">
+        // Collante en bas de l'écran pendant le défilement, puis posée après la liste : elle ne cache jamais le dernier titre.
+        <div className="lot-bar" role="region" aria-label="Sélection" style={{ marginTop: 8 }}>
           <span className="small grow">
             <b>{selected.size} titre{selected.size > 1 ? "s" : ""}</b> coché{selected.size > 1 ? "s" : ""}
           </span>
@@ -419,17 +439,31 @@ function Card({
         </button>
       </div>
       <div className="stack" style={{ gap: 2 }}>
-        <button type="button" className="btn" disabled={selected.length === 0} onClick={store}>
-          Ranger dans {selected.length} bac{selected.length > 1 ? "s" : ""}
-        </button>
+        {selected.length === 0 ? (
+          <button type="button" className="btn" onClick={() => setPicking(true)}>
+            Choisir un bac…
+          </button>
+        ) : (
+          <button type="button" className="btn" onClick={store}>
+            Ranger dans {selected.length} bac{selected.length > 1 ? "s" : ""}
+          </button>
+        )}
         <button type="button" className="btn btn--quiet" onClick={skip}>
           Laisser dans Divers
         </button>
       </div>
       <BottomSheet open={picking} onClose={() => setPicking(false)} title="Choisir les bacs">
         <BacPicker bacs={bacs} selected={selected} onToggle={toggle} />
-        <button type="button" className="btn" onClick={() => setPicking(false)}>
-          OK
+        <button
+          type="button"
+          className="btn"
+          disabled={selected.length === 0}
+          onClick={() => {
+            setPicking(false);
+            store();
+          }}
+        >
+          Ranger dans {selected.length} bac{selected.length > 1 ? "s" : ""}
         </button>
       </BottomSheet>
     </>
