@@ -41,6 +41,9 @@ export interface SortOptions {
    * (bacs de scène : 85 → 90 % de rangements justes) ; false pour l'ancien rangement.
    */
   families?: boolean;
+  /** Banc d'essai : bacs transversaux par titre (3 par défaut, 2 avant le 12/10/2026) et bacs par titre en tout (MAX_BACS_PER_TRACK). */
+  maxTransversal?: number;
+  maxPerTrack?: number;
   /** Cumul des tokens consommés, pour mesurer le coût. */
   usage?: { input: number; output: number };
 }
@@ -91,7 +94,7 @@ const FORMAT = `Format des titres : numéro | artistes — titre | année | tags
 
 const isScene = (f: SortFiche) => f.axis === "scène";
 
-function familiesPrompt(fiches: SortFiche[]): string {
+function familiesPrompt(fiches: SortFiche[], maxTransversal = 3): string {
   return `Tu ranges les likes Spotify d'une personne dans ses bacs (des playlists). Il y a deux familles de bacs.
 
 ## Bacs de scène (un genre, une scène)
@@ -102,7 +105,7 @@ ${fichesBlock(fiches, (f) => !isScene(f)) || "(aucun)"}
 
 Pour chaque titre, réponds en deux temps, indépendants :
 1. « scene » : le bac de scène où il a sa place — un seul en général, deux s'il est vraiment à cheval entre deux scènes. Liste vide si aucune scène ne lui convient.
-2. « transversal » : 0 à 3 bacs transversaux où il colle aussi, quelle que soit sa scène. Ne t'en prive pas : c'est ce qui permet à la personne de retrouver un titre dans une ambiance ou un moment, en plus de sa scène.
+2. « transversal » : 0 à ${maxTransversal} bacs transversaux où il colle aussi, quelle que soit sa scène. Ne t'en prive pas : c'est ce qui permet à la personne de retrouver un titre dans une ambiance ou un moment, en plus de sa scène.
 ${SCALE}
 Un titre sans aucun bac ira dans la caisse « Divers », c'est normal.
 Juge l'ensemble (artiste, titre, époque, énergie, tags) et respecte les frontières décrites dans les fiches : les tags de genre sont des indices, pas des règles.
@@ -164,7 +167,7 @@ async function sortBatch(
         list
           .filter((b) => valid(b) && isScene(fiches[b.bac - 1]) === scene)
           .sort((a, b) => b.confiance - a.confiance)
-          .slice(0, scene ? 2 : 3);
+          .slice(0, scene ? 2 : (opts.maxTransversal ?? 3));
       answers.set(t.id, { bacs: [...pick(t.scene, true), ...pick(t.transversal, false)], raison: t.raison });
     }
   } else {
@@ -178,7 +181,7 @@ async function sortBatch(
       .map((b) => ({ bac: b.bac - 1, confidence: Math.min(1, b.confiance) }))
       .filter((s, k, all) => all.findIndex((o) => o.bac === s.bac) === k)
       .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, MAX_BACS_PER_TRACK);
+      .slice(0, opts.maxPerTrack ?? MAX_BACS_PER_TRACK);
     return { track_id: track.track_id, suggestions, reason: (answer?.raison.trim() ?? "").slice(0, 160) };
   });
 }
@@ -220,7 +223,7 @@ export async function sortTracks(
   opts: SortOptions = {},
 ): Promise<Sorted[]> {
   const families = opts.families ?? true;
-  const system = families ? familiesPrompt(fiches) : systemPrompt(fiches);
+  const system = families ? familiesPrompt(fiches, opts.maxTransversal) : systemPrompt(fiches);
   const batches: { tracks: CorpusTrack[]; offset: number }[] = [];
   const size = opts.batch ?? BATCH;
   for (let i = 0; i < tracks.length; i += size) batches.push({ tracks: tracks.slice(i, i + size), offset: i });

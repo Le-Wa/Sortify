@@ -25,7 +25,8 @@ export type Fiche = z.infer<typeof ficheSchema>;
 
 const analysisSchema = z.object({ bacs: z.array(ficheSchema) });
 
-const RULES = `Un bac est une playlist que Sortify remplit tout seul avec les nouveaux likes. Il est défini par une fiche :
+/** Règles des fiches (exportées pour le banc d'essai, qui en compare des variantes). */
+export const RULES = `Un bac est une playlist que Sortify remplit tout seul avec les nouveaux likes. Il est défini par une fiche :
 - name : court et évocateur, comme un intercalaire chez un disquaire (« Soirée potes », « Dimanche lent », « Rap introspectif », « Électro solaire »). Pas de nom générique (« Mix », « Divers », « Favoris »), pas d'emoji.
 - pitch : une phrase pour la personne, qui donne envie.
 - brief : 3 à 5 lignes relues par l'IA à chaque rangement. Scène(s) et genres, énergie, ambiance, moment d'écoute ; ce qui est clairement dedans ; ce qui est à la frontière ou dehors (en nommant les bacs voisins avec lesquels il ne faut pas confondre).
@@ -46,7 +47,7 @@ ${DATA_RULE}`;
  * Analyse de la bibliothèque : propose les bacs qui la résument.
  * Le nombre est libre (rarement moins de 5, rarement plus de 15), dicté par la taille et les directions réelles.
  */
-export async function proposeFiches(corpus: CorpusTrack[]): Promise<Fiche[]> {
+export async function proposeFiches(corpus: CorpusTrack[], variant: { rules?: string } = {}): Promise<Fiche[]> {
   const lines = corpus.map((t, i) => trackLine(t, i)).join("\n");
   const minPerBac = minPerBacFor(corpus.length);
   const max = maxBacs(corpus.length);
@@ -63,7 +64,7 @@ export async function proposeFiches(corpus: CorpusTrack[]): Promise<Fiche[]> {
     output_config: { effort: "medium", format: zodOutputFormat(analysisSchema) },
     system: `Tu es un disquaire passionné. Tu découvres la discothèque de quelqu'un (ses likes Spotify) et tu en tires les bacs qui en résument l'âme.
 
-${RULES}
+${variant.rules ?? RULES}
 
 Ta mission :
 ${howMany}
