@@ -8,13 +8,10 @@ import { saveProgress, type Job } from "./jobs";
 import { MAX_IMPORT } from "./library-size";
 import { spotify } from "./spotify/client";
 
-/** Corpus de l'analyse : 2 ans de likes, ou tout l'historique s'il y en a moins que ça. */
-const CORPUS_YEARS = 2;
-const SMALL_LIBRARY = 300;
-
 export interface ImportProgress {
   phase: "likes" | "enrich" | "done";
-  mode: "2ans" | "tout";
+  /** « recents » : les MAX_IMPORT derniers likes (depuis le 13/10/2026) ; « 2ans » et « tout » : ancienne fenêtre. */
+  mode: "2ans" | "tout" | "recents";
   cursor: string | null;
   imported: number;
   enriched: number;
@@ -26,7 +23,7 @@ export interface ImportProgress {
 
 export const initialImport: ImportProgress = {
   phase: "likes",
-  mode: "2ans",
+  mode: "recents",
   cursor: null,
   imported: 0,
   enriched: 0,
@@ -96,12 +93,8 @@ export async function runImportStep(job: Job<ImportProgress>, deadline: number):
 
 async function importPage(memberId: string, progress: ImportProgress): Promise<ImportProgress> {
   const page = await spotify<SavedTracksPage>(memberId, progress.cursor ?? "/me/tracks?limit=50");
-  const cutoff =
-    progress.mode === "2ans" ? Date.now() - CORPUS_YEARS * 365.25 * 24 * 3600 * 1000 : Number.NEGATIVE_INFINITY;
-
-  const inRange = page.items.filter((item) => Date.parse(item.added_at) >= cutoff);
-  // Grosse bibliothèque : coût et durée de l'analyse grimpent avec chaque titre, on s'arrête aux plus récents.
-  const rows = inRange
+  // Spotify rend les likes du plus récent au plus ancien : on s'arrête aux MAX_IMPORT premiers.
+  const rows = page.items
     .map((item) => toRow(memberId, item))
     .filter((r): r is LikeRow => r !== null)
     .slice(0, Math.max(0, MAX_IMPORT - progress.imported));
@@ -114,16 +107,8 @@ async function importPage(memberId: string, progress: ImportProgress): Promise<I
   const current = last
     ? { title: last.title, artist: last.artists[0] ?? "", cover: last.cover_url, liked_at: last.liked_at }
     : progress.current;
-  const reachedCutoff = inRange.length < page.items.length;
   if (imported >= MAX_IMPORT) return { ...progress, phase: "enrich", cursor: null, imported, current, capped: true };
-
-  if (!reachedCutoff && page.next) return { ...progress, cursor: page.next, imported, current };
-
-  // Petite bibliothèque : on reprend là où la limite des 2 ans nous a arrêtés.
-  if (progress.mode === "2ans" && reachedCutoff && imported < SMALL_LIBRARY) {
-    const offset = page.offset + inRange.length;
-    return { ...progress, mode: "tout", cursor: `/me/tracks?limit=50&offset=${offset}`, imported, current };
-  }
+  if (page.next) return { ...progress, cursor: page.next, imported, current };
   return { ...progress, phase: "enrich", cursor: null, imported, current };
 }
 
@@ -191,8 +176,8 @@ export async function enrichNext(memberId: string): Promise<{ count: number; las
  * Genres d'un lot : tags Last.fm de l'artiste principal (en cache, partagés entre membres),
  * ceux du titre quand l'artiste n'en a pas, puis les genres d'album Deezer en dernier recours.
  * Homonymes : Last.fm confond parfois deux artistes (HUGEL → rappeur finlandais). On vérifie UN titre de
- * l'artiste sur Deezer (verdict gardé dans `artist_tags.homonym`) ; si Deezer contredit, chacun de ses titres
- * prend ses genres Deezer. Vérifier par artiste plutôt que par titre divise les appels à Deezer par ~3.
+ * l'artiste sur Deezer (verdict gardé dans `artist_tags.homonym`) ; si Deezer contredit, chacun de ses titres est
+ * vérifié à son tour (règle hybride, banc du 13/10/2026). Vérifier par artiste d'abord divise les appels à Deezer par ~3.
  */
 export async function genresForLikes(likes: PendingLike[]): Promise<Map<string, string[]>> {
   const artists = [...new Set(likes.map((l) => l.artists[0]).filter((a): a is string => Boolean(a)))];
@@ -256,8 +241,11 @@ export async function genresForLikes(likes: PendingLike[]): Promise<Map<string, 
           // Tags sans style (« french, female vocalists ») : on ajoute les genres Deezer du titre.
           result.set(like.track_id, [...tags, ...(await deezerFor(like))]);
         } else if (homonym.get(artist)) {
-          // Homonyme : les genres Deezer du titre ; s'il ne le connaît pas, aucun tag plutôt que ceux de l'autre artiste.
-          result.set(like.track_id, await deezerFor(like));
+          // Artiste signalé : on tranche titre par titre (ses genres Deezer sont demandés de toute façon). Deezer contredit
+          // Last.fm → les genres Deezer ; sinon (featuring, remix, titre inconnu de Deezer) on garde Last.fm.
+          // Banc du 13/10/2026 : top 1 de 75 à 96 % sur les titres concernés, sans appel en plus.
+          const deezer = await deezerFor(like);
+          result.set(like.track_id, deezer.length > 0 && contradicts(tags, deezer) ? deezer : tags);
         } else {
           result.set(like.track_id, tags);
         }

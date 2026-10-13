@@ -51,7 +51,7 @@ export const GOOD_TO_KNOW: string[] = [
 /** Cartes qui défilent pendant l'attente, selon l'étape. */
 export const WAIT_TIPS: Record<"likes" | "enrich" | "analyse", { title: string; text: string }[]> = {
   likes: [
-    { title: "Pourquoi deux ans ?", text: "Tes likes récents disent ce que tu écoutes aujourd'hui. Avec peu de likes, on remonte plus loin." },
+    { title: "Pourquoi tes 1 000 derniers likes ?", text: "Tes likes récents disent ce que tu écoutes aujourd'hui. Si tu en as moins, on les prend tous." },
     { title: "Rien ne bouge chez toi", text: "Sortify lit tes likes. Il ne crée rien dans Spotify avant que tu valides tes bacs." },
   ],
   enrich: [

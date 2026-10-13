@@ -118,8 +118,8 @@ export function ProposalScreen({ likes, period, size, bacs, divers, total, filli
         </p>
       ) : size === "plafond" ? (
         <p className="notice" style={{ margin: 0 }}>
-          Ta bibliothèque est grande : on a pris tes {MAX_IMPORT.toLocaleString("fr-FR")} likes les plus récents. Les plus anciens restent dans
-          Spotify, sans bac.
+          On est parti de tes {MAX_IMPORT.toLocaleString("fr-FR")} likes les plus récents : ce sont eux qui disent le mieux ce que tu écoutes
+          aujourd&apos;hui. Les plus anciens restent dans Spotify, sans bac.
         </p>
       ) : null}
 

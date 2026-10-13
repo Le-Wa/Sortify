@@ -54,13 +54,12 @@ export function WaitScreen({ stage }: { stage: "import" | "analyse" }) {
   let count = 0;
   let suffix = "";
   let ratio = 0;
-  let step = "On lit tes likes des 2 dernières années…";
+  let step = "On lit tes likes, du plus récent au plus ancien…";
   if (imp) {
     const p = imp.progress;
     if (p.phase === "likes") {
       count = p.imported;
       suffix = "likes lus";
-      if (p.mode === "tout") step = "Petite bibliothèque : on remonte plus loin…";
     } else {
       count = p.enriched;
       suffix = `/ ${p.imported.toLocaleString("fr-FR")} likes`;

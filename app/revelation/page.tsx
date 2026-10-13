@@ -66,7 +66,7 @@ export default async function RevelationPage() {
     <main className="page page--bare">
       <ProposalScreen
         likes={imp?.progress.imported ?? 0}
-        period={imp?.progress.capped ? "les plus récents" : imp?.progress.mode === "tout" ? "tout l'historique" : "2 ans"}
+        period={imp?.progress.capped ? "les plus récents" : imp?.progress.mode === "2ans" ? "2 ans" : "tout l'historique"}
         size={imp?.progress.capped ? "plafond" : librarySize(impact.total)}
         bacs={proposal}
         divers={impact.divers}

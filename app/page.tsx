@@ -54,7 +54,7 @@ export default async function ConnexionPage(props: PageProps<"/">) {
         <li>
           <span className="mono">02</span>
           <span>
-            <b>L&apos;IA imagine tes bacs</b> à partir de 2 ans de likes.
+            <b>L&apos;IA imagine tes bacs</b> à partir de tes 1 000 derniers likes.
           </span>
         </li>
         <li>

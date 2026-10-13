@@ -7,8 +7,11 @@
 export const MIN_LIBRARY = 20;
 /** Sous ce nombre, petite bibliothèque : 2 ou 3 bacs au plus, sans passe « compléter ». */
 export const SMALL_LIBRARY = 60;
-/** Plafond de l'import : les likes les plus récents seulement (l'analyse voit alors tout, sans échantillon). */
-export const MAX_IMPORT = 2500;
+/**
+ * Fenêtre d'import : les 1 000 likes les plus récents, quel que soit leur âge (décision de Walid, 13/10/2026,
+ * `docs/analyses/2026-10-13-fenetre-import.md`) : ~3 $ d'IA et ~10 min d'attente pour tout le monde.
+ */
+export const MAX_IMPORT = 1000;
 
 export type LibrarySize = "trop-petite" | "petite" | "normale";
 
