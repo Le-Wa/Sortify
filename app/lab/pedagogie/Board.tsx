@@ -70,7 +70,7 @@ export function Board() {
       </Phone>
       <Phone caption="7 · Proposition : comment la lire">
         <div className="row between label">
-          <span>1 160 likes · 2 ans</span>
+          <span>1 000 likes · les plus récents</span>
           <span>13 bacs</span>
         </div>
         <h1 className="display" style={{ fontSize: 36 }}>

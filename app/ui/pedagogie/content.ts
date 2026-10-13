@@ -13,7 +13,7 @@ export interface Story {
 export const STORIES: Story[] = [
   {
     title: "Tu likes.",
-    text: "Tu continues d'aimer des titres sur Spotify, comme d'habitude. Sortify lit tes likes des deux dernières années : c'est ton goût d'aujourd'hui.",
+    text: "Tu continues d'aimer des titres sur Spotify, comme d'habitude. Sortify lit tes 1 000 derniers likes : c'est ton goût d'aujourd'hui.",
     visual: "likes",
   },
   {
