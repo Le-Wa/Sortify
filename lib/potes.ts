@@ -25,7 +25,12 @@ interface LibTrack extends AffinityTrack {
   liked_at: string;
 }
 
-const firstName = (name: string | null, id: string) => (name ?? id).split(" ")[0];
+/** Prénom (« Walid » pour « Walid Kadem ») ; un pseudo comme « Le G 87 » reste entier. */
+const firstName = (name: string | null, id: string) => {
+  const full = (name ?? id).trim();
+  const first = full.split(/\s+/)[0];
+  return first.length >= 3 ? first : full.slice(0, 24);
+};
 
 async function library(memberId: string): Promise<Map<string, LibTrack>> {
   const rows: { track_id: string; title: string; artists: string[]; genres: string[]; cover_url: string | null; isrc: string | null; liked_at: string }[] = [];

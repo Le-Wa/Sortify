@@ -206,6 +206,8 @@ a { color: inherit; }
   line-height: 0.92; /* 0,84 faisait toucher les accents des capitales (É) à la ligne du dessus */
   overflow-wrap: anywhere;
 }
+/* Les lignes sont déjà calculées (lib/sleeve-layout.ts) : ne jamais couper un mot en deux (« DANCEHAL / L »). */
+.sleeve__name > span { white-space: nowrap; }
 
 /* ── Fiche de bac (la pochette dépasse et sert d'onglet) ─── */
 .bin { position: relative; display: block; padding-top: 14px; text-decoration: none; color: inherit; }
