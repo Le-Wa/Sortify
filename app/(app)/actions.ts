@@ -49,9 +49,9 @@ export async function decide(track: string, bacs: string[]): Promise<ActionResul
   });
 }
 
-export async function acceptAll(): Promise<ActionResult> {
+export async function acceptAll(only?: string[]): Promise<ActionResult> {
   return run(async (memberId) => {
-    const n = await acceptAllPending(memberId);
+    const n = await acceptAllPending(memberId, only === undefined ? undefined : z.array(trackId).max(1000).parse(only));
     return { ok: true, message: `${n} titre${n > 1 ? "s" : ""} rangé${n > 1 ? "s" : ""}.` };
   });
 }

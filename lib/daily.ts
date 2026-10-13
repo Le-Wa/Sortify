@@ -290,8 +290,10 @@ export async function setTrackBacs(
 }
 
 /** « Tout accepter » : chaque titre en attente part dans le bac pré-coché. */
-export async function acceptAllPending(memberId: string): Promise<number> {
-  const queue = await pendingQueue(memberId);
+/** « Tout accepter » : chaque titre va dans son premier bac proposé ; `only` limite aux titres du filtre affiché. */
+export async function acceptAllPending(memberId: string, only?: string[]): Promise<number> {
+  const all = await pendingQueue(memberId);
+  const queue = only ? all.filter((q) => only.includes(q.track_id)) : all;
   const divers = await ensureDivers(memberId);
   const placements = queue.map((item) => ({
     bac_id: item.suggestions[0]?.bac.id ?? divers.id,

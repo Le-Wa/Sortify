@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { adjustFiche } from "@/lib/ai/fiches";
 import { currentMember } from "@/lib/auth";
-import { detachBac, moveBac, refreshBriefs, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
+import { detachBac, letSleep, moveBac, refreshBriefs, removeTrack, restyleBac, updateBac } from "@/lib/bac-admin";
 import { getBac, listBacs } from "@/lib/bacs";
 import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { kickJob, startJob } from "@/lib/jobs";
@@ -140,4 +140,9 @@ export async function accept(id: string): Promise<ActionResult> {
 
 export async function refuse(id: string): Promise<ActionResult> {
   return run((m) => refuseSuggestion(m, uuid.parse(id)));
+}
+
+/** « Ce bac dort » → « Laisser dormir » : la carte revient dans 8 semaines si rien ne change. */
+export async function sleepOn(id: string): Promise<ActionResult> {
+  return run((memberId) => letSleep(memberId, z.string().uuid().parse(id)));
 }

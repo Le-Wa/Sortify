@@ -313,3 +313,47 @@ export async function diversTracks(memberId: string, limit: number): Promise<{ t
     tracks: rows.map((r) => ({ track_id: r.track_id, title: r.title, artist: r.artists[0] ?? "", cover_url: r.cover_url, isrc: r.isrc })),
   };
 }
+
+/** Un bac « dort » quand aucun titre liké depuis 8 semaines n'y est entré (et qu'il a plus de 8 semaines). */
+const SLEEP_WEEKS = 8;
+const SLEEP_MS = SLEEP_WEEKS * WEEK_MS;
+
+/**
+ * Bacs qui dorment, avec le nombre de semaines depuis leur dernier titre. Rien si le membre lui-même like peu
+ * (moins de 10 likes en 8 semaines) : ce n'est pas le bac qui dort, c'est la bibliothèque.
+ */
+export async function sleepingBacs(memberId: string, bacs: Bac[]): Promise<Map<string, number>> {
+  const since = new Date(Date.now() - SLEEP_MS).toISOString();
+  const { count, error } = await db().from("likes").select("track_id", { count: "exact", head: true }).eq("member_id", memberId).gte("liked_at", since);
+  if (error) throw new Error(`Likes récents : ${error.message}`);
+  const asleep = new Map<string, number>();
+  if ((count ?? 0) < 10) return asleep;
+  const candidates = bacs.filter((b) => !b.is_divers && b.auto_fill && Date.parse(b.created_at) < Date.now() - SLEEP_MS);
+  await Promise.all(
+    candidates.map(async (bac) => {
+      const rows = check(
+        await db().from("placements").select("likes!inner(liked_at)").eq("bac_id", bac.id).limit(2000),
+        "Derniers titres du bac",
+      ) as unknown as { likes: { liked_at: string } }[];
+      const last = Math.max(0, ...rows.map((r) => Date.parse(r.likes.liked_at)));
+      if (last < Date.now() - SLEEP_MS) asleep.set(bac.id, Math.floor((Date.now() - last) / WEEK_MS));
+    }),
+  );
+  return asleep;
+}
+
+/** La carte « ce bac dort » : le bac qui dort depuis le plus longtemps, sauf si on l'a laissé dormir. */
+export function sleeperToShow(bacs: Bac[], asleep: Map<string, number>): Bac | undefined {
+  return bacs
+    .filter((b) => asleep.has(b.id) && !(b.asleep_ok_until && Date.parse(b.asleep_ok_until) > Date.now()))
+    .sort((a, b) => asleep.get(b.id)! - asleep.get(a.id)!)[0];
+}
+
+/** « Laisser dormir » : la carte ne revient pas avant 8 semaines. */
+export async function letSleep(memberId: string, id: string): Promise<void> {
+  await ownedActive(memberId, id);
+  check(
+    await db().from("bacs").update({ asleep_ok_until: new Date(Date.now() + SLEEP_MS).toISOString() }).eq("id", id),
+    "Laisser dormir",
+  );
+}

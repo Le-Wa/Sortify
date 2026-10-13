@@ -195,7 +195,7 @@ export function BacDetail({ bac, tracks }: Props) {
           </div>
         </div>
       ) : (
-        <button type="button" className="btn btn--quiet danger-btn" onClick={() => setConfirmDetach(true)}>
+        <button type="button" id="retirer" className="btn btn--quiet danger-btn" onClick={() => setConfirmDetach(true)}>
           Retirer ce bac de Sortify
         </button>
       )}

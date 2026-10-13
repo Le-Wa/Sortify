@@ -912,3 +912,57 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 /* Interrupteur décoratif (illustrations de la pédagogie). */
 .switch.is-on::before { background: var(--ink); }
 .switch.is-on::after { transform: translateX(20px); background: var(--accent); }
+
+/* ── À trier : filtres (13/10/2026) ───────────────────────── */
+.filter-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -16px;
+  padding: 0 16px;
+  scroll-snap-type: x proximity;
+}
+.filter-chips::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  transition: background 0.15s, color 0.15s, transform 0.12s ease-out;
+}
+.filter-chip[aria-selected="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.filter-chip:active { transform: scale(0.96); }
+
+/* ── Comptoir vide : petite célébration (principes : docs/analyses/2026-10-13-animations.md) ── */
+.cleared { display: flex; flex-direction: column; gap: 14px; min-height: calc(100dvh - 160px); text-align: center; align-items: center; }
+.cleared__crate { display: flex; justify-content: center; height: 100px; }
+.cleared__sleeve {
+  margin: 0 -10px;
+  transform: rotate(var(--tilt));
+  animation: fall-in 0.56s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.25));
+}
+.cleared__title { font-size: 64px; margin: 0; animation: settle-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.cleared__text { margin: 0; font-size: 15px; line-height: 1.45; animation: fade-up 0.36s ease-out backwards; }
+@keyframes fall-in {
+  from { opacity: 0; transform: translateY(-160px) rotate(calc(var(--tilt) * -3)); }
+  70% { opacity: 1; transform: translateY(6px) rotate(var(--tilt)); }
+  to { transform: rotate(var(--tilt)); }
+}
+@keyframes settle-in {
+  from { opacity: 0; transform: scale(1.12); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}

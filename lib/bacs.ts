@@ -43,6 +43,8 @@ export interface Bac {
   needs_fill: boolean;
   cover_uploaded_at: string | null;
   created_at: string;
+  /** « Laisser dormir » : pas de carte « ce bac dort » avant cette date. */
+  asleep_ok_until: string | null;
 }
 
 export async function listBacs(memberId: string, statuses: Bac["status"][]): Promise<Bac[]> {

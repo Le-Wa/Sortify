@@ -15,6 +15,8 @@ interface Item {
   autoFill: boolean;
   total: number;
   week: number;
+  /** Semaines sans nouveau titre, si le bac dort. */
+  asleep: number | null;
 }
 
 export function BacList({ bacs }: { bacs: Item[] }) {
@@ -53,7 +55,13 @@ export function BacList({ bacs }: { bacs: Item[] }) {
                 {/* En mode Réordonner, place aux flèches : le nom seul suffit. */}
                 {reordering ? null : (
                   <span className="mono small muted">
-                    {b.total} titres · {b.week > 0 ? `+${b.week}` : "0"} cette semaine{b.autoFill ? "" : " · en pause"}
+                    {b.total} titres ·{" "}
+                    {b.asleep !== null ? (
+                      <span style={{ color: "var(--accent)" }}>dort · {b.asleep} sem.</span>
+                    ) : (
+                      `${b.week > 0 ? `+${b.week}` : "0"} cette semaine`
+                    )}
+                    {b.autoFill ? "" : " · en pause"}
                   </span>
                 )}
               </span>
