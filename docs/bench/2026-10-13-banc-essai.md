@@ -65,9 +65,30 @@ En base, le verdict par artiste n'existe que pour 15 artistes (imports depuis le
 **Hybride** : le verdict par artiste décide qui vérifier ; pour un artiste signalé, chaque titre garde ses tags Last.fm si ses genres Deezer ne les contredisent pas, ou si Deezer ne le connaît pas. Ces genres Deezer sont **déjà demandés titre par titre** pour les artistes signalés : aucun appel en plus, l'import reste aussi rapide. Il règle 41 des 58 désaccords (le 3e type reste, il demanderait de vérifier chaque titre).
 → **Recommandé : passer à l'hybride** (petit changement dans `genresForLikes`, `lib/import.ts`). Petits groupes : gain à confirmer, mais il va dans le même sens chez vous deux et ne coûte rien.
 
+## 5. Inférence par artiste (questions de Walid, même jour) — à ne pas faire
+
+Coût : 1,80 $ de plus (total du jour **6,66 $** dans `ai_usage`). Scripts : `scripts/lab/artist-rule.mts`, phase `indice-artiste` du banc 4.
+
+**a. Rangement d'office quand l'artiste est « sûr »** (au moins 3 titres dans un seul bac de scène, aucun ailleurs).
+Sur les titres déjà rangés, la règle retrouve le bon bac à 99 % — mais c'est circulaire : ces titres ont été rangés par l'IA, qui suit déjà l'artiste.
+Sur Divers, là où elle servirait : **3 titres chez Walid, 0 validé ; 154 chez Jérémy, 4 validés (3 %)**. Les titres restés dans Divers sont justement ceux qui ne ressemblent pas au bac de leur artiste : le rap créole de Kalash face à son dancehall (« Dancehall jamaïcain »), les titres rap de Drake et 50 Cent face à « R&B nocturne ».
+
+**b. Indice donné à l'IA du tri** (« artiste déjà dans : Rap FR (5) » ajouté à la ligne du titre).
+
+| | Rangés | Top 1 | Précision | Rangements validés par le juge |
+|---|---|---|---|---|
+| Walid, échantillon de 200 — sans indice (2 passages) | 68 / 69 % | 84 / 85 % | 82 / 82 % | — |
+| Walid — avec indice (2 passages) | 68 / 70 % | 87 / 85 % | 84 / 81 % | — |
+| Jérémy, 241 titres de Divers dont l'artiste est rangé ailleurs — sans indice | 12 % | — | — | 55 % (15 à tort) |
+| Jérémy — avec indice | 22 % | — | — | **37 % (40 à tort)** |
+
+Sur un échantillon normal, aucun effet (dans le bruit). Sur les cas difficiles, l'indice fait suivre l'artiste à l'IA et range presque trois fois plus de titres à tort.
+→ **Ni rangement d'office, ni indice au tri.** Le Divers de Jérémy est fait de scènes qui n'ont pas de bac (rap US, rap FR actuel, rap créole : ses bacs retirés) : il lui faut de nouveaux bacs (« Fais-moi des bacs avec Divers »), pas une règle par artiste. L'artiste reste utile **à l'écran**, pour regrouper et ranger par lot à la main.
+
 ## Recommandations
 
 1. Limite de 5 bacs : rien à changer.
 2. Consigne des 3 transversaux : garder.
 3. Deezer pour les tags sans style : garder ; profite aux bibliothèques existantes seulement après un re-rangement (essai à blanc d'abord, à ta demande).
-4. Homonymes : **passer à la règle hybride** (attend ton feu vert).
+4. Homonymes : règle hybride — **en ligne depuis le 13/10** (feu vert de Walid).
+5. Inférence par artiste : ni rangement d'office, ni indice au tri ; seulement le regroupement par artiste à l'écran de Divers.

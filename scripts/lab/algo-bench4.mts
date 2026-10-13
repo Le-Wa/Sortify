@@ -10,7 +10,7 @@ import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { proposeFiches, RULES, type Fiche } from "@/lib/ai/fiches";
 import { sortTracks, type SortFiche, type SortOptions, type Sorted } from "@/lib/ai/sort";
-import { listBacs, placeThreshold, sortFichesFor, SURE_THRESHOLD } from "@/lib/bacs";
+import { ensureDivers, listBacs, placeThreshold, sortFichesFor, SURE_THRESHOLD } from "@/lib/bacs";
 import { costOf } from "@/lib/ai-cost";
 import { claude, responseText } from "@/lib/claude";
 import { loadCorpus, trackLine, type CorpusTrack } from "@/lib/corpus";
@@ -363,6 +363,79 @@ if (phase === "homonymes") {
   }
   console.table(rows);
   report.homonymes = rows;
+}
+
+// ═══ E. Indice « artiste déjà dans tel bac » donné à l'IA du tri ═══════════════════
+/** Par titre : bacs de scène actifs où d'autres titres de son artiste sont rangés (« Rap FR (5) »), sans le titre lui-même. */
+async function artistHintsFor(memberId: string, ids: Set<string>, corpus: CorpusTrack[]): Promise<Map<string, string>> {
+  const bacs = await listBacs(memberId, ["active"]);
+  const scene = new Map(bacs.filter((b) => !b.is_divers && b.axis === "scène").map((b) => [b.id, b.name]));
+  const artistOf = new Map(corpus.map((t) => [t.track_id, t.artists[0] ?? ""]));
+  const rows: { bac_id: string; track_id: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await db().from("placements").select("bac_id, track_id").eq("member_id", memberId).range(from, from + 999);
+    rows.push(...(data ?? []));
+    if ((data ?? []).length < 1000) break;
+  }
+  const per = new Map<string, Map<string, Set<string>>>();
+  for (const r of rows) {
+    const name = scene.get(r.bac_id);
+    const a = artistOf.get(r.track_id);
+    if (!name || !a) continue;
+    const m2 = per.get(a) ?? new Map<string, Set<string>>();
+    m2.set(name, (m2.get(name) ?? new Set()).add(r.track_id));
+    per.set(a, m2);
+  }
+  const hints = new Map<string, string>();
+  for (const id of ids) {
+    const m2 = per.get(artistOf.get(id) ?? "");
+    if (!m2) continue;
+    const parts = [...m2].map(([name, set]) => [name, [...set].filter((x) => x !== id).length] as const).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    if (parts.length) hints.set(id, parts.map(([n, c]) => `${n} (${c})`).join(", "));
+  }
+  return hints;
+}
+
+if (phase === "indice-artiste") {
+  const rows: Record<string, unknown> = {};
+  // a) Échantillon de Walid (juge du 11/10) : les passages sans indice sont ceux de la phase « limite » (même réglage).
+  const setup = JSON.parse(readFileSync(`${ref}/algo-bench3-setup.json`, "utf8")) as { refreshed16: SortFiche[] };
+  const fiches = setup.refreshed16;
+  const gold = new Map(Object.entries(JSON.parse(readFileSync(`${ref}/algo-bench3-gold.json`, "utf8")) as Record<string, number[]>).map(([k, v]) => [k, new Set(v)]));
+  const { sampleIds } = JSON.parse(readFileSync(`${ref}/echantillon.json`, "utf8")) as { sampleIds: string[] };
+  const corpusW = await loadCorpus(walid.spotify_id);
+  const byIdW = new Map(corpusW.map((t) => [t.track_id, t]));
+  const tracksW = sampleIds.map((id) => byIdW.get(id)).filter((t): t is CorpusTrack => Boolean(t));
+  const hintsW = await artistHintsFor(walid.spotify_id, new Set(sampleIds), corpusW);
+  console.log(`Walid : ${hintsW.size} titres sur ${tracksW.length} ont un indice`);
+  rows["Walid — sans indice, passage 1"] = score(await sortWith("limite-5a", fiches, tracksW), fiches, gold);
+  rows["Walid — sans indice, passage 2"] = score(await sortWith("limite-5b", fiches, tracksW), fiches, gold);
+  rows["Walid — avec indice, passage 1"] = score(await sortWith("indice-a", fiches, tracksW, { artistHints: hintsW }), fiches, gold);
+  rows["Walid — avec indice, passage 2"] = score(await sortWith("indice-b", fiches, tracksW, { artistHints: hintsW }), fiches, gold);
+
+  // b) Divers de Jérémy, titres dont l'artiste est déjà dans un bac de scène : l'indice les fait-il ranger à tort ?
+  const corpusJ = await loadCorpus(jeremy.spotify_id);
+  const divers = await ensureDivers(jeremy.spotify_id);
+  const { data: dv } = await db().from("placements").select("track_id").eq("bac_id", divers.id).limit(5000);
+  const hintsJ = await artistHintsFor(jeremy.spotify_id, new Set((dv ?? []).map((r) => r.track_id)), corpusJ);
+  const tracksJ = corpusJ.filter((t) => hintsJ.has(t.track_id));
+  const fichesJ = await sortFichesFor((await listBacs(jeremy.spotify_id, ["active"])).filter((b) => !b.is_divers));
+  console.log(`Jérémy : ${tracksJ.length} titres de Divers avec un indice`);
+  for (const [name, opts] of [["sans", {}], ["avec", { artistHints: hintsJ }]] as const) {
+    const sorted = await sortWith(`indice-jeremy-${name}`, fichesJ, tracksJ, opts);
+    const byT = new Map(tracksJ.map((t) => [t.track_id, t]));
+    const pairs = sorted.flatMap((x) => placedOf(x, fichesJ).map((bac) => ({ t: byT.get(x.track_id)!, bac })));
+    const verdicts = await cached(`indice-jeremy-verif-${name}`, () => verify(fichesJ, pairs));
+    const ok = verdicts.filter(Boolean).length;
+    rows[`Jérémy (Divers) — ${name} indice`] = {
+      rangés: pct(sorted.filter((x) => placedOf(x, fichesJ).length > 0).length, sorted.length),
+      placements: pairs.length,
+      "validés par le juge": pct(ok, pairs.length),
+      "rangés à tort": pairs.length - ok,
+    };
+  }
+  console.table(rows);
+  report.indiceArtiste = rows;
 }
 
 writeFileSync(`${out}/rapport-${phase}.json`, JSON.stringify(report, null, 1));

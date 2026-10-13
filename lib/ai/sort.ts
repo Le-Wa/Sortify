@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { claude, responseText, SORT_MODEL } from "../claude";
-import { DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
+import { cleanForPrompt, DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
 import type { Axis } from "./fiches";
 import { MAX_BACS_PER_TRACK } from "../limits";
 
@@ -44,6 +44,8 @@ export interface SortOptions {
   /** Banc d'essai : bacs transversaux par titre (3 par défaut, 2 avant le 12/10/2026) et bacs par titre en tout (MAX_BACS_PER_TRACK). */
   maxTransversal?: number;
   maxPerTrack?: number;
+  /** Banc d'essai : indice par titre, « bacs où l'artiste est déjà rangé » (ex. « Rap FR (5) »). */
+  artistHints?: Map<string, string>;
   /** Cumul des tokens consommés, pour mesurer le coût. */
   usage?: { input: number; output: number };
 }
@@ -141,7 +143,12 @@ async function sortBatch(
   opts: SortOptions,
 ): Promise<Sorted[]> {
   const bacCount = fiches.length;
-  const lines = tracks.map((t, i) => trackLine(t, offset + i)).join("\n");
+  const lines = tracks
+    .map((t, i) => {
+      const hint = opts.artistHints?.get(t.track_id);
+      return hint ? `${trackLine(t, offset + i)} | artiste déjà dans : ${cleanForPrompt(hint, 120)}` : trackLine(t, offset + i);
+    })
+    .join("\n");
   const message = await claude().beta.messages.create({
     model: opts.model ?? SORT_MODEL,
     // Repli serveur si le modèle refuse (recommandé pour Sonnet 5.5 sur l'API Claude).
