@@ -24,6 +24,8 @@ export async function syncMember(memberId: string): Promise<number> {
         .from("likes")
         .select("track_id, liked_at, placements!inner(bac_id, synced_at)")
         .eq("member_id", memberId)
+        // Anciens likes en cours de rangement : ils iront en bas des playlists (lib/old-likes.ts).
+        .is("backfilled_at", null)
         .eq("placements.bac_id", bac.id)
         .is("placements.synced_at", null)
         .order("liked_at", { ascending: false }),

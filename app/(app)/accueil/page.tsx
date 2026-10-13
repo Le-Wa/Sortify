@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { COST_ALERT_USD, costAlerts, usd } from "@/lib/ai-budget";
+import { pendingOldLikesRequests } from "@/lib/old-likes";
+import { OldLikesRequests } from "./OldLikesRequests";
 import { activeBacs, chip, failedTri, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { Sleeve } from "../../ui/Sleeve";
@@ -18,7 +20,7 @@ const SHOWN = 10;
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs, suggestions, arrival, failure, costly] = await Promise.all([
+  const [queue, tri, bacs, suggestions, arrival, failure, costly, oldRequests] = await Promise.all([
     pendingQueue(id),
     lastTri(id),
     activeBacs(id),
@@ -26,6 +28,7 @@ export default async function AccueilPage() {
     weekArrival(id),
     failedTri(id),
     member.is_owner ? costAlerts() : Promise.resolve([]),
+    member.is_owner ? pendingOldLikesRequests() : Promise.resolve([]),
   ]);
   const lastDone = tri?.status === "done" ? tri : null;
   const recent = arrival.items;
@@ -112,6 +115,10 @@ export default async function AccueilPage() {
           Coût de l&apos;IA sur 7 jours : {costly.map((m) => `${m.name} ${usd(m.cost)}`).join(", ")} (au-delà de {usd(COST_ALERT_USD)}). Détail dans les{" "}
           <Link href="/reglages">Réglages</Link>.
         </p>
+      ) : null}
+
+      {oldRequests.length > 0 ? (
+        <OldLikesRequests requests={oldRequests.map((r) => ({ id: r.id, name: r.name, estimate: r.estimate, cost: usd(Number(r.cost_usd)) }))} />
       ) : null}
 
       {suggestions.length > 0 ? <SuggestionCards suggestions={suggestions} /> : null}

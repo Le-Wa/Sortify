@@ -125,6 +125,8 @@ async function unsortedLikes(memberId: string): Promise<CorpusTrack[]> {
         .eq("member_id", memberId)
         .not("enriched_at", "is", null)
         .eq("excluded", false)
+        // Anciens likes en cours de rangement : leur job s'en occupe (lib/old-likes.ts).
+        .is("backfilled_at", null)
         .order("liked_at", { ascending: false })
         .range(from, from + 999),
       "Lecture des likes",

@@ -4,7 +4,9 @@ import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { homeFor } from "@/lib/library";
 import { countSharedAppMembers, MAX_MEMBERS, openInvitations } from "@/lib/members";
 import { SignOutButton } from "../ui/SignOutButton";
-import { latestJob, recentIncidents } from "@/lib/jobs";
+import { isStalled, kickJob, latestJob, recentIncidents, type Job } from "@/lib/jobs";
+import { oldLikesStatus, ownerName } from "@/lib/old-likes";
+import { OldLikesCard, type OldLikesView } from "./OldLikesCard";
 import { setAsideTracks } from "@/lib/daily";
 import { hasActiveBacs } from "@/lib/library";
 import { DeleteData, ReanalyseCard } from "./DataSettings";
@@ -26,15 +28,44 @@ const KIND_LABEL: Record<string, string> = {
   creation: "création des playlists",
   reanalyse: "ré-analyse",
   bac: "nouveau bac",
+  anciens: "anciens likes",
 };
+
+const MONTH = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "Europe/Paris" });
+
+/** Carte « Tes anciens likes » : null si tout est déjà dans Sortify, ou si Spotify ne répond pas (la page reste utilisable). */
+async function oldLikesView(memberId: string, isOwner: boolean): Promise<OldLikesView | null> {
+  try {
+    const [s, owner] = await Promise.all([oldLikesStatus(memberId, isOwner), ownerName()]);
+    const job = s.job;
+    if (job?.status === "running" && isStalled(job as Job<unknown>)) await kickJob(job.id);
+    if (s.older === 0 && job?.status !== "running") return null;
+    return {
+      older: s.older,
+      since: s.before ? MONTH.format(new Date(s.before)) : "",
+      cost: usd(s.cost),
+      minutes: s.minutes,
+      direct: s.direct,
+      owner,
+      request: s.request?.status === "pending" || s.request?.status === "refused" ? s.request.status : null,
+      job: job
+        ? { running: job.status === "running", phase: job.progress.phase, fetched: job.progress.fetched, placed: job.progress.placed, divers: job.progress.divers, failed: job.status === "failed" ? job.error : null }
+        : null,
+    };
+  } catch (error) {
+    console.error("Anciens likes indisponibles :", error instanceof Error ? error.message : error);
+    return null;
+  }
+}
 
 export default async function ReglagesPage() {
   const member = await requireMember();
   const home = await homeFor(member.spotify_id);
-  const [hasBacs, reanalyse, setAside] = await Promise.all([
+  const [hasBacs, reanalyse, setAside, oldLikes] = await Promise.all([
     hasActiveBacs(member.spotify_id),
     latestJob(member.spotify_id, "reanalyse"),
     setAsideTracks(member.spotify_id).then((t) => t.length),
+    oldLikesView(member.spotify_id, member.is_owner),
   ]);
   const [codes, members, incidents, costs] = member.is_owner
     ? await Promise.all([openInvitations(member.spotify_id), countSharedAppMembers(), recentIncidents(7), costByMember(30)])
@@ -73,6 +104,7 @@ export default async function ReglagesPage() {
         <>
           <div className="label section-label">Tes bacs</div>
           <ReanalyseCard running={reanalyse?.status === "running"} />
+          {oldLikes ? <OldLikesCard view={oldLikes} /> : null}
         </>
       ) : null}
 

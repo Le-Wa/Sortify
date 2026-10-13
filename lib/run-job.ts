@@ -8,6 +8,7 @@ import { notify } from "./push";
 import { runNewBacStep, type NewBacProgress } from "./new-bac";
 import { runReanalyseStep, suggestFromDivers, type ReanalyseProgress } from "./suggestions";
 import { runTriStep, type TriProgress } from "./tri";
+import { runOldLikesStep, type OldLikesProgress } from "./old-likes";
 import { withUsage } from "./ai-usage";
 import { claimJob, failJob, finishJob, kickJob, releaseJob, startJob, STEP_BUDGET_MS, type Job } from "./jobs";
 
@@ -85,6 +86,20 @@ async function runClaimed(job: Job<unknown>): Promise<void> {
           await refreshBriefs(job.member_id).catch((error: unknown) =>
             console.error("Frontières des fiches non rafraîchies :", error instanceof Error ? error.message : error),
           );
+          return;
+        }
+        await releaseJob(id, progress);
+        break;
+      }
+      case "anciens": {
+        const progress = await runOldLikesStep(job as Job<OldLikesProgress>, deadline);
+        if (progress.phase === "done") {
+          await finishJob(id, progress);
+          await notify(job.member_id, {
+            title: "Tes anciens likes sont rangés",
+            body: `${progress.placed} dans tes bacs, ${progress.divers} dans Divers.`,
+            url: "/bacs",
+          }).catch((error: unknown) => console.error("Notification des anciens likes :", error instanceof Error ? error.message : error));
           return;
         }
         await releaseJob(id, progress);

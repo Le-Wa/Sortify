@@ -10,6 +10,7 @@ import { currentMember } from "@/lib/auth";
 import { check, db } from "@/lib/db";
 import { kickJob, latestJob, startJob } from "@/lib/jobs";
 import { createInvitation, updateSettings } from "@/lib/members";
+import { decideOldLikes, oldLikesStatus, requestOldLikes, startOldLikes } from "@/lib/old-likes";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -112,5 +113,28 @@ export async function deleteMyData(confirmation: string): Promise<ActionResult> 
   if (confirmation !== "SUPPRIMER") return { ok: false, message: "Tape SUPPRIMER pour confirmer." };
   // Les tables V2 sont liées au membre en cascade (likes, bacs, placements, jobs…).
   check(await db().from("members").delete().eq("spotify_id", member.spotify_id), "Suppression des données");
+  return { ok: true };
+}
+
+/** « Ranger mes anciens likes » : lance directement (propriétaire, clé personnelle) ou envoie la demande au propriétaire. */
+export async function askOldLikes(): Promise<ActionResult> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  const status = await oldLikesStatus(member.spotify_id, member.is_owner);
+  if (status.older === 0) return { ok: false, message: "Tous tes likes sont déjà dans Sortify." };
+  if (status.job?.status === "running") return { ok: false, message: "C'est déjà en cours." };
+  if (status.direct) await startOldLikes(member.spotify_id);
+  else await requestOldLikes(member.spotify_id, status.older);
+  revalidatePath("/reglages");
+  return { ok: true };
+}
+
+/** Décision du propriétaire sur une demande d'anciens likes (Accueil). */
+export async function decideOldLikesRequest(id: string, accept: boolean): Promise<ActionResult> {
+  const member = await currentMember();
+  if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
+  if (!member.is_owner) return { ok: false, message: "Seul le propriétaire de Sortify peut décider." };
+  await decideOldLikes(z.string().uuid().parse(id), accept);
+  revalidatePath("/accueil");
   return { ok: true };
 }
