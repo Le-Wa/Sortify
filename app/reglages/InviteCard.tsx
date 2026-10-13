@@ -3,7 +3,12 @@
 import { useState, useTransition } from "react";
 import { newInvitation } from "./actions";
 
-export function InviteCard({ code, members, max }: { code: string | null; members: number; max: number }) {
+/**
+ * Le pote doit être ajouté dans le dashboard Spotify (mode développement) avant de se connecter, sinon Spotify le refuse :
+ * on le rappelle par une case à cocher avant de créer un code. L'API Spotify ne permet pas de le faire à sa place.
+ */
+export function InviteCard({ code, members, max, dashboardUrl }: { code: string | null; members: number; max: number; dashboardUrl: string }) {
+  const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [creating, startCreating] = useTransition();
@@ -46,17 +51,44 @@ export function InviteCard({ code, members, max }: { code: string | null; member
           </button>
         </div>
       ) : null}
-      <button type="button" className={code ? "link-btn" : "btn btn--accent"} onClick={create} disabled={creating || full} style={code ? { alignSelf: "flex-start", color: "inherit" } : undefined}>
-        {full ? "Plus de place" : creating ? "Création…" : code ? "Créer un autre code" : "Créer un code"}
+      {full ? null : (
+        <>
+          <p className="small" style={{ margin: 0 }}>
+            Avant le code : ajoute l&apos;e-mail du compte Spotify de ton pote dans le dashboard Spotify, onglet « User Management » (nom + e-mail).
+            Sinon, Spotify refusera sa connexion.{" "}
+            <a href={dashboardUrl} target="_blank" rel="noreferrer">
+              Ouvrir le dashboard ↗
+            </a>
+          </p>
+          <label className="row" style={{ minHeight: 44, gap: 10, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={added}
+              onChange={(e) => setAdded(e.target.checked)}
+              style={{ width: 22, height: 22, flex: "none", accentColor: "var(--accent)" }}
+            />
+            <span className="small">J&apos;ai ajouté son e-mail dans le dashboard Spotify</span>
+          </label>
+        </>
+      )}
+      <button
+        type="button"
+        className={code ? "link-btn" : "btn btn--accent"}
+        onClick={create}
+        disabled={creating || (!full && !added)} style={code ? { alignSelf: "flex-start", color: "inherit" } : undefined}>
+        {creating ? "Création…" : code ? "Créer un autre code" : full ? "Créer un code (power user)" : "Créer un code"}
       </button>
       {error ? (
         <p role="alert" className="small" style={{ margin: 0, color: "var(--accent)" }}>
           {error}
         </p>
       ) : null}
-      <p className="small muted" style={{ margin: 0 }}>
-        Pense aussi à ajouter son compte dans ton dashboard Spotify.
-      </p>
+      {full ? (
+        <p className="small muted" style={{ margin: 0 }}>
+          Les places de l&apos;app Spotify de Sortify sont prises : ton pote peut encore entrer avec sa propre app Spotify (lien « power user » sur la page de
+          connexion) et un code.
+        </p>
+      ) : null}
     </div>
   );
 }

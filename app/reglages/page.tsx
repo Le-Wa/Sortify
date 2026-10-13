@@ -15,6 +15,7 @@ import { OwnKeyCard } from "./OwnKeyCard";
 import { NotifyCard } from "./NotifyCard";
 import { env } from "@/lib/env";
 import { anthropicKeyHint } from "@/lib/own-keys";
+import { COST_ALERT_USD, costByMember, usd } from "@/lib/ai-budget";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeOf } from "@/lib/theme";
 
@@ -35,9 +36,9 @@ export default async function ReglagesPage() {
     latestJob(member.spotify_id, "reanalyse"),
     setAsideTracks(member.spotify_id).then((t) => t.length),
   ]);
-  const [codes, members, incidents] = member.is_owner
-    ? await Promise.all([openInvitations(member.spotify_id), countSharedAppMembers(), recentIncidents(7)])
-    : [[], 0, []];
+  const [codes, members, incidents, costs] = member.is_owner
+    ? await Promise.all([openInvitations(member.spotify_id), countSharedAppMembers(), recentIncidents(7), costByMember(30)])
+    : [[], 0, [], []];
 
   return (
     <main className="page page--bare">
@@ -78,7 +79,36 @@ export default async function ReglagesPage() {
       {member.is_owner ? (
         <>
           <div className="label section-label">Les potes</div>
-          <InviteCard code={codes[0]?.code ?? null} members={members} max={MAX_MEMBERS} />
+          <InviteCard
+            code={codes[0]?.code ?? null}
+            members={members}
+            max={MAX_MEMBERS}
+            dashboardUrl={`https://developer.spotify.com/dashboard/${env.spotifyClientId}/settings`}
+          />
+
+          <div className="label section-label">Coût de l&apos;IA (30 jours)</div>
+          {costs.length === 0 ? (
+            <p className="small muted" style={{ margin: "0 4px" }}>
+              Aucun appel à l&apos;IA ce mois-ci.
+            </p>
+          ) : (
+            <div className="list">
+              {costs.map((c) => (
+                <div key={c.memberId} className="list__row" style={{ alignItems: "flex-start", flexDirection: "column", gap: 2 }}>
+                  <span className="row between" style={{ width: "100%" }}>
+                    <b>{c.name}</b>
+                    <span className="mono" style={c.cost > COST_ALERT_USD ? { color: "var(--accent)" } : undefined}>
+                      {usd(c.cost)}
+                    </span>
+                  </span>
+                  {c.ownKey > 0 ? <span className="small muted">+ {usd(c.ownKey)} sur sa propre clé</span> : null}
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="small muted" style={{ margin: "0 4px" }}>
+            Une première analyse coûte 2 à 9 $ selon la taille de la bibliothèque, un mois de tri environ 0,50 $. Alerte sur l&apos;Accueil au-delà de {usd(COST_ALERT_USD)} en 7 jours.
+          </p>
 
           <div className="label section-label">Incidents (7 jours)</div>
           {incidents.length === 0 ? (

@@ -10,6 +10,7 @@ import { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept, typ
 import { useRevelation } from "./useRevelation";
 import { ProposalIntro } from "../ui/pedagogie/ProposalIntro";
 import type { SleeveMark } from "@/lib/cover-shapes";
+import { MAX_IMPORT, type LibrarySize } from "@/lib/library-size";
 
 export interface ProposalBac {
   id: string;
@@ -32,12 +33,14 @@ interface Props {
   total: number;
   likes: number;
   period: string;
+  /** Petite bibliothèque (2 ou 3 bacs) ou plafond d'import atteint : on le dit. */
+  size: LibrarySize | "plafond";
   bacs: ProposalBac[];
   filling: boolean;
   error: string | null;
 }
 
-export function ProposalScreen({ likes, period, bacs, divers, total, filling, error: jobError }: Props) {
+export function ProposalScreen({ likes, period, size, bacs, divers, total, filling, error: jobError }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(bacs[0]?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null); // id du bac (ou « create », « custom ») en cours
@@ -107,6 +110,18 @@ export function ProposalScreen({ likes, period, bacs, divers, total, filling, er
         <b>Divers : {divers.toLocaleString("fr-FR")} titres</b> ({total ? Math.round((100 * divers) / total) : 0} %) n&apos;ont pas de bac.
         {total && divers / total > 0.3 ? " C'est beaucoup : garde des bacs ou ajoute-en un sur mesure pour leur trouver une place." : ""}
       </p>
+
+      {size === "petite" ? (
+        <p className="notice" style={{ margin: 0 }}>
+          Ta bibliothèque est encore petite ({total.toLocaleString("fr-FR")} titres) : on te propose 2 ou 3 bacs pour commencer. Quand tes likes
+          s&apos;accumuleront, Sortify pourra te suggérer de nouveaux bacs à partir de Divers.
+        </p>
+      ) : size === "plafond" ? (
+        <p className="notice" style={{ margin: 0 }}>
+          Ta bibliothèque est grande : on a pris tes {MAX_IMPORT.toLocaleString("fr-FR")} likes les plus récents. Les plus anciens restent dans
+          Spotify, sans bac.
+        </p>
+      ) : null}
 
       {jobError ? (
         <p className="notice notice--error" role="alert">

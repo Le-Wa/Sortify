@@ -7,6 +7,7 @@ import { check, db } from "./db";
 import { initialImport, type ImportProgress } from "./import";
 import { isStalled, kickJob, latestJob, startJob, type Job } from "./jobs";
 import { hasActiveBacs } from "./library";
+import { MIN_LIBRARY } from "./library-size";
 
 interface JobView<P> {
   status: "running" | "done" | "failed";
@@ -57,15 +58,18 @@ export async function revelationState(memberId: string, retry = false): Promise<
   }
 
   let imp = await latestJob<ImportProgress>(memberId, "import");
-  if (!imp || (imp.status === "failed" && retry)) imp = await launch(memberId, "import", initialImport);
+  let analyse = await latestJob<AnalyseProgress>(memberId, "analyse");
+  // Bibliothèque trop petite (l'analyse a refusé) : « Réessayer » relit les likes, il y en a peut-être de nouveaux.
+  const tooSmall = imp?.status === "done" && analyse?.status === "failed" && imp.progress.imported < MIN_LIBRARY;
+  if (!imp || (imp.status === "failed" && retry) || (tooSmall && retry)) imp = await launch(memberId, "import", initialImport);
   if (imp.status !== "done") {
     await nudge(imp);
     return { stage: "import", ...view(imp) };
   }
 
   const proposed = await listBacs(memberId, ["proposed", "removed"]);
-  let analyse = await latestJob<AnalyseProgress>(memberId, "analyse");
-  if (!analyse || (analyse.status === "failed" && retry)) {
+  // Une analyse plus ancienne que le dernier import ne compte plus (import relancé).
+  if (!analyse || (analyse.status === "failed" && retry) || analyse.started_at < imp.started_at) {
     analyse = await launch(memberId, "analyse", proposed.length > 0 ? fillOnly : initialAnalyse);
   }
   const analysing = ["fiches", "rangement", "complement"].includes(analyse.progress.phase);

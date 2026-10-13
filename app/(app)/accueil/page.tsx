@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
+import { COST_ALERT_USD, costAlerts, usd } from "@/lib/ai-budget";
 import { activeBacs, chip, failedTri, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
 import { Sleeve } from "../../ui/Sleeve";
@@ -17,13 +18,14 @@ const SHOWN = 10;
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs, suggestions, arrival, failure] = await Promise.all([
+  const [queue, tri, bacs, suggestions, arrival, failure, costly] = await Promise.all([
     pendingQueue(id),
     lastTri(id),
     activeBacs(id),
     openSuggestions(id),
     weekArrival(id),
     failedTri(id),
+    member.is_owner ? costAlerts() : Promise.resolve([]),
   ]);
   const lastDone = tri?.status === "done" ? tri : null;
   const recent = arrival.items;
@@ -102,6 +104,13 @@ export default async function AccueilPage() {
       {failure ? (
         <p className="notice notice--error" role="alert">
           Le dernier tri ({relativeDay(new Date(failure.at))} {hourOf(new Date(failure.at))}) n&apos;a pas pu se faire : {failure.error}. Touche « Nouveaux likes ? » pour le relancer.
+        </p>
+      ) : null}
+
+      {costly.length > 0 ? (
+        <p className="notice notice--warn" role="status">
+          Coût de l&apos;IA sur 7 jours : {costly.map((m) => `${m.name} ${usd(m.cost)}`).join(", ")} (au-delà de {usd(COST_ALERT_USD)}). Détail dans les{" "}
+          <Link href="/reglages">Réglages</Link>.
         </p>
       ) : null}
 

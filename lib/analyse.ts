@@ -5,6 +5,7 @@ import { addPlacements, insertFiches, listBacs, replacePlacements, sortFichesFor
 import { loadCorpus, sampleCorpus } from "./corpus";
 import { check, db } from "./db";
 import { saveProgress, type Job } from "./jobs";
+import { librarySize, minPerBac as minPerBacFor, tooSmallMessage } from "./library-size";
 
 export interface AnalyseProgress {
   /** fiches → rangement de tout le corpus → compléter (orphelins) → remplissage des bacs à remplir → done */
@@ -54,6 +55,8 @@ async function analyseUnit(memberId: string, progress: AnalyseProgress): Promise
 
 async function writeFiches(memberId: string): Promise<AnalyseProgress> {
   const corpus = await loadCorpus(memberId);
+  // Message lisible à l'écran d'attente ; « Réessayer » relance alors l'import pour lire les nouveaux likes.
+  if (librarySize(corpus.length) === "trop-petite") throw new Error(tooSmallMessage(corpus.length));
   const sample = sampleCorpus(corpus);
   const fiches = await proposeFiches(sample);
   // Nouvelle analyse : les propositions précédentes (jamais créées) disparaissent.
@@ -110,7 +113,9 @@ async function complementUnit(memberId: string, progress: AnalyseProgress): Prom
     if (rows.length < 1000) break;
   }
   const orphans = corpus.filter((t) => !placed.has(t.track_id));
-  const minPerBac = Math.max(15, Math.round(corpus.length * 0.03));
+  // Petite bibliothèque : on s'en tient aux 2 ou 3 bacs de l'analyse.
+  if (librarySize(corpus.length) !== "normale") return next;
+  const minPerBac = minPerBacFor(corpus.length);
   if (orphans.length / corpus.length <= 1 - TARGET_COVERAGE || orphans.length < minPerBac) return next;
 
   const fiches = await complementFiches(

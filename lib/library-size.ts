@@ -1,0 +1,32 @@
+/**
+ * Garde-fous selon la taille de la bibliothèque (analyse d'onboarding du 12/10/2026, P2-g et h).
+ * Module pur (sans base ni IA) : testé dans `lib/__tests__/library-size.test.ts`.
+ */
+
+/** Sous ce nombre de titres, pas d'analyse : il n'y a pas de quoi remplir deux bacs. */
+export const MIN_LIBRARY = 20;
+/** Sous ce nombre, petite bibliothèque : 2 ou 3 bacs au plus, sans passe « compléter ». */
+export const SMALL_LIBRARY = 60;
+/** Plafond de l'import : les likes les plus récents seulement (l'analyse voit alors tout, sans échantillon). */
+export const MAX_IMPORT = 2500;
+
+export type LibrarySize = "trop-petite" | "petite" | "normale";
+
+export function librarySize(tracks: number): LibrarySize {
+  if (tracks < MIN_LIBRARY) return "trop-petite";
+  if (tracks < SMALL_LIBRARY) return "petite";
+  return "normale";
+}
+
+/** Nombre maximum de bacs proposés à l'analyse (null : libre, dicté par la bibliothèque). */
+export function maxBacs(tracks: number): number | null {
+  return librarySize(tracks) === "petite" ? 3 : null;
+}
+
+/** Titres qu'un bac proposé doit pouvoir accueillir au minimum. */
+export function minPerBac(tracks: number): number {
+  return librarySize(tracks) === "petite" ? Math.max(8, Math.round(tracks * 0.15)) : Math.max(15, Math.round(tracks * 0.03));
+}
+
+export const tooSmallMessage = (tracks: number) =>
+  `Ta bibliothèque compte ${tracks} titre${tracks > 1 ? "s" : ""} liké${tracks > 1 ? "s" : ""} : c'est trop peu pour en tirer des bacs (il en faut au moins ${MIN_LIBRARY}). Like quelques titres de plus dans Spotify, puis touche « Réessayer ».`;

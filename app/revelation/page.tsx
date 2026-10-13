@@ -8,6 +8,7 @@ import { CreationScreen } from "./CreationScreen";
 import { ProposalScreen, type ProposalBac } from "./ProposalScreen";
 import { WaitScreen } from "./WaitScreen";
 import { markFor } from "@/lib/cover-shapes";
+import { librarySize } from "@/lib/library-size";
 
 /** Première visite : import, analyse, proposition des bacs, puis création dans Spotify. */
 export default async function RevelationPage() {
@@ -65,7 +66,8 @@ export default async function RevelationPage() {
     <main className="page page--bare">
       <ProposalScreen
         likes={imp?.progress.imported ?? 0}
-        period={imp?.progress.mode === "tout" ? "tout l'historique" : "2 ans"}
+        period={imp?.progress.capped ? "les plus récents" : imp?.progress.mode === "tout" ? "tout l'historique" : "2 ans"}
+        size={imp?.progress.capped ? "plafond" : librarySize(impact.total)}
         bacs={proposal}
         divers={impact.divers}
         total={impact.total}

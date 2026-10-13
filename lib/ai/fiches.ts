@@ -4,6 +4,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ANALYSIS_MODEL, claude, EDIT_MODEL, responseText } from "../claude";
 import { FICHE_SHAPES, SHAPE_MEANINGS } from "../cover-shapes";
 import { cleanForPrompt, DATA_RULE, titlesBlock, trackLine, type CorpusTrack } from "../corpus";
+import { maxBacs, minPerBac as minPerBacFor } from "../library-size";
 
 export const AXES = ["scène", "ambiance", "moment"] as const;
 export type Axis = (typeof AXES)[number];
@@ -47,7 +48,12 @@ ${DATA_RULE}`;
  */
 export async function proposeFiches(corpus: CorpusTrack[]): Promise<Fiche[]> {
   const lines = corpus.map((t, i) => trackLine(t, i)).join("\n");
-  const minPerBac = Math.max(15, Math.round(corpus.length * 0.03));
+  const minPerBac = minPerBacFor(corpus.length);
+  const max = maxBacs(corpus.length);
+  // Petite bibliothèque : peu de bacs bien remplis plutôt que des bacs de 3 titres ; la règle des transversaux ne tient plus.
+  const howMany = max
+    ? `- La bibliothèque est petite (${corpus.length} titres) : propose ${max - 1} ou ${max} bacs au plus, les directions les plus nettes, de préférence des scènes. La règle « au moins trois transversaux » ne s'applique pas ici.`
+    : "- Propose le nombre de bacs que la bibliothèque justifie vraiment : rarement moins de 5, rarement plus de 15. Une petite bibliothèque ou très homogène en mérite moins.";
 
   const stream = claude().beta.messages.stream({
     model: ANALYSIS_MODEL,
@@ -60,7 +66,7 @@ export async function proposeFiches(corpus: CorpusTrack[]): Promise<Fiche[]> {
 ${RULES}
 
 Ta mission :
-- Propose le nombre de bacs que la bibliothèque justifie vraiment : rarement moins de 5, rarement plus de 15. Une petite bibliothèque ou très homogène en mérite moins.
+${howMany}
 - Chaque bac doit pouvoir accueillir au moins ~${minPerBac} titres du corpus.
 - Ensemble, les bacs doivent donner une maison à au moins 85 % des titres. Les titres isolés iront dans la caisse « Divers » : ne crée pas de bac pour eux.
 - Ordonne les bacs du plus central au plus marginal dans cette bibliothèque.
@@ -71,7 +77,7 @@ Format du corpus, un titre par ligne : numéro | artistes — titre | année de 
   });
   const message = await stream.finalMessage();
   const parsed = analysisSchema.parse(JSON.parse(responseText(message, "Analyse de la bibliothèque")));
-  return parsed.bacs.map((f) => cleanFiche(f, corpus.length));
+  return parsed.bacs.slice(0, max ?? undefined).map((f) => cleanFiche(f, corpus.length));
 }
 
 /** Bornes de sécurité sur le texte produit par l'IA (affiché, puis relu à chaque rangement). */

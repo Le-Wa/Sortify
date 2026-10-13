@@ -8,6 +8,8 @@ import { decrypt, encrypt } from "@/lib/secrets";
 interface Pending {
   clientId: string;
   clientSecret: string;
+  /** Clé Anthropic déjà vérifiée sur /power (facultative). */
+  anthropicKey?: string | null;
   invite: string | null;
   state: string;
   exp: number;
@@ -53,7 +55,12 @@ export async function GET(req: NextRequest) {
     }
     const { error } = await db()
       .from("members")
-      .update({ spotify_client_id: app.clientId, spotify_client_secret_enc: encrypt(app.clientSecret) })
+      .update({
+        spotify_client_id: app.clientId,
+        spotify_client_secret_enc: encrypt(app.clientSecret),
+        // Enregistrée avant la première visite de /revelation : l'analyse, la plus chère, passe déjà par cette clé.
+        ...(pending.anthropicKey ? { anthropic_key_enc: encrypt(pending.anthropicKey) } : {}),
+      })
       .eq("spotify_id", me.id);
     if (error) throw new Error(error.message);
     return NextResponse.redirect(new URL(`/power/connexion?t=${encodeURIComponent(signHandoff(me.id))}`, req.url));

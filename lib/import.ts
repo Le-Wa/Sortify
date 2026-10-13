@@ -5,6 +5,7 @@ import { contradicts, hasStyle } from "./enrichment/families";
 import { artistTags, trackTags } from "./enrichment/lastfm";
 import { audioFeatures, RECCOBEATS_BATCH, type AudioFeatures } from "./enrichment/reccobeats";
 import { saveProgress, type Job } from "./jobs";
+import { MAX_IMPORT } from "./library-size";
 import { spotify } from "./spotify/client";
 
 /** Corpus de l'analyse : 2 ans de likes, ou tout l'historique s'il y en a moins que ça. */
@@ -17,6 +18,8 @@ export interface ImportProgress {
   cursor: string | null;
   imported: number;
   enriched: number;
+  /** Plafond atteint : seuls les MAX_IMPORT likes les plus récents sont importés. */
+  capped?: boolean;
   /** Dernier titre traité, montré pendant l'attente. */
   current: { title: string; artist: string; cover: string | null; liked_at: string } | null;
 }
@@ -97,7 +100,11 @@ async function importPage(memberId: string, progress: ImportProgress): Promise<I
     progress.mode === "2ans" ? Date.now() - CORPUS_YEARS * 365.25 * 24 * 3600 * 1000 : Number.NEGATIVE_INFINITY;
 
   const inRange = page.items.filter((item) => Date.parse(item.added_at) >= cutoff);
-  const rows = inRange.map((item) => toRow(memberId, item)).filter((r): r is LikeRow => r !== null);
+  // Grosse bibliothèque : coût et durée de l'analyse grimpent avec chaque titre, on s'arrête aux plus récents.
+  const rows = inRange
+    .map((item) => toRow(memberId, item))
+    .filter((r): r is LikeRow => r !== null)
+    .slice(0, Math.max(0, MAX_IMPORT - progress.imported));
   if (rows.length > 0) {
     check(await db().from("likes").upsert(rows, { onConflict: "member_id,track_id" }), "Enregistrement des likes");
   }
@@ -108,6 +115,7 @@ async function importPage(memberId: string, progress: ImportProgress): Promise<I
     ? { title: last.title, artist: last.artists[0] ?? "", cover: last.cover_url, liked_at: last.liked_at }
     : progress.current;
   const reachedCutoff = inRange.length < page.items.length;
+  if (imported >= MAX_IMPORT) return { ...progress, phase: "enrich", cursor: null, imported, current, capped: true };
 
   if (!reachedCutoff && page.next) return { ...progress, cursor: page.next, imported, current };
 
