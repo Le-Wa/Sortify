@@ -1,8 +1,8 @@
-# Prochaine session — passage de relais (11 oct. 2026, soir)
+# Prochaine session — passage de relais (13 oct. 2026)
 
 ## État
-Sortify V2 est **en production** (https://sortify-mauve.vercel.app), branche `v2` (en avance sur `origin/v2`, pas encore poussée).
-Fait aujourd'hui :
+Sortify V2 est **en production** (https://sortify-mauve.vercel.app). Branches `v2` = `main`, poussées sur GitHub (`origin`). 2 membres : Walid (propriétaire) et Jérémy (« Le G 87 »). Tri automatique le lundi.
+Fait le 11/10 :
 - **Pochettes à formes** (variante B choisie sur planche, `docs/design/pochettes-formes*.png`) : une forme par bac, pleine (scène) ou en contour (ambiance / moment). **Toucher la pochette** d'un bac → choix de la forme, plein / contour et couleur, renvoyée à Spotify. Walid a déjà personnalisé Tech house (noir + éclair), Afro orient (orange + soleil), Fin de nuit (lune en contour).
 - **Algorithme** mesuré au banc (`docs/bench/2026-10-11-banc-essai.md`) puis appliqué :
   - Deezer remplace Last.fm quand ils se contredisent (homonymes Last.fm : 139 likes) ;
@@ -60,14 +60,16 @@ Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Wal
 
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
-2. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle.
-3. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
-4. Plus tard pour l'algo : affiner les fiches à partir des corrections ; mesurer au banc la limite de 5 et la nouvelle consigne de l'analyse.
-5. Plus tard : réordonner par glisser-déposer.
-6. **Plus tard : choix du LLM par membre, autres fournisseurs** (GPT, Gemini, Mistral…), pour les power users avec leur propre clé. Demande : couche commune (Vercel AI SDK / AI Gateway) à la place des appels Anthropic directs (sorties structurées, cache des fiches, repli en cas de refus, effort), puis chaque modèle passé au banc (`scripts/lab/algo-bench3.mts`) avant d'être proposé (liste validée). ~2–3 jours. Variante plus simple écartée pour l'instant par Walid : réglage « Qualité » parmi les modèles Claude (Haiku 76 % / Sonnet 86 % de premier bac juste).
+2. Suite de l'analyse d'onboarding (`docs/analyses/2026-10-12-onboarding.md`) : clé Anthropic saisissable sur `/power` avant l'analyse (P1-d) ; case « e-mail ajouté au dashboard Spotify » dans « Inviter un pote » (P2-e) ; garde-fous petite (< 60 likes) et grosse bibliothèque (plafond du corpus, alerte de coût) (P2-g, h).
+3. Tester : « + Nouveau bac » et « Récupérer » de bout en bout ; un retrait / ajout fait dans Spotify puis « Nouveaux likes ? » ; une clé Anthropic personnelle réelle ; le mini-guide après un code d'invitation (navigation privée).
+4. Tester sur un vrai téléphone : installation + « Prévenir le lundi » ; et la connexion `/power` avec une vraie app Spotify perso.
+5. Mesurer au banc ce qui ne l'a pas été (limite de 5 bacs par titre, consigne « 3 transversaux » de l'analyse, Deezer pour les tags sans style, homonymes par artiste) ; plus tard, affiner les fiches à partir des corrections.
+6. Idées restantes (liste du 12/10) : importer ses playlists Spotify existantes à l'onboarding ; filtres « Incertains » dans À trier ; petite célébration quand le comptoir est vide ; « ce bac dort » ; disque oublié de la semaine ; bacs des potes / affinité ; ordre « DJ » dans une playlist ; bilan du mois / de l'année ; réordonner les bacs par glisser-déposer.
+7. **Plus tard : choix du LLM par membre, autres fournisseurs** (GPT, Gemini, Mistral…), pour les power users avec leur propre clé. Demande : couche commune (Vercel AI SDK / AI Gateway) à la place des appels Anthropic directs (sorties structurées, cache des fiches, repli en cas de refus, effort), puis chaque modèle passé au banc (`scripts/lab/algo-bench3.mts`) avant d'être proposé (liste validée). ~2–3 jours. Variante plus simple écartée pour l'instant par Walid : réglage « Qualité » parmi les modèles Claude (Haiku 76 % / Sonnet 86 % de premier bac juste).
 
 ## En attente de Walid
 - **Fenêtre d'import** : aujourd'hui, 2 ans de likes, ou tout l'historique s'il y en a moins de 300 (`lib/import.ts`, `CORPUS_YEARS` / `SMALL_LIBRARY`). Le pote de Walid avait 259 likes sur 2 ans → import depuis 2019 (2 340 likes, 1 918 titres sortis avant 2021). Proposition : élargir année par année jusqu'à 300 likes, puis relancer son import et son analyse.
+- Relancer l'import et l'analyse de Jérémy (avec son accord) une fois la fenêtre d'import décidée ; il a déjà créé « Foulées rythmées » (Divers 1 264 → 1 039).
 - Re-ranger les bibliothèques avec les dernières corrections (Deezer pour les tags sans style, 0,6 minimum) : essai à blanc d'abord.
 - Plus de partage (16 %) : bacs transversaux à critère net ; « Avant de sortir » à surveiller.
 - Suivre la part de titres « À trier » (cible ~20 %).
