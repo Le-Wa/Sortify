@@ -23,9 +23,9 @@ Walid a deux époques nettes (2014–2019, puis 2024–2026, presque rien entre 
 
 ## Comment sont estimés le coût et l'attente
 
-- **Coût IA de l'onboarding** ≈ **1,30 $ + 0,22 centime par titre** :
-  - fiches (Fable 5.1) : tout le corpus est lu, ~55 à 62 tokens par titre (compté avec l'API sur nos deux bibliothèques), plus la réflexion et la réponse (~0,9 $) ;
-  - rangement (Sonnet 5.5) : 0,155 c / titre au banc du 10/10, ~0,17 c avec les deux familles (estimation sur Jérémy) ;
+- **Coût IA de l'onboarding** ≈ **1 $ + 0,21 centime par titre** :
+  - fiches (Fable 5.1) : tout le corpus est lu, ~55 à 62 tokens par titre (compté avec l'API sur nos deux bibliothèques), plus la réflexion et la réponse ; mesuré au banc du 13/10 : **0,83 $ pour 450 titres** ;
+  - rangement (Sonnet 5.5) : 0,14 à 0,16 c / titre (bancs du 10/10 et du 13/10) ;
   - passe « compléter » + remplissages : ~0,4 $.
   - `ai_usage` ne contient pas encore d'onboarding complet (il démarre le 11/10) : les chiffres viennent du banc et du comptage des tokens, à ± 25 %. Mesuré dans `ai_usage` : une retouche Opus sur la proposition de Jérémy coûte ~0,45 $ (elle relit tout le corpus).
 - **Attente** ≈ 6 min + 1 min par 240 likes (formule de l'écran d'attente, calée le 12/10 ; 8 min au minimum). Une relance est plus rapide : les tags d'artistes sont déjà en cache.
@@ -35,24 +35,24 @@ Walid a deux époques nettes (2014–2019, puis 2024–2026, presque rien entre 
 
 | | Règle | Walid (onboarding aujourd'hui) | Jérémy |
 |---|---|---|---|
-| **A. Actuelle** | 2 ans ; tout si < 300 | 1 157 likes · **~3,80 $** · ~11 min | 2 340 likes (depuis 2019) · **~6,40 $** · ~16 min · 82 % sortis avant 2021 |
-| **B. Élargir année par année jusqu'à 300** (proposition du relais) | 2 ans, +1 an tant qu'il y a moins de 300 likes | identique à A | 434 likes (depuis oct. 2023) · **~2,30 $** · ~8 min · ~50 % avant 2021 |
-| **C. Les 1 000 derniers likes** | les 1 000 plus récents, quel que soit l'âge | 1 000 likes (depuis juin 2025) · **~3,50 $** · ~10 min | 1 000 likes (depuis juin 2021) · **~3,50 $** · ~10 min · ~60 % avant 2021 |
-| **D. Tout l'historique** | tout, dans la limite de 2 500 | 2 243 likes (depuis 2014) · **~6,20 $** · ~15 min · ~50 % avant 2021 | identique à A |
+| **A. Actuelle** | 2 ans ; tout si < 300 | 1 157 likes · **~3,40 $** · ~11 min | 2 340 likes (depuis 2019) · **~5,90 $** · ~16 min · 82 % sortis avant 2021 |
+| **B. Élargir année par année jusqu'à 300** (proposition du relais) | 2 ans, +1 an tant qu'il y a moins de 300 likes | identique à A | 434 likes (depuis oct. 2023) · **~1,90 $** · ~8 min · ~50 % avant 2021 |
+| **C. Les 1 000 derniers likes** | les 1 000 plus récents, quel que soit l'âge | 1 000 likes (depuis juin 2025) · **~3,10 $** · ~10 min | 1 000 likes (depuis juin 2021) · **~3,10 $** · ~10 min · ~60 % avant 2021 |
+| **D. Tout l'historique** | tout, dans la limite de 2 500 | 2 243 likes (depuis 2014) · **~5,70 $** · ~15 min · ~50 % avant 2021 | identique à A |
 
 ### Ce que ça donne
 
 - **A — Actuelle.** Bon pour Walid. Pour Jérémy, le seuil « < 300 » fait tout basculer : ses bacs sont construits surtout sur 2019–2020 (1 226 likes sur 2 340), alors que ses nouveaux likes, ceux que le tri du lundi range, ressemblent à 2023–2026. Risque : des bacs datés et plus de titres « À trier ». Effet de seuil brutal : 299 likes en 2 ans → tout importer ; 301 → 2 ans.
-- **B — Élargir jusqu'à 300.** Le moins cher et le plus rapide pour Jérémy, des bacs qui collent à ce qu'il like aujourd'hui. Mais 434 titres, c'est peu : avec ~2 likes par semaine, il aura ~6 à 8 bacs de 30 à 60 titres, et ses 1 900 likes plus anciens n'apparaîtront dans aucune playlist. Variante « jusqu'à 500 » : 666 likes depuis oct. 2022, ~2,80 $, ~9 min.
+- **B — Élargir jusqu'à 300.** Le moins cher et le plus rapide pour Jérémy, des bacs qui collent à ce qu'il like aujourd'hui. Mais 434 titres, c'est peu : avec ~2 likes par semaine, il aura ~6 à 8 bacs de 30 à 60 titres, et ses 1 900 likes plus anciens n'apparaîtront dans aucune playlist. Variante « jusqu'à 500 » : 666 likes depuis oct. 2022, ~2,40 $, ~9 min.
 - **C — Les 1 000 derniers.** Même coût et même attente pour tout le monde, faciles à annoncer (« on part de tes 1 000 derniers likes »). Pour Walid, on perd 157 likes de fin 2024 – début 2025 par rapport à aujourd'hui ; pour Jérémy, on remonte à mi-2021 : des playlists bien remplies, plus récentes qu'en A. Un gros likeur (1 000 likes en 8 mois) n'aurait que ses derniers mois.
 - **D — Tout l'historique.** Le plus complet : toute la bibliothèque est rangée, y compris les années 2014–2019 de Walid. Le plus cher et le plus long (~6 $, ~15 min pour vous deux), et des bacs qui mélangent deux époques : l'analyse proposera des bacs « d'avant » que les nouveaux likes ne nourriront presque jamais.
 
 ### Complément possible (n'importe quelle option)
 
-Garder une fenêtre courte à l'onboarding (coût et attente bas), puis proposer plus tard **« Ranger mes anciens likes »** dans Bacs ou Réglages : l'import continue en tâche de fond, les anciens titres sont rangés dans les bacs existants (rangement seul, ~0,17 c par titre : 1 000 anciens likes ≈ 1,70 $), le reste va dans Divers. La complétude devient un choix de la personne, une fois qu'elle a vu ses bacs.
+Garder une fenêtre courte à l'onboarding (coût et attente bas), puis proposer plus tard **« Ranger mes anciens likes »** dans Bacs ou Réglages : l'import continue en tâche de fond, les anciens titres sont rangés dans les bacs existants (rangement seul, ~0,15 c par titre : 1 000 anciens likes ≈ 1,50 $), le reste va dans Divers. La complétude devient un choix de la personne, une fois qu'elle a vu ses bacs.
 
 ## Recommandation
 
-**C (les 1 000 derniers likes)**, avec plus tard « Ranger mes anciens likes » pour qui veut tout. Coût et attente prévisibles (~3,50 $, ~10 min pour tout le monde), des bacs à jour du goût actuel, assez de titres pour des playlists bien remplies, et plus d'effet de seuil. B serait à préférer si le coût prime ; D seulement si « toute ma bibliothèque rangée » est la promesse principale.
+**C (les 1 000 derniers likes)**, avec plus tard « Ranger mes anciens likes » pour qui veut tout. Coût et attente prévisibles (~3 $, ~10 min pour tout le monde), des bacs à jour du goût actuel, assez de titres pour des playlists bien remplies, et plus d'effet de seuil. B serait à préférer si le coût prime ; D seulement si « toute ma bibliothèque rangée » est la promesse principale.
 
 Pour Jérémy, quelle que soit l'option : la relance de l'import et de l'analyse se fera **avec son accord**. Elle est à préparer : il a déjà des bacs actifs (dont « Foulées rythmées ») et des corrections, que la Révélation ne sait pas reprendre telle quelle. Essai à blanc et résumé chiffré d'abord.

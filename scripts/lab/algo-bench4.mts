@@ -314,10 +314,20 @@ if (phase === "homonymes") {
       return res;
     });
     // Genres selon chaque règle.
-    const diff: { perArtist: CorpusTrack; perTrack: CorpusTrack }[] = [];
+    const diff: { perArtist: CorpusTrack; perTrack: CorpusTrack; flagged: boolean }[] = [];
     let unknown = 0, artistYes = 0, trackYes = 0;
+    const kinds = { "artiste oui, titre non": 0, "artiste oui, titre inconnu de Deezer": 0, "artiste non, titre oui": 0 };
+    // Verdict par artiste comme à l'import : le premier titre (plus récent d'abord) que Deezer connaît, 2 essais au plus.
+    // En base, il n'existe que pour les artistes importés depuis le 12/10 : on le simule pour les autres.
+    const simulated = new Map<string, boolean | null>();
+    for (const artist of new Set(targets.map((t) => artistOf.get(t.track_id)!))) {
+      const tries = targets.filter((t) => artistOf.get(t.track_id) === artist).slice(0, 2);
+      const known = tries.find((t) => (dz[t.track_id] ?? []).length > 0);
+      simulated.set(artist, known ? contradicts(tagsOf.get(artist)!.tags, dz[known.track_id]) : null);
+    }
     for (const t of targets) {
-      const a = tagsOf.get(artistOf.get(t.track_id)!)!;
+      const stored = tagsOf.get(artistOf.get(t.track_id)!)!;
+      const a = { ...stored, homonym: stored.homonym ?? simulated.get(artistOf.get(t.track_id)!) ?? null };
       const d = dz[t.track_id] ?? [];
       if (a.homonym === null) {
         unknown++;
@@ -329,9 +339,11 @@ if (phase === "homonymes") {
       const g = (homonym: boolean) => (homonym ? d : a.tags);
       // Par titre : sans genres Deezer pour ce titre, on garde Last.fm.
       const byTrack = d.length > 0 ? titleSays : false;
-      if (a.homonym !== byTrack) diff.push({ perArtist: { ...t, genres: g(a.homonym) }, perTrack: { ...t, genres: g(byTrack) } });
+      if (a.homonym !== byTrack) kinds[a.homonym ? (d.length ? "artiste oui, titre non" : "artiste oui, titre inconnu de Deezer") : "artiste non, titre oui"]++;
+      if (a.homonym !== byTrack) diff.push({ perArtist: { ...t, genres: g(a.homonym) }, perTrack: { ...t, genres: g(byTrack) }, flagged: a.homonym });
     }
-    console.log(`${m.display_name} : ${targets.length} titres d'artistes à 2+ likes ; verdict inconnu ${unknown} ; homonyme par artiste ${artistYes}, par titre ${trackYes} ; règles en désaccord sur ${diff.length} titres (${pct(diff.length, corpus.length)} % de la bibliothèque)`);
+    console.log(`${m.display_name} : ${targets.length} titres d'artistes à 2+ likes ; verdict impossible (Deezer ne connaît pas l'artiste) ${unknown} ; homonyme par artiste ${artistYes}, par titre ${trackYes} ; règles en désaccord sur ${diff.length} titres (${pct(diff.length, corpus.length)} % de la bibliothèque)`);
+    console.log("  désaccords par type :", JSON.stringify(kinds));
     if (diff.length === 0) continue;
     diff.splice(120);
     const fiches = await sortFichesFor(await listBacs(m.spotify_id, ["active"]));
@@ -339,9 +351,15 @@ if (phase === "homonymes") {
     const both = diff.map((d) => ({ ...d.perArtist, genres: [...new Set([...d.perArtist.genres, ...d.perTrack.genres])] }));
     const gold = await cached(`homonymes-juge-${m.display_name}`, async () => Object.fromEntries([...(await judge(fiches, both))].map(([k, v]) => [k, [...v]])));
     const g = new Map(Object.entries(gold).map(([k, v]) => [k, new Set(v)]));
-    rows[`${m.display_name} — par artiste (en ligne)`] = score(await sortWith(`homonymes-artiste-${m.display_name}`, fiches, diff.map((d) => d.perArtist)), fiches, g);
-    rows[`${m.display_name} — par titre`] = score(await sortWith(`homonymes-titre-${m.display_name}`, fiches, diff.map((d) => d.perTrack)), fiches, g);
-    for (const d of diff.slice(0, 12)) console.log(`  ${d.perArtist.artists[0]} — ${d.perArtist.title} | artiste: ${d.perArtist.genres.slice(0, 3).join(", ")} | titre: ${d.perTrack.genres.slice(0, 3).join(", ")}`);
+    const sa = await sortWith(`homonymes-artiste-${m.display_name}`, fiches, diff.map((d) => d.perArtist));
+    const st = await sortWith(`homonymes-titre-${m.display_name}`, fiches, diff.map((d) => d.perTrack));
+    rows[`${m.display_name} — par artiste (en ligne)`] = score(sa, fiches, g);
+    rows[`${m.display_name} — par titre`] = score(st, fiches, g);
+    // Hybride : verdict par artiste pour savoir qui vérifier, puis verdict du titre pour les artistes signalés
+    // (leurs genres Deezer sont déjà demandés titre par titre : aucun appel en plus).
+    const flagged = new Set(diff.filter((d) => d.flagged).map((d) => d.perArtist.track_id));
+    rows[`${m.display_name} — hybride`] = score(sa.map((x) => (flagged.has(x.track_id) ? st.find((y) => y.track_id === x.track_id)! : x)), fiches, g);
+    for (const d of diff.slice(0, 20)) console.log(`  ${d.perArtist.artists[0]} — ${d.perArtist.title} | artiste: ${d.perArtist.genres.slice(0, 3).join(", ")} | titre: ${d.perTrack.genres.slice(0, 3).join(", ")}`);
   }
   console.table(rows);
   report.homonymes = rows;
