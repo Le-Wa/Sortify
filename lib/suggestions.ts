@@ -58,42 +58,62 @@ const examples = (fiche: Fiche, corpus: CorpusTrack[]): string[] =>
  * Après un tri : si Divers contient assez de titres qui vont ensemble, propose un nouveau bac (une fois par semaine au plus,
  * seulement si la personne a laissé les suggestions activées et n'a pas déjà une suggestion en attente).
  */
-export async function suggestFromDivers(memberId: string): Promise<void> {
-  const member = await getMember(memberId);
-  if (!member?.suggest_bacs) return;
-  const recent = check(
-    await db().from("suggestions").select("status, created_at").eq("member_id", memberId).eq("origin", "divers").order("created_at", { ascending: false }).limit(1),
-    "Dernière suggestion",
-  ) as { status: string; created_at: string }[];
-  if (recent[0] && (recent[0].status === "open" || Date.now() - Date.parse(recent[0].created_at) < DIVERS_CHECK_EVERY_MS)) return;
+export async function suggestFromDivers(memberId: string, opts: { onDemand?: boolean } = {}): Promise<number> {
+  // À la demande (« Fais-moi des bacs avec Divers ») : ni réglage, ni délai d'une semaine, jusqu'à 2 propositions.
+  if (!opts.onDemand) {
+    const member = await getMember(memberId);
+    if (!member?.suggest_bacs) return 0;
+    const recent = check(
+      await db().from("suggestions").select("status, created_at").eq("member_id", memberId).eq("origin", "divers").order("created_at", { ascending: false }).limit(1),
+      "Dernière suggestion",
+    ) as { status: string; created_at: string }[];
+    if (recent[0] && (recent[0].status === "open" || Date.now() - Date.parse(recent[0].created_at) < DIVERS_CHECK_EVERY_MS)) return 0;
+  }
 
   const { total } = await diversTracks(memberId, 1);
-  if (total < MIN_FROM_DIVERS) return;
+  if (total < MIN_FROM_DIVERS) return 0;
   const divers = await ensureDivers(memberId);
-  const inDivers = new Set(
-    (check(await db().from("placements").select("track_id").eq("bac_id", divers.id), "Lecture de Divers") as { track_id: string }[]).map((r) => r.track_id),
-  );
+  const inDivers = new Set<string>();
+  // PostgREST plafonne à 1 000 lignes par requête (Divers de Jérémy : 1 034 titres).
+  for (let from = 0; ; from += 1000) {
+    const rows = check(await db().from("placements").select("track_id").eq("bac_id", divers.id).range(from, from + 999), "Lecture de Divers") as { track_id: string }[];
+    for (const r of rows) inDivers.add(r.track_id);
+    if (rows.length < 1000) break;
+  }
   const orphans = (await loadCorpus(memberId)).filter((t) => inDivers.has(t.track_id));
   const bacs = await listBacs(memberId, ["active"]);
-  const [fiche] = await complementFiches(
-    orphans,
-    bacs.map((b) => ({ name: b.name, pitch: b.pitch, axis: b.axis })),
-    MIN_FROM_DIVERS,
-  );
-  if (!fiche) return noteEmptyCheck(memberId, "Aucun groupe assez cohérent dans Divers.");
-  const matches = (
-    await fillBac({ name: fiche.name, axis: fiche.axis, brief: fiche.brief, examples: [] }, bacs.map((b) => b.name), orphans)
-  ).filter((m) => m.confidence >= placeThreshold(fiche.axis));
-  if (matches.length < MIN_FROM_DIVERS) return noteEmptyCheck(memberId, `Seulement ${matches.length} titres pour « ${fiche.name} ».`);
-  await insertSuggestion(memberId, {
-    kind: "ajouter",
-    origin: "divers",
-    payload: {
-      reason: `${matches.length} titres de Divers vont ensemble.`,
-      fiche: { ...fiche, exampleIds: examples(fiche, orphans) },
-      trackIds: matches.map((m) => m.track_id),
-    },
-  });
+  const fiches = (
+    await complementFiches(
+      orphans,
+      bacs.map((b) => ({ name: b.name, pitch: b.pitch, axis: b.axis })),
+      MIN_FROM_DIVERS,
+    )
+  ).slice(0, opts.onDemand ? 2 : 1);
+  if (fiches.length === 0) {
+    await noteEmptyCheck(memberId, "Aucun groupe assez cohérent dans Divers.");
+    return 0;
+  }
+  let created = 0;
+  for (const fiche of fiches) {
+    const matches = (
+      await fillBac({ name: fiche.name, axis: fiche.axis, brief: fiche.brief, examples: [] }, bacs.map((b) => b.name), orphans)
+    ).filter((m) => m.confidence >= placeThreshold(fiche.axis));
+    if (matches.length < MIN_FROM_DIVERS) {
+      await noteEmptyCheck(memberId, `Seulement ${matches.length} titres pour « ${fiche.name} ».`);
+      continue;
+    }
+    await insertSuggestion(memberId, {
+      kind: "ajouter",
+      origin: "divers",
+      payload: {
+        reason: `${matches.length} titres de Divers vont ensemble.`,
+        fiche: { ...fiche, exampleIds: examples(fiche, orphans) },
+        trackIds: matches.map((m) => m.track_id),
+      },
+    });
+    created++;
+  }
+  return created;
 }
 
 export interface ReanalyseProgress {

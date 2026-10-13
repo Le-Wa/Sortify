@@ -973,3 +973,19 @@ a:active .sleeve:not([style*="rotate"]), button:active .sleeve:not([style*="rota
 .dj-list li::before { content: counter(dj, decimal-leading-zero); font-family: var(--font-mono); font-size: 11px; opacity: 0.5; }
 .dj-list__title { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dj-list__key { min-width: 32px; text-align: right; }
+
+/* ── Divers : cases à cocher et barre de lot (13/10/2026) ── */
+.check { width: 22px; height: 22px; flex: none; accent-color: var(--accent); margin: 11px 0; }
+.divers-row__text { min-width: 0; min-height: 44px; border: 0; background: none; color: inherit; font: inherit; text-align: left; padding: 0; }
+.lot-bar {
+  position: sticky;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  animation: fade-up 0.22s ease-out;
+}

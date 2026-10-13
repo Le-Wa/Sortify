@@ -289,7 +289,6 @@ export async function setTrackBacs(
   await syncMember(memberId);
 }
 
-/** « Tout accepter » : chaque titre en attente part dans le bac pré-coché. */
 /** « Tout accepter » : chaque titre va dans son premier bac proposé ; `only` limite aux titres du filtre affiché. */
 export async function acceptAllPending(memberId: string, only?: string[]): Promise<number> {
   const all = await pendingQueue(memberId);

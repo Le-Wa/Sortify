@@ -10,7 +10,8 @@ import { getBac, listBacs } from "@/lib/bacs";
 import { bacsOfTrack, setTrackBacs } from "@/lib/daily";
 import { kickJob, startJob } from "@/lib/jobs";
 import { newBacProgress, recoverProgress } from "@/lib/new-bac";
-import { acceptSuggestion, refuseSuggestion } from "@/lib/suggestions";
+import { acceptSuggestion, refuseSuggestion, suggestFromDivers } from "@/lib/suggestions";
+import { placeManyFromDivers as placeMany } from "@/lib/divers";
 import { withUsage } from "@/lib/ai-usage";
 import { MAX_BACS_PER_TRACK } from "@/lib/limits";
 import { applyOrder, djPreview, type DjPreview } from "@/lib/dj";
@@ -165,5 +166,25 @@ export async function setPlayOrder(id: string, order: "dj" | "recents"): Promise
   return run(async (memberId) => {
     await applyOrder(memberId, z.string().uuid().parse(id), z.enum(["dj", "recents"]).parse(order));
     return { ok: true, message: order === "dj" ? "Playlist réordonnée façon DJ dans Spotify." : "Les plus récents sont de nouveau en haut." };
+  });
+}
+
+/** Divers : ranger plusieurs titres d'un coup (filtre, artiste, sélection). */
+export async function placeManyFromDivers(tracks: string[], bacIds: string[]): Promise<ActionResult> {
+  return run(async (m) => {
+    const ids = z.array(trackId).min(1).max(2000).parse(tracks);
+    const chosen = z.array(uuid).min(1).max(MAX_BACS_PER_TRACK).parse(bacIds);
+    const n = await placeMany(m, ids, chosen);
+    return { ok: true, message: `${n} titre${n > 1 ? "s" : ""} rangé${n > 1 ? "s" : ""}.` };
+  });
+}
+
+/** « Fais-moi des bacs avec Divers » : l'IA cherche tout de suite jusqu'à 2 groupes qui méritent leur bac. */
+export async function bacsFromDivers(): Promise<ActionResult> {
+  return run(async (m) => {
+    const n = await suggestFromDivers(m, { onDemand: true });
+    return n > 0
+      ? { ok: true, message: n > 1 ? "2 nouveaux bacs proposés." : "Un nouveau bac proposé." }
+      : { ok: true, message: "Pas de groupe assez net pour l'instant : range à la main, ou réessaie quand Divers aura grandi." };
   });
 }
