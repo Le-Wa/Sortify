@@ -6,7 +6,7 @@ Repérage sans IA dans la base Sortify : au moins 4 titres d'un même album (mê
 
 Où ils sont rangés aujourd'hui : Rap français 496 (sur 670 titres du bac), Divers 207 (sur 528), Avant de sortir 73, Groove joyeux 37, Pop indé sensible 14, Afrobeats 12, Caraïbes 9, Route de nuit 7, Soul nocturne 5, Fin de nuit 4, Groove de bureau 2.
 
-Ils gonflent aussi l'affinité avec Jérémy (63 %, « surtout sur rap »).
+Ils pèsent probablement dans l’affinité avec Jérémy (63 % aujourd’hui, « surtout sur rap » ; non mesuré sans eux).
 
 | # | Artiste | Album | Liké le | Titres likés |
 |---|---|---|---|---|
