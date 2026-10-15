@@ -8,6 +8,7 @@ const TABS = [
   { href: "/a-trier", label: "À trier" },
   { href: "/bacs", label: "Bacs" },
   { href: "/arrivages", label: "Arrivages" },
+  { href: "/potes", label: "Potes" },
 ] as const;
 
 export function TabBar({ pending }: { pending: number }) {

@@ -9,9 +9,6 @@ export default async function PotesPage() {
   const view = await potesOverview(member.spotify_id);
   return (
     <>
-      <Link href="/bacs" className="back">
-        ‹ Bacs
-      </Link>
       <h1 className="display">Les potes</h1>
       {!view.sharing ? (
         <>

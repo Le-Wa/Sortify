@@ -229,8 +229,8 @@ a { color: inherit; }
   bottom: max(16px, env(safe-area-inset-bottom));
   width: min(448px, calc(100% - 32px));
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
   background: var(--card);
   border-radius: 14px;
   padding: 6px;
@@ -245,7 +245,7 @@ a { color: inherit; }
   gap: 6px;
   border-radius: 10px;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   font-stretch: 75%;
   text-transform: uppercase;

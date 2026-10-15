@@ -50,16 +50,6 @@ export default async function BacsPage() {
       <NewBac
         archived={archived.map((b) => ({ id: b.id, name: b.name, sleeve: b.sleeve_name ?? b.name, color: b.color, mark: markFor(b), pitch: b.pitch }))}
       />
-      <Link href="/potes" className="card row" style={{ gap: 12, padding: 14, color: "inherit", textDecoration: "none", minHeight: 56 }}>
-        <span className="grow">
-          <b>Les potes</b>
-          <br />
-          <span className="small muted">Affinité, leurs bacs, une playlist à deux.</span>
-        </span>
-        <span aria-hidden="true" style={{ fontSize: 20 }}>
-          ›
-        </span>
-      </Link>
       <Link href="/bacs/divers" className="crate-card">
         <span className="crate-card__label">
           Caisse
