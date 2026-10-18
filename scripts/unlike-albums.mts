@@ -1,6 +1,6 @@
 // Délike une liste de titres (albums likés en bloc, choisis par Walid le 18/10/2026), puis retire ces titres des playlists Sortify.
 // Usage : npm run try -- scripts/unlike-albums.mts <fichier.json> [--apply]
-// Sans --apply : essai à blanc (lecture seule). Le fichier sert aussi de sauvegarde (re-liker : PUT /me/library?uris=…).
+// Sans --apply : essai à blanc (lecture seule) ; --remaining [n] liste les titres encore likés. Le fichier sert aussi de sauvegarde (re-liker : PUT /me/library?uris=…).
 import { readFileSync } from "node:fs";
 import { db } from "@/lib/db";
 import { reconcileSpotify } from "@/lib/reconcile";
@@ -24,6 +24,10 @@ for (let i = 0; i < ids.length; i += CHUNK) {
   chunk.forEach((id, k) => saved[k] && liked.push(id));
 }
 console.log(`${ids.length} titres dans la liste, ${liked.length} encore likés dans Spotify.`);
+if (process.argv.includes("--remaining")) {
+  console.log(liked.slice(0, Number(process.argv[process.argv.indexOf("--remaining") + 1]) || liked.length).join(" "));
+  process.exit(0);
+}
 if (!apply) {
   console.log("Essai à blanc : rien n'a changé. Relancer avec --apply pour déliker.");
   process.exit(0);
