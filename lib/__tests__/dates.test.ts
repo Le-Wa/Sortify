@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextCron, relativeDay } from "../dates";
+import { lastTriWeekStart, nextCron, relativeDay } from "../dates";
 import { weekKey, weekLabel } from "../weeks";
 
 describe("tri du lundi", () => {
@@ -8,6 +8,11 @@ describe("tri du lundi", () => {
     expect(nextCron(new Date("2026-10-12T05:59:00Z")).toISOString()).toBe("2026-10-12T06:00:00.000Z"); // lundi avant le tri
     expect(nextCron(new Date("2026-10-12T06:00:00Z")).toISOString()).toBe("2026-10-19T06:00:00.000Z"); // lundi, tri passé
     expect(nextCron(new Date("2026-10-15T20:00:00Z")).toISOString()).toBe("2026-10-19T06:00:00.000Z"); // jeudi
+  });
+
+  it("la semaine des potes : les 7 jours rangés par le dernier tri, et depuis", () => {
+    expect(lastTriWeekStart(new Date("2026-10-18T12:00:00Z")).toISOString()).toBe("2026-10-05T06:00:00.000Z"); // dimanche : tri du 12
+    expect(lastTriWeekStart(new Date("2026-10-19T07:00:00Z")).toISOString()).toBe("2026-10-12T06:00:00.000Z"); // lundi, tri passé
   });
 
   it("dit les jours comme on les dit", () => {

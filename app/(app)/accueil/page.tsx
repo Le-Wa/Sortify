@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { COST_ALERT_USD, costAlerts, usd } from "@/lib/ai-budget";
 import { pendingOldLikesRequests } from "@/lib/old-likes";
-import { pendingCommonsFor } from "@/lib/potes";
+import { pendingCommonsFor, tourDesBacs } from "@/lib/potes";
 import { OldLikesRequests } from "./OldLikesRequests";
 import { activeBacs, chip, failedTri, lastTri, pendingQueue, weekArrival } from "@/lib/daily";
 import { hourOf, nextCron, relativeDay } from "@/lib/dates";
@@ -21,7 +21,7 @@ const SHOWN = 10;
 export default async function AccueilPage() {
   const member = await requireMember();
   const id = member.spotify_id;
-  const [queue, tri, bacs, suggestions, arrival, failure, costly, oldRequests, commons] = await Promise.all([
+  const [queue, tri, bacs, suggestions, arrival, failure, costly, oldRequests, commons, tour] = await Promise.all([
     pendingQueue(id),
     lastTri(id),
     activeBacs(id),
@@ -31,7 +31,10 @@ export default async function AccueilPage() {
     member.is_owner ? costAlerts() : Promise.resolve([]),
     member.is_owner ? pendingOldLikesRequests() : Promise.resolve([]),
     pendingCommonsFor(id),
+    tourDesBacs(id),
   ]);
+  // Le tour des bacs : seulement quand un pote a rangé quelque chose depuis le dernier tri.
+  const freshStops = tour?.stops.filter((s) => s.fresh > 0) ?? [];
   const lastDone = tri?.status === "done" ? tri : null;
   const recent = arrival.items;
   // Rangée de pochettes : seulement les bacs qui ont reçu des titres cette semaine.
@@ -162,6 +165,21 @@ export default async function AccueilPage() {
           ) : null}
         </section>
       ) : null}
+      {freshStops.length > 0 ? (
+        <Link href="/potes#tour" className="suggestion card" style={{ color: "inherit", textDecoration: "none" }}>
+          <div className="grow stack" style={{ gap: 4 }}>
+            <b style={{ fontSize: 15 }}>Le tour des bacs</b>
+            <span style={{ fontSize: 13 }}>
+              {freshStops
+                .slice(0, 2)
+                .map((s) => `${s.name} : +${s.fresh} dans ${s.bacs.slice(0, 2).map((b) => b.name).join(", ")}${s.bacs.length > 2 ? "…" : ""}`)
+                .join(" · ")}
+              {freshStops.length > 2 ? ` · et ${freshStops.length - 2} autre${freshStops.length > 3 ? "s" : ""}` : ""} ›
+            </span>
+          </div>
+        </Link>
+      ) : null}
+
       <p className="small muted" style={{ margin: "0 4px" }}>
         {arrival.waiting > 0
           ? `${arrival.waiting} like${arrival.waiting > 1 ? "s attendent" : " attend"} le tri ${relativeDay(next) === "aujourd'hui" ? "de ce matin" : relativeDay(next) === "demain" ? "de demain" : `de ${relativeDay(next)}`} (vers ${hourOf(next)}), ou « Nouveaux likes ? » pour ranger tout de suite.`

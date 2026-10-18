@@ -6,6 +6,7 @@ import { markFor, type SleeveMark } from "./cover-shapes";
 import { check, db } from "./db";
 import { families } from "./enrichment/families";
 import { FAMILY_LABELS } from "./divers";
+import { lastTriWeekStart } from "./dates";
 import { getMember } from "./members";
 import { spotify, SpotifyError } from "./spotify/client";
 import { addToTop } from "./spotify/playlists";
@@ -167,6 +168,92 @@ export async function poteBac(meId: string, bacId: string): Promise<PoteBacView 
     bac: { id: bac.id, name: bac.name, sleeve: bac.sleeve_name ?? bac.name, color: bac.color, mark: markFor(bac), count: tracks.length, pitch: bac.pitch, playlistId: bac.spotify_playlist_id },
     tracks,
   };
+}
+
+/** Titres d'un pote lus pour le tour des bacs (ses likes les plus récents). */
+const TOUR_SCAN = 80;
+/** Titres montrés par pote (les plus récents d'abord). */
+const TOUR_SHOWN = 8;
+
+export interface TourStop {
+  poteId: string;
+  name: string;
+  /** Titres arrivés dans ses bacs partagés depuis `since` ; 0 → on montre ses derniers rangements. */
+  fresh: number;
+  bacs: (PoteBacCard & {
+    tracks: { track_id: string; title: string; artist: string; cover_url: string | null; isrc: string | null; liked_at: string; mine: boolean }[];
+  })[];
+}
+
+export interface Tour {
+  /** Début de « cette semaine » : la semaine rangée par le dernier tri du lundi, et depuis. */
+  since: string;
+  stops: TourStop[];
+}
+
+/**
+ * Le tour des bacs : ce que chaque pote a liké et rangé dans ses bacs partagés depuis le dernier tri du lundi
+ * (ses derniers rangements s'il n'y a rien de neuf). Null si je ne partage pas mes bacs.
+ */
+export async function tourDesBacs(meId: string, now = new Date()): Promise<Tour | null> {
+  const me = await getMember(meId);
+  if (!me?.share_bacs) return null;
+  const since = lastTriWeekStart(now);
+  const stops = await Promise.all(
+    (await sharingPotes(meId)).map(async (o): Promise<TourStop | null> => {
+      const bacs = await sharedBacs(o.spotify_id);
+      if (bacs.length === 0) return null;
+      const recent = check(
+        await db()
+          .from("likes")
+          .select("track_id, title, artists, cover_url, isrc, liked_at")
+          .eq("member_id", o.spotify_id)
+          .eq("excluded", false)
+          .is("unliked_at", null)
+          .order("liked_at", { ascending: false })
+          .limit(TOUR_SCAN),
+        "Derniers likes d'un pote",
+      ) as { track_id: string; title: string; artists: string[]; cover_url: string | null; isrc: string | null; liked_at: string }[];
+      const ids = recent.map((r) => r.track_id);
+      if (ids.length === 0) return null;
+      const [placed, mine] = await Promise.all([
+        db()
+          .from("placements")
+          .select("bac_id, track_id")
+          .in(
+            "bac_id",
+            bacs.map((b) => b.id),
+          )
+          .in("track_id", ids),
+        db().from("likes").select("track_id").eq("member_id", meId).is("unliked_at", null).in("track_id", ids),
+      ]);
+      const placements = check(placed, "Rangements d'un pote") as { bac_id: string; track_id: string }[];
+      const mineIds = new Set((check(mine, "Mes likes en commun") as { track_id: string }[]).map((r) => r.track_id));
+      // Un titre rangé dans plusieurs bacs n'est montré qu'une fois, dans le premier.
+      const bacOf = new Map<string, string>();
+      for (const p of placements) if (!bacOf.has(p.track_id)) bacOf.set(p.track_id, p.bac_id);
+      const arrived = recent.filter((r) => bacOf.has(r.track_id));
+      if (arrived.length === 0) return null;
+      const fresh = arrived.filter((r) => Date.parse(r.liked_at) >= since.getTime());
+      const shown = (fresh.length > 0 ? fresh : arrived).slice(0, TOUR_SHOWN);
+      const byBac = bacs
+        .map((b) => ({
+          id: b.id,
+          name: b.name,
+          sleeve: b.sleeve_name ?? b.name,
+          color: b.color,
+          mark: markFor(b),
+          count: (fresh.length > 0 ? fresh : arrived).filter((r) => bacOf.get(r.track_id) === b.id).length,
+          tracks: shown
+            .filter((r) => bacOf.get(r.track_id) === b.id)
+            .map((r) => ({ track_id: r.track_id, title: r.title, artist: r.artists[0] ?? "", cover_url: r.cover_url, isrc: r.isrc, liked_at: r.liked_at, mine: mineIds.has(r.track_id) })),
+        }))
+        .filter((b) => b.tracks.length > 0)
+        .sort((a, b) => Date.parse(b.tracks[0].liked_at) - Date.parse(a.tracks[0].liked_at));
+      return { poteId: o.spotify_id, name: firstName(o.display_name, o.spotify_id), fresh: fresh.length, bacs: byBac };
+    }),
+  );
+  return { since: since.toISOString(), stops: stops.filter((s): s is TourStop => s !== null).sort((a, b) => b.fresh - a.fresh) };
 }
 
 const CROSS_MIN = 0.44;

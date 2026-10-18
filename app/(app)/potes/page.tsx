@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
-import { potesOverview } from "@/lib/potes";
+import { potesOverview, tourDesBacs } from "@/lib/potes";
 import { PoteCard, ShareSwitch } from "./PotesClient";
+import { TourDesBacs } from "./Tour";
 
-/** Bacs des potes : l'accord, puis la vitrine de chaque pote qui a dit oui (affinité, bacs, bac commun). */
+/** Bacs des potes : l'accord, puis le tour des bacs et la vitrine de chaque pote qui a dit oui (affinité, bacs, bac commun). */
 export default async function PotesPage() {
   const member = await requireMember();
-  const view = await potesOverview(member.spotify_id);
+  const [view, tour] = await Promise.all([potesOverview(member.spotify_id), tourDesBacs(member.spotify_id)]);
   return (
     <>
       <h1 className="display">Les potes</h1>
@@ -31,6 +32,7 @@ export default async function PotesPage() {
         </>
       ) : (
         <>
+          {tour ? <TourDesBacs tour={tour} /> : null}
           {view.potes.map((p) => (
             <PoteCard key={p.id} pote={p} />
           ))}

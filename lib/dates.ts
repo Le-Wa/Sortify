@@ -30,3 +30,10 @@ export function nextCron(now = new Date()): Date {
   if (next <= now) next.setUTCDate(next.getUTCDate() + 7);
   return next;
 }
+
+/** Début de la semaine rangée par le dernier tri du lundi (7 jours avant lui) : « cette semaine » chez les potes. */
+export function lastTriWeekStart(now = new Date()): Date {
+  const last = nextCron(now);
+  last.setUTCDate(last.getUTCDate() - 14);
+  return last;
+}
