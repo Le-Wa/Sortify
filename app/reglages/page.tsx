@@ -97,7 +97,7 @@ export default async function ReglagesPage() {
       </Link>
 
       <div className="label section-label">Power user</div>
-      <OwnKeyCard hint={await anthropicKeyHint(member.spotify_id)} />
+      <OwnKeyCard hint={await anthropicKeyHint(member.spotify_id)} required={Boolean(member.spotify_client_id)} />
 
       <div className="label section-label">Apparence</div>
       <ThemeSettings theme={themeOf((await cookies()).get(THEME_COOKIE)?.value)} />

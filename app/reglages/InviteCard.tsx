@@ -71,13 +71,15 @@ export function InviteCard({ code, members, max, dashboardUrl }: { code: string 
           </label>
         </>
       )}
-      <button
-        type="button"
-        className={code ? "link-btn" : "btn btn--accent"}
-        onClick={create}
-        disabled={creating || (!full && !added)} style={code ? { alignSelf: "flex-start", color: "inherit" } : undefined}>
-        {creating ? "Création…" : code ? "Créer un autre code" : full ? "Créer un code (power user)" : "Créer un code"}
-      </button>
+      {full ? null : (
+        <button
+          type="button"
+          className={code ? "link-btn" : "btn btn--accent"}
+          onClick={create}
+          disabled={creating || !added} style={code ? { alignSelf: "flex-start", color: "inherit" } : undefined}>
+          {creating ? "Création…" : code ? "Créer un autre code" : "Créer un code"}
+        </button>
+      )}
       {error ? (
         <p role="alert" className="small" style={{ margin: 0, color: "var(--accent)" }}>
           {error}
@@ -85,8 +87,8 @@ export function InviteCard({ code, members, max, dashboardUrl }: { code: string 
       ) : null}
       {full ? (
         <p className="small muted" style={{ margin: 0 }}>
-          Les places de l&apos;app Spotify de Sortify sont prises : ton pote peut encore entrer avec sa propre app Spotify (lien « power user » sur la page de
-          connexion) et un code.
+          Les places de l&apos;app Spotify de Sortify sont prises : ton pote peut encore entrer en power user, sans code, avec sa propre app Spotify et sa
+          clé Anthropic (lien « power user » sur la page de connexion).
         </p>
       ) : null}
     </div>

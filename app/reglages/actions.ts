@@ -33,7 +33,7 @@ export async function saveSettings(input: z.input<typeof settingsSchema>): Promi
   return { ok: true };
 }
 
-/** Clé Anthropic personnelle (onboarding « power user ») : vérifiée puis enregistrée chiffrée ; null pour la retirer. */
+/** Clé Anthropic personnelle : vérifiée puis enregistrée chiffrée ; null pour la retirer (refusé à un power user). */
 export async function saveAnthropicKey(key: string | null): Promise<ActionResult> {
   const member = await currentMember();
   if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
@@ -89,7 +89,6 @@ export async function newInvitation(): Promise<ActionResult> {
   const member = await currentMember();
   if (!member) return { ok: false, message: "Ta session a expiré, reconnecte-toi." };
   if (!member.is_owner) return { ok: false, message: "Seul le propriétaire de Sortify peut inviter." };
-  // Même complète, l'app partagée n'empêche pas d'inviter : un pote peut entrer en power user avec sa propre app Spotify.
   await createInvitation(member.spotify_id);
   revalidatePath("/reglages");
   return { ok: true };

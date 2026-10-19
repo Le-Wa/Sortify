@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
-import { consumeInvitation, countMembers, createMember, deleteMember, getMember, saveTokens } from "@/lib/members";
+import { countMembers, createMember, getMember, saveTokens } from "@/lib/members";
 import { db } from "@/lib/db";
 import { exchangeCode, POWER_COOKIE, signHandoff } from "@/lib/power-login";
 import { decrypt, encrypt } from "@/lib/secrets";
@@ -8,9 +8,8 @@ import { decrypt, encrypt } from "@/lib/secrets";
 interface Pending {
   clientId: string;
   clientSecret: string;
-  /** Clé Anthropic déjà vérifiée sur /power (facultative). */
-  anthropicKey?: string | null;
-  invite: string | null;
+  /** Clé Anthropic déjà vérifiée sur /power : obligatoire, le power user entre sans invitation et paie son IA. */
+  anthropicKey: string;
   state: string;
   exp: number;
 }
@@ -31,6 +30,7 @@ export async function GET(req: NextRequest) {
     return back("expire");
   }
   if (pending.exp < Date.now() || params.get("state") !== pending.state || !params.get("code")) return back("expire");
+  if (!pending.anthropicKey) return back("cle");
 
   const app = { clientId: pending.clientId, clientSecret: pending.clientSecret };
   try {
@@ -45,13 +45,9 @@ export async function GET(req: NextRequest) {
     if (await getMember(me.id)) {
       await saveTokens(me.id, tokens);
     } else {
+      // Sans invitation : sa propre app Spotify (hors des 5 places) et sa propre clé Anthropic, il ne coûte rien à Sortify.
       const first = (await countMembers()) === 0;
-      if (!first && !pending.invite) return back("invitation");
       await createMember({ spotifyId: me.id, displayName: me.display_name ?? null, email: me.email ?? null, tokens, isOwner: first });
-      if (!first && !(await consumeInvitation(pending.invite!, me.id))) {
-        await deleteMember(me.id);
-        return back("code");
-      }
     }
     const { error } = await db()
       .from("members")
@@ -59,7 +55,7 @@ export async function GET(req: NextRequest) {
         spotify_client_id: app.clientId,
         spotify_client_secret_enc: encrypt(app.clientSecret),
         // Enregistrée avant la première visite de /revelation : l'analyse, la plus chère, passe déjà par cette clé.
-        ...(pending.anthropicKey ? { anthropic_key_enc: encrypt(pending.anthropicKey) } : {}),
+        anthropic_key_enc: encrypt(pending.anthropicKey),
       })
       .eq("spotify_id", me.id);
     if (error) throw new Error(error.message);

@@ -5,8 +5,7 @@ import { PowerForm, PowerIntro } from "./PowerForm";
 const ERRORS: Record<string, string> = {
   expire: "La connexion a pris trop de temps : recommence.",
   refus: "Connexion annulée ou refusée par Spotify.",
-  code: "Code d'invitation invalide ou déjà utilisé.",
-  invitation: "Il te faut un code d'invitation pour entrer dans Sortify.",
+  cle: "Il manque ta clé Anthropic : recommence en la donnant.",
   spotify: "Spotify n'a pas pu finir la connexion : vérifie l'adresse de redirection de ton app.",
 };
 

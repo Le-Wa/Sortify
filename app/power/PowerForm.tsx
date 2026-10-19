@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { startPowerLogin } from "./actions";
 
-type PowerInput = { clientId: string; clientSecret: string; code: string; anthropicKey: string };
+type PowerInput = { clientId: string; clientSecret: string; anthropicKey: string };
 
 /** La démo (`/lab/onboarding`) passe sa propre vérification (`submit`) et sa suite (`onSuccess`) à la place de Spotify. */
 export function PowerForm({
@@ -15,7 +15,6 @@ export function PowerForm({
 }) {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
-  const [code, setCode] = useState("");
   const [anthropicKey, setAnthropicKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -27,7 +26,7 @@ export function PowerForm({
         e.preventDefault();
         setError(null);
         start(async () => {
-          const result = await submit({ clientId, clientSecret, code, anthropicKey }).catch((err: unknown) => ({
+          const result = await submit({ clientId, clientSecret, anthropicKey }).catch((err: unknown) => ({
             ok: false as const,
             message: err instanceof Error ? err.message : "Erreur",
           }));
@@ -44,12 +43,8 @@ export function PowerForm({
         Client Secret
       </label>
       <input id="client-secret" className="field" type="password" autoComplete="off" spellCheck={false} value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} />
-      <label className="label" htmlFor="invite">
-        Code d&apos;invitation (si tu n&apos;es pas encore membre)
-      </label>
-      <input id="invite" className="field" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
       <label className="label" htmlFor="anthropic-key">
-        Ta clé Anthropic (facultatif)
+        Ta clé Anthropic
       </label>
       <input
         id="anthropic-key"
@@ -62,15 +57,15 @@ export function PowerForm({
         onChange={(e) => setAnthropicKey(e.target.value)}
       />
       <span className="small muted">
-        Avec ta clé, l&apos;IA de Sortify est facturée sur ton compte Anthropic dès la première analyse (quelques dollars, puis environ 0,2 centime par
-        titre rangé). Vérifiée, puis gardée chiffrée ; tu pourras la retirer dans les Réglages.
+        L&apos;IA de Sortify (analyse, tri, nouveaux bacs) passe par ta clé : quelques dollars pour la première analyse, puis environ 0,2 centime par
+        titre rangé. Vérifiée, puis gardée chiffrée ; tu pourras la remplacer dans les Réglages.
       </span>
       {error ? (
         <p className="notice notice--error" role="alert">
           {error}
         </p>
       ) : null}
-      <button type="submit" className="btn" disabled={pending || !clientId || !clientSecret}>
+      <button type="submit" className="btn" disabled={pending || !clientId || !clientSecret || !anthropicKey}>
         {pending ? "Vérification…" : "Se connecter avec mon app Spotify"}
       </button>
     </form>
@@ -83,7 +78,8 @@ export function PowerIntro({ redirectUri }: { redirectUri: string }) {
     <>
       <h1 className="display">Ta propre app Spotify</h1>
       <p className="muted" style={{ margin: 0 }}>
-        Pour les power users : Sortify passe par ton app Spotify plutôt que par la sienne. Compte 5 minutes.
+        Pour les power users : Sortify passe par ton app Spotify et ta clé Anthropic plutôt que par les siennes. Pas besoin d&apos;invitation. Compte 5
+        minutes.
       </p>
       <ol className="small stack" style={{ gap: 6, paddingLeft: 18, margin: 0 }}>
         <li>
@@ -102,6 +98,13 @@ export function PowerIntro({ redirectUri }: { redirectUri: string }) {
         </li>
         <li>Dans « User Management », ajoute l&apos;e-mail de ton compte Spotify.</li>
         <li>Copie le Client ID et le Client Secret ci-dessous. Le secret est vérifié, puis gardé chiffré.</li>
+        <li>
+          Crée une clé sur{" "}
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
+            console.anthropic.com
+          </a>{" "}
+          (API Keys) : l&apos;IA de Sortify passera par ton compte.
+        </li>
       </ol>
     </>
   );

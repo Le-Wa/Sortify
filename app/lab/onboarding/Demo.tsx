@@ -69,7 +69,6 @@ const PRESS = 1100;
 const NEED_CODE = "Première fois ici ? Il te faut un code d'invitation.";
 const REFUSED = "Spotify a refusé la connexion. Si c'est ta première fois, la personne qui t'a invité doit d'abord ajouter ton compte Spotify à Sortify.";
 const POWER_REFUSED = "Connexion annulée ou refusée par Spotify.";
-const POWER_NEED_CODE = "Il te faut un code d'invitation pour entrer dans Sortify.";
 
 const IDEAS = [
   { name: "Dimanche lent", pitch: "Les titres qui ne pressent personne : voix posées, tempos bas, le café qui refroidit." },
@@ -401,10 +400,11 @@ export function Demo({ data }: { data: DemoData }) {
             await wait(800);
             if (!/^[0-9a-f]{32}$/i.test(input.clientId.trim())) return { ok: false, message: "Le Client ID fait 32 caractères (chiffres et lettres a à f)." };
             if (!/^[0-9a-f]{32}$/i.test(input.clientSecret.trim())) return { ok: false, message: "Le Client Secret fait 32 caractères (chiffres et lettres a à f)." };
-            if (input.anthropicKey.trim() && !input.anthropicKey.trim().startsWith("sk-ant-")) return { ok: false, message: "Cette clé Anthropic ne marche pas (elle commence par sk-ant-)." };
-            return { ok: true, url: input.code.trim() ? "ok" : "sans-code" };
+            if (!input.anthropicKey.trim()) return { ok: false, message: "Ta clé Anthropic est obligatoire : avec ta propre app Spotify, l'IA passe par ta clé." };
+            if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(input.anthropicKey.trim())) return { ok: false, message: "Ça ne ressemble pas à une clé Anthropic (elle commence par « sk-ant- »)." };
+            return { ok: true, url: "ok" };
           }}
-          onSuccess={(url) => toSpotify(url === "ok", "power", url === "ok" ? undefined : POWER_NEED_CODE)}
+          onSuccess={() => toSpotify(true, "power")}
         />
       </main>
     );
@@ -462,7 +462,7 @@ export function Demo({ data }: { data: DemoData }) {
       <div className="demo-bar" role="note">
         <span>
           <b>Démo</b> · rien n&apos;est réel (ni Spotify, ni IA). Code : n&apos;importe quel DISQ-XXXXXX. Power : 32 caractères 0-9 a-f, ex.{" "}
-          <code>0123456789abcdef0123456789abcdef</code>.
+          <code>0123456789abcdef0123456789abcdef</code>, et une clé <code>sk-ant-demo-000000000000000000000</code>.
         </span>
         <span className="row" style={{ gap: 12 }}>
           <label className="row" style={{ gap: 6 }}>
