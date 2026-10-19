@@ -25,9 +25,15 @@ export function PlaylistsScreen({ candidates }: { candidates: PlaylistCandidate[
   const broad = chosen.filter((c) => c.broad);
 
   function finish(final: Map<string, PlaylistMode | "drop">) {
-    const choices: PlaylistChoice[] = chosen
-      .map((c) => ({ id: c.id, name: c.name, mode: final.get(c.id) ?? (c.broad ? "split" : "bac") }))
-      .filter((c): c is PlaylistChoice => c.mode !== "drop");
+    save(
+      chosen
+        .map((c) => ({ id: c.id, name: c.name, mode: final.get(c.id) ?? (c.broad ? "split" : "bac") }))
+        .filter((c): c is PlaylistChoice => c.mode !== "drop"),
+    );
+  }
+
+  /** Enregistre les choix (aucun : l'étape est passée), puis l'analyse démarre. */
+  function save(choices: PlaylistChoice[]) {
     setError(null);
     start(async () => {
       const r = await source.actions.savePlaylists(choices).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
@@ -139,8 +145,9 @@ export function PlaylistsScreen({ candidates }: { candidates: PlaylistCandidate[
       ) : null}
       <div className="grow" />
       <div className="row" style={{ gap: 8 }}>
-        <button type="button" className="btn btn--quiet" disabled={pending} onClick={() => finish(new Map())}>
-          {selected.length === 0 ? "Passer" : "Annuler"}
+        {/* Passer : aucune playlist reprise, même si certaines sont cochées. */}
+        <button type="button" className="btn btn--quiet" style={{ width: "auto", flex: "none" }} disabled={pending} onClick={() => save([])}>
+          Passer
         </button>
         <button
           type="button"
