@@ -31,7 +31,7 @@ export function WelcomeCard({ nextTri, onClose }: { nextTri: string; onClose: ()
         <li>
           <span aria-hidden="true">→</span>
           <span>
-            En bas : <b>À trier</b> quand l&apos;IA hésite, <b>Bacs</b> pour tout retoucher, <b>Arrivages</b> pour chaque semaine.
+            En bas : <b>À trier</b> quand l&apos;IA hésite, <b>Bacs</b> pour tout retoucher, <b>Arrivages</b> pour chaque semaine, <b>Potes</b> pour les bacs de tes amis.
           </span>
         </li>
       </ul>
