@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { PlaylistCandidate, PlaylistChoice, PlaylistMode } from "@/lib/playlists-import";
-import { savePlaylists } from "./actions";
+import { useRevelationSource } from "./source";
 
 const MAX = 8;
 // Couleurs des morceaux d'une playlist découpée (mêmes tons que les pochettes).
@@ -16,7 +15,7 @@ const PART_COLORS = ["#e85d3a", "#f2c94c", "#3a5be8", "#2bb673", "#c25bd6", "#8f
  * Ses playlists ne bougent pas : Sortify en fait des bacs à lui.
  */
 export function PlaylistsScreen({ candidates }: { candidates: PlaylistCandidate[] }) {
-  const router = useRouter();
+  const source = useRevelationSource();
   const [selected, setSelected] = useState<string[]>([]);
   const [step, setStep] = useState<number | null>(null); // index dans `broad` pendant le découpage
   const [modes, setModes] = useState<Map<string, PlaylistMode | "drop">>(new Map());
@@ -31,8 +30,8 @@ export function PlaylistsScreen({ candidates }: { candidates: PlaylistCandidate[
       .filter((c): c is PlaylistChoice => c.mode !== "drop");
     setError(null);
     start(async () => {
-      const r = await savePlaylists(choices).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
-      if (r.ok) router.refresh();
+      const r = await source.actions.savePlaylists(choices).catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : "Erreur" }));
+      if (r.ok) source.advance();
       else setError(r.message);
     });
   }

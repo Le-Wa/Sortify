@@ -5,18 +5,32 @@ import { useActionState, useEffect, useState } from "react";
 import { StoryGuide } from "../ui/pedagogie/StoryGuide";
 import { checkInvitation, type InvitationState } from "./actions";
 
-export function InvitationForm() {
-  const [state, action, pending] = useActionState<InvitationState, FormData>(checkInvitation, { status: "idle" });
+/**
+ * Code d'invitation, puis mini-guide, puis Spotify. La démo (`/lab/onboarding`) passe sa propre vérification
+ * (`check`) et sa suite (`onReady`) à la place de la connexion Spotify.
+ */
+export function InvitationForm({
+  check = checkInvitation,
+  onReady,
+}: {
+  check?: (prev: InvitationState, formData: FormData) => Promise<InvitationState>;
+  onReady?: () => void;
+}) {
+  const [state, action, pending] = useActionState<InvitationState, FormData>(check, { status: "idle" });
   // Code accepté et mis en cookie : le mini-guide (qu'on peut passer), puis Spotify.
   const [guideDone, setGuideDone] = useState(false);
   const redirecting = state.status === "ok" && guideDone;
 
   useEffect(() => {
     if (!redirecting) return;
+    if (onReady) {
+      onReady();
+      return;
+    }
     signIn("spotify", { callbackUrl: "/" }).catch((error: unknown) => {
       console.error("Connexion Spotify impossible", error);
     });
-  }, [redirecting]);
+  }, [redirecting, onReady]);
 
   if (state.status === "ok" && !guideDone) return <StoryGuide onDone={() => setGuideDone(true)} />;
 
@@ -52,5 +66,16 @@ export function InvitationForm() {
         {redirecting ? "Ouverture de Spotify…" : pending ? "Vérification…" : "Valider et se connecter"}
       </button>
     </form>
+  );
+}
+
+export function InvitationIntro() {
+  return (
+    <>
+      <h1 className="display">Ton code d&apos;invitation</h1>
+      <p className="muted" style={{ margin: 0 }}>
+        Un pote t&apos;a fait entrer dans Sortify ? Tape le code qu&apos;il t&apos;a donné, puis connecte-toi avec Spotify.
+      </p>
+    </>
   );
 }

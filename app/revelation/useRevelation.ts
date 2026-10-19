@@ -1,20 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RevelationState } from "@/lib/revelation";
+import { useRevelationSource } from "./source";
 
 const POLL_MS = 1500;
 
 /**
  * Suit l'état de la Révélation tant qu'un job tourne. Quand l'étape change,
- * la page serveur est rechargée pour afficher le bon écran.
+ * la page est rechargée pour afficher le bon écran (via la source : serveur ou démo).
  */
 export function useRevelation(
   stage: RevelationState["stage"] | RevelationState["stage"][],
   keepPolling: (s: RevelationState) => boolean,
 ) {
-  const router = useRouter();
+  const source = useRevelationSource();
   const stagesKey = (Array.isArray(stage) ? stage : [stage]).join(",");
   const [state, setState] = useState<RevelationState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,15 +29,10 @@ export function useRevelation(
     const retry = retryNext.current;
     retryNext.current = false;
     try {
-      const res = await fetch(`/api/revelation${retry ? "?retry=1" : ""}`, { method: "POST" });
-      if (!res.ok) {
-        const failure = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(failure.error ?? `HTTP ${res.status}`);
-      }
-      const body = (await res.json()) as RevelationState;
+      const body = await source.poll(retry);
       setError(null);
       if (!stagesKey.split(",").includes(body.stage)) {
-        router.refresh();
+        source.advance();
         return false;
       }
       setState(body);
@@ -46,7 +41,7 @@ export function useRevelation(
       setError(`Connexion au serveur perdue (${e instanceof Error ? e.message : "erreur inconnue"}). On réessaie…`);
       return true;
     }
-  }, [router, stagesKey]);
+  }, [source, stagesKey]);
 
   useEffect(() => {
     let alive = true;

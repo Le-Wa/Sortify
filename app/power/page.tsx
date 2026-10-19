@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { powerRedirectUri } from "@/lib/power-login";
-import { PowerForm } from "./PowerForm";
+import { PowerForm, PowerIntro } from "./PowerForm";
 
 const ERRORS: Record<string, string> = {
   expire: "La connexion a pris trop de temps : recommence.",
@@ -19,28 +19,7 @@ export default async function PowerPage(props: PageProps<"/power">) {
       <Link href="/" className="back">
         ‹ Connexion
       </Link>
-      <h1 className="display">Ta propre app Spotify</h1>
-      <p className="muted" style={{ margin: 0 }}>
-        Pour les power users : Sortify passe par ton app Spotify plutôt que par la sienne. Compte 5 minutes.
-      </p>
-      <ol className="small stack" style={{ gap: 6, paddingLeft: 18, margin: 0 }}>
-        <li>
-          Sur{" "}
-          <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noreferrer">
-            developer.spotify.com/dashboard
-          </a>
-          , crée une app (API : « Web API »).
-        </li>
-        <li>
-          Dans ses réglages, ajoute cette adresse de redirection (Redirect URI) :
-          <br />
-          <code className="mono" style={{ wordBreak: "break-all" }}>
-            {powerRedirectUri()}
-          </code>
-        </li>
-        <li>Dans « User Management », ajoute l&apos;e-mail de ton compte Spotify.</li>
-        <li>Copie le Client ID et le Client Secret ci-dessous. Le secret est vérifié, puis gardé chiffré.</li>
-      </ol>
+      <PowerIntro redirectUri={powerRedirectUri()} />
       {error ? (
         <p className="notice notice--error" role="alert">
           {error}

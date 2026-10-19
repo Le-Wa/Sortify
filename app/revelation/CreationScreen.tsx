@@ -6,10 +6,12 @@ import { SleeveMarkSvg } from "@/lib/sleeve-mark";
 import { shapeBox, sleeveLayout } from "@/lib/sleeve-layout";
 import type { CreationBac } from "@/lib/creation";
 import { useRevelation } from "./useRevelation";
+import { useRevelationSource } from "./source";
 import { NextSteps } from "../ui/pedagogie/NextSteps";
 
 /** « On presse tes bacs » : chaque bac devient une playlist et se remplit sous tes yeux. */
 export function CreationScreen() {
+  const { homeHref } = useRevelationSource();
   const { state, error, retry } = useRevelation(["creation", "done"], (s) => s.stage === "creation" && s.status === "running");
   const creation = state?.stage === "creation" ? state : null;
   const done = state?.stage === "done";
@@ -59,7 +61,7 @@ export function CreationScreen() {
 
       <div className="grow" />
       {done ? (
-        <Link href="/accueil" className="btn">
+        <Link href={homeHref} className="btn">
           Voir mes bacs
         </Link>
       ) : (

@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { BottomSheet } from "../ui/BottomSheet";
 import { Sleeve } from "../ui/Sleeve";
 import { usePreview } from "../ui/usePreview";
-import { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept, type ActionResult } from "./actions";
+import type { ActionResult } from "./actions";
+import { useRevelationSource } from "./source";
 import { useRevelation } from "./useRevelation";
 import { ProposalIntro } from "../ui/pedagogie/ProposalIntro";
 import type { SleeveMark } from "@/lib/cover-shapes";
@@ -43,7 +43,8 @@ interface Props {
 }
 
 export function ProposalScreen({ likes, period, size, bacs, divers, total, filling, error: jobError }: Props) {
-  const router = useRouter();
+  const source = useRevelationSource();
+  const { addCustomBac, createBacs, mergeBacs, otherIdea, renameBac, setKept } = source.actions;
   const [open, setOpen] = useState<string | null>(bacs[0]?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null); // id du bac (ou « create », « custom ») en cours
   // Travail de l'IA en cours : bacs concernés et message, montrés sur les fiches et en bas de l'écran.
@@ -62,8 +63,8 @@ export function ProposalScreen({ likes, period, size, bacs, divers, total, filli
     if (filling) resume();
   }, [filling, resume]);
   useEffect(() => {
-    if (filling && state?.stage === "proposition" && !state.filling) router.refresh();
-  }, [filling, state, router]);
+    if (filling && state?.stage === "proposition" && !state.filling) source.advance();
+  }, [filling, state, source]);
 
   const kept = bacs.filter((b) => b.kept);
 
@@ -269,7 +270,7 @@ export function ProposalScreen({ likes, period, size, bacs, divers, total, filli
           type="button"
           className="btn"
           disabled={kept.length === 0 || busy !== null || stillFilling}
-          onClick={() => act("create", createBacs, () => router.refresh())}
+          onClick={() => act("create", createBacs, () => source.advance())}
         >
           {busy === "create"
             ? "On lance la presse…"

@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentMember } from "@/lib/auth";
 import { homeFor } from "@/lib/library";
-import { Sleeve } from "./ui/Sleeve";
 import { SpotifyButton } from "./ui/SpotifyButton";
-import { HowItWorks } from "./ui/pedagogie/HowItWorks";
+import { ConnexionView } from "./ui/ConnexionView";
 
 const ERRORS: Record<string, string> = {
   invitation: "Première fois ici ? Il te faut un code d'invitation.",
@@ -25,68 +23,5 @@ export default async function ConnexionPage(props: PageProps<"/">) {
   const ours = typeof params.erreur === "string" ? ERRORS[params.erreur] : undefined;
   const error = ours ?? (typeof params.error === "string" ? SPOTIFY_REFUSED : undefined);
 
-  return (
-    <main className="page page--bare">
-      <div className="row between label">
-        <span className="display display--s">Sortify</span>
-        <span>Disquaire perso · bac 00</span>
-      </div>
-
-      <div className="hero-stack" aria-hidden="true">
-        <Sleeve name="Soirée potes" color="#FF6A13" size={196} mark={{ shape: "starburst", outline: true }} rotate={-9} className="hero-a" />
-        <Sleeve name="Club 2h du mat'" color="#2448D8" size={196} mark={{ shape: "bolt", outline: false }} rotate={6} className="hero-b" />
-        <Sleeve name="Dimanche lent" color="#FF9FCB" size={196} mark={{ shape: "crescent", outline: true }} rotate={-1.5} className="hero-c" />
-      </div>
-
-      <h1 className="display display--xl">
-        Tu likes.
-        <br />
-        Sortify range.
-      </h1>
-
-      <ol className="steps">
-        <li>
-          <span className="mono">01</span>
-          <span>
-            <b>Tu likes sur Spotify</b>, comme d&apos;habitude.
-          </span>
-        </li>
-        <li>
-          <span className="mono">02</span>
-          <span>
-            <b>L&apos;IA imagine tes bacs</b> à partir de tes 1 000 derniers likes.
-          </span>
-        </li>
-        <li>
-          <span className="mono">03</span>
-          <span>
-            <b>Elle range chaque nouveau like</b>, chaque semaine.
-          </span>
-        </li>
-      </ol>
-
-      <HowItWorks />
-
-      <div className="grow" />
-
-      {error ? (
-        <p className="notice notice--error" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="stack">
-        <SpotifyButton />
-        <p className="small muted" style={{ textAlign: "center", margin: 0 }}>
-          Tes playlists actuelles ne sont pas touchées.
-        </p>
-        <Link href="/invitation" className="link-btn" style={{ alignSelf: "center", display: "flex", alignItems: "center" }}>
-          Première fois ? J&apos;ai un code d&apos;invitation
-        </Link>
-        <Link href="/power" className="link-btn small" style={{ alignSelf: "center", display: "flex", alignItems: "center" }}>
-          Power user : utiliser ma propre app Spotify
-        </Link>
-      </div>
-    </main>
-  );
+  return <ConnexionView error={error} primary={<SpotifyButton />} />;
 }
