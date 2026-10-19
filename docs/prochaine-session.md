@@ -1,4 +1,4 @@
-# Prochaine session — passage de relais (13 oct. 2026, soir)
+# Prochaine session — passage de relais (19 oct. 2026)
 
 ## État
 Sortify V2 est **en production** (https://sortify-mauve.vercel.app). Branches `v2` = `main`, poussées sur GitHub (`origin`). 2 membres : Walid (propriétaire) et Jérémy (« Le G 87 »). Tri automatique le lundi.
@@ -67,6 +67,16 @@ Textes dans `app/ui/pedagogie/content.ts` (sans jargon technique, demande de Wal
 - **Fenêtre d'import** : comparaison de 4 options dans `docs/analyses/2026-10-13-fenetre-import.md` (données Spotify : `scripts/lab/import-window.mts`). Recommandation : les 1 000 derniers likes (~3 $, ~10 min), plus tard « Ranger mes anciens likes ». **Rien codé**, en attente de Walid.
 - **Banc du 13/10** (`docs/bench/2026-10-13-banc-essai.md`, `scripts/lab/algo-bench4.mts`, 4,86 $) : limite de 5 bacs sans effet (aucun titre ne dépasse 3 bacs) ; consigne des 3 transversaux gardée (82 % de placements validés contre 77 %, mais 31 % de titres partagés contre 41 %) ; Deezer pour les tags sans style gardé (Walid top 1 83 → 92 %) ; homonymes : **règle hybride recommandée** (verdict du titre pour les artistes signalés, sans appel Deezer en plus ; Walid top 1 75 → 96 % sur les 26 titres concernés). Le verdict par artiste n'est en base que pour 15 artistes (imports depuis le 12/10).
 - **Idées** triées dans `docs/analyses/2026-10-13-idees.md` (effort, coût, design, points d'attention). Recommandation : importer ses playlists Spotify d'abord, puis Incertains + comptoir vide + ce bac dort.
+
+## Fait du 15 au 19/10/2026
+- **Onglet Potes** dans le menu (5 onglets) ; la carte sur Bacs a disparu.
+- **Le tour des bacs** (`tourDesBacs`, `lib/potes.ts` ; `app/(app)/potes/Tour.tsx`) : en haut de Potes, ce que chaque pote a liké et rangé dans ses bacs partagés depuis la semaine rangée par le dernier tri (`lastTriWeekStart`, `lib/dates.ts`, testé), sinon ses 8 derniers rangements ; carte sur l'Accueil seulement quand il y a du neuf. Pas de notification (choix de Walid). Planche vivante `/lab/tour?me=&now=`.
+- **Principe produit** : ne pas refaire ce que Spotify fait déjà (Blend, Jam, partage, suivre une playlist). Idées sociales restantes, propres à Sortify : « Vous ne rangez pas pareil », « Tu l'as découvert avant lui ».
+- **Albums likés en bloc** : 47 albums / 747 titres repérés (`docs/analyses/2026-10-15-albums-likes-en-bloc.md`) ; Walid a trié dans un artefact ; **672 titres délikés** le 18/10 via le connecteur Spotify de Claude (Sortify n'a que `user-library-read`), puis retirés des playlists (`scripts/unlike-albums.mts`, liste dans `backups/`). Rap français 670 → 216, Divers 528 → 340. THEY. gardé.
+- **Nom de l'app** : planche `docs/design/noms.jpg` (Diggeur, DiggBot, DiggerBot, Disquaire, Chineur). Préférence Claude : DiggBot. **Pas encore décidé**, rien renommé.
+- **Power user sans invitation** (décision de Walid, 19/10) : sa propre app Spotify **et sa clé Anthropic, obligatoire** ; plus de code ; son IA ne retombe jamais sur la clé de Sortify (`POWER_KEY_MISSING`, `lib/own-keys.ts`) ; clé remplaçable, pas retirable. Page `/power` : « Tes clés, ton Sortify. ». N'importe qui peut donc créer un compte power (sans coût pour Walid).
+- **Démo de l'onboarding** `/lab/onboarding` (dev seulement) : les vrais écrans (connexion, code, mini-guide, power, import, playlists, analyse, proposition, création, bienvenue) rejoués sans Spotify ni IA, sur 240 likes et 9 bacs de Walid. Les écrans de la Révélation passent par une source (`app/revelation/source.tsx`, serveur par défaut). Checklist de test : artefact « Test de l'onboarding ».
+- Corrigé : étape « Tes playlists » (bouton écrasé ; « Annuler » reprenait les playlists cochées → « Passer »).
 
 ## À faire
 1. Retours de Jérémy sur son onboarding (Walid les donnera).
