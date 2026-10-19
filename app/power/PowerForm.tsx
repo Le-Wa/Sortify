@@ -76,9 +76,13 @@ export function PowerForm({
 export function PowerIntro({ redirectUri }: { redirectUri: string }) {
   return (
     <>
-      <h1 className="display">Ta propre app Spotify</h1>
+      <h1 className="display">
+        Tes clés,
+        <br />
+        ton Sortify.
+      </h1>
       <p className="muted" style={{ margin: 0 }}>
-        Pour les power users : tu branches ta propre app Spotify et ta propre clé Anthropic. Pas besoin d&apos;invitation, compte 5 minutes.
+        Pour les power users : tu branches ta propre app Spotify et ta propre clé Anthropic, et tu entres sans invitation. Compte 5 minutes.
       </p>
       <ol className="small stack" style={{ gap: 6, paddingLeft: 18, margin: 0 }}>
         <li>
